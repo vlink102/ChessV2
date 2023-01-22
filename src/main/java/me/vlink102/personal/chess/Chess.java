@@ -13,7 +13,7 @@ public class Chess {
         board.setupBoard(false);
 
         JFrame frame = new JFrame("Chess - vlink102 - Prototype v3");
-        Dimension size = new Dimension(board.getDimension(), board.getDimension());
+        Dimension size = new Dimension(board.getDimension() + 100, board.getDimension());
 
         frame.getContentPane().setPreferredSize(size);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -25,19 +25,15 @@ public class Chess {
         frame.getContentPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                int resizeTo = Math.min(frame.getWidth(), frame.getHeight());
-                board.setPieceSize(resizeTo / 8);
-                board.setBounds(0, 0, board.getDimension(), board.getDimension());
+                board.setPieceSize(frame.getContentPane().getHeight() / 8);
 
-                frame.getContentPane().setPreferredSize(new Dimension(resizeTo, resizeTo));
-                Dimension preferred = frame.getPreferredSize();
-                frame.setSize((int) preferred.getWidth(), (int) preferred.getHeight());
+                //frame.getContentPane().setSize(/* todo*/);
+
                 board.repaint();
             }
         });
 
         frame.setSize(size);
-        board.setBounds(0, 0,  board.getDimension(), board.getDimension());
         board.addMouseListener(board.highlightListener());
         board.addKeyListener(board.boardViewListener());
 
