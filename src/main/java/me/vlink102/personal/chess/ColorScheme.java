@@ -2,29 +2,10 @@ package me.vlink102.personal.chess;
 
 import java.awt.*;
 
-public class ColorScheme {
-    private final Color dark;
-    private final Color light;
-    private final Color movedHighlight;
-    private final Color background;
-
-    public ColorScheme(Color light, Color dark, Color movedHighlight, Color background) {
-        this.dark = dark;
-        this.light = light;
-        this.movedHighlight = movedHighlight;
-        this.background = background;
-    }
-
-    public Color getDark() {
-        return dark;
-    }
-
-    public Color getLight() {
-        return light;
-    }
+public record ColorScheme(Color light, Color dark, Color movedHighlight, Color background) {
 
     public Color getHighlighted() {
-        return new Color(235, 97, 80, 200);
+        return new Color(235, 97, 80, 204);
     }
 
     public Color getMoved() {
@@ -55,13 +36,5 @@ public class ColorScheme {
         }
 
         return new Color(a << 24 | r << 16 | g << 8 | b);
-    }
-
-    public Color getMovedHighlight() {
-        return movedHighlight;
-    }
-
-    public Color getBackground() {
-        return background;
     }
 }

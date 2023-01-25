@@ -23,6 +23,8 @@ public class BoardCoordinate {
         return type;
     }
 
+
+
     public BoardCoordinate convert(CoordinateType convertType) {
         BoardCoordinate newCoord = new BoardCoordinate(file, rank, type);
         switch (type) {                    // R (Y), F (X)    R (Y), F (X)

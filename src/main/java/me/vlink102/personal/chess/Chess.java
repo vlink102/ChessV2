@@ -81,6 +81,7 @@ public class Chess {
         frame.add(board);
         frame.setJMenuBar(settings);
 
+
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
