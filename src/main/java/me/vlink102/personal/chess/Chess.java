@@ -13,7 +13,7 @@ public class Chess {
         board.setupBoard(false);
 
         JFrame frame = new JFrame("Chess - vlink102 - Prototype v3");
-        Dimension size = new Dimension(board.getDimension() + 100, board.getDimension());
+        Dimension size = new Dimension(board.getDimension(), board.getDimension());
 
         frame.getContentPane().setPreferredSize(size);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

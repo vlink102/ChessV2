@@ -5,6 +5,8 @@ import me.vlink102.personal.chess.pieces.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
@@ -346,10 +348,15 @@ public class BoardGUI extends JComponent {
         HighlightType[][] highlightTypes = BoardMatrixRotation.rotateHighlightMatrix(highlights, view);
 
         if (useOnline) {
+            Image image = OnlineAssets.getSavedBoard().getScaledInstance(pieceSize * 8, pieceSize * 8, Image.SCALE_FAST);
             if (view == BoardView.SIDE || view == BoardView.SIDE2) {
-                // rotate TODO
+                double degrees = Math.toRadians(view == BoardView.SIDE ? 90 : -90);
+                double locX = image.getWidth(null) / 2d;
+                double locY = image.getHeight(null) / 2d;
+                AffineTransform transform = AffineTransform.getRotateInstance(degrees, locX, locY);
+                ((Graphics2D)g).drawImage(image, transform, null);
             } else {
-                g.drawImage(OnlineAssets.getSavedBoard().getScaledInstance(pieceSize * 8, pieceSize * 8, Image.SCALE_FAST), 0, 0, null);
+                g.drawImage(image, 0, 0, null);
             }
         }
 
@@ -386,8 +393,6 @@ public class BoardGUI extends JComponent {
             }
         }
 
-        JPanel parent = (JPanel) getParent();
-        parent.setSize(this.getDimension(), this.getDimension());
     }
 
     public Colours getBoardTheme() {
