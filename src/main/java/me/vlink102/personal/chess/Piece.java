@@ -46,8 +46,8 @@ public abstract class Piece {
     public String getAbbr() {
         return abbr;
     }
-    public Image getIcon() {
-        return icon;
+    public Image getIcon(int pieceSize) {
+        return icon.getScaledInstance(pieceSize, pieceSize, Image.SCALE_SMOOTH);
     }
     public boolean isWhite() {
         return white;
@@ -64,4 +64,8 @@ public abstract class Piece {
     public void setIcon(Image icon) {
         this.icon = icon;
     }
+
+
+
+
 }

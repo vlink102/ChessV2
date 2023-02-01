@@ -1,21 +1,51 @@
 package me.vlink102.personal.chess;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
+import java.net.URL;
 
-public class Chess {
+public class Chess extends JLayeredPane implements MouseListener, MouseMotionListener {
     private static BoardGUI board;
+    public static Image getPiece() {
+        try {
+            return ImageIO.read(new URL("https://www.chess.com/chess-themes/pieces/neo/64/wp.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    public static void main(String[] args) {
-        board = new BoardGUI(BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,100, true,true);
-        board.setupBoard(true);
-        board.setupBoard(false);
+    public Chess(int initialPieceSize) {
+        board = new BoardGUI(BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, true,true);
+        Dimension initialSize = new Dimension(initialPieceSize * 8, initialPieceSize * 8);
 
-        JFrame frame = new JFrame("Chess - vlink102 - Prototype v3");
-        Dimension size = new Dimension(board.getDimension(), board.getDimension());
+        board.setLayout(new GridLayout(8, 8));
+        board.setPreferredSize(initialSize);
+        board.setBounds(0, 0, initialSize.width, initialSize.height);
+        board.addMouseListener(this);
+        board.addMouseMotionListener(this);
+        add(board, JLayeredPane.DEFAULT_LAYER);
 
-        frame.getContentPane().setPreferredSize(size);
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                JPanel square = new JPanel(new BorderLayout());
+                board.add(square);
+                square.setOpaque(false);
+            }
+        }
+
+        board.requestFocus();
+    }
+
+    public static void initUI(int initialPieceSize) {
+        Dimension initialSize = new Dimension(initialPieceSize * 8, initialPieceSize * 8);
+        JFrame frame = new JFrame("Chess - vlink102 - Prototype v5");
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.add(new Chess(initialPieceSize));
+        frame.setResizable(true);
+        frame.getContentPane().setPreferredSize(initialSize);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setResizable(true);
 
@@ -33,10 +63,15 @@ public class Chess {
             }
         });
 
-        frame.setSize(size);
-        board.addMouseListener(board.highlightListener());
-        board.addKeyListener(board.boardViewListener());
+        frame.setJMenuBar(getMenu());
 
+        frame.setSize(initialSize);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    public static JMenuBar getMenu() {
         JMenuBar settings = new JMenuBar();
         JMenu generalMenu = new JMenu("General");
         JMenuItem item = new JMenuItem("Quit Game", KeyEvent.VK_ESCAPE);
@@ -77,16 +112,45 @@ public class Chess {
         settings.add(generalMenu);
         settings.add(boardMenu);
         settings.add(pieceMenu);
-
-        frame.add(board);
-        frame.setJMenuBar(settings);
-
-
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        frame.toFront();
-        board.requestFocus();
+        return settings;
     }
 
+    public static void main(String[] args) {
+        EventQueue.invokeLater(() -> Chess.initUI(100));
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+
+    }
 }

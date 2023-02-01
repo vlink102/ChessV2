@@ -6,11 +6,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
-public class BoardGUI extends JComponent {
+public class BoardGUI extends JPanel {
     private final OnlineAssets onlineAssets;
     private boolean useOnline;
     private PieceDesign pieceTheme;
@@ -44,6 +42,11 @@ public class BoardGUI extends JComponent {
         this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
         this.gamePieces = new Piece[8][8];
         this.highlights = new HighlightType[8][8];
+
+        setupBoard(true);
+        setupBoard(false);
+        addMouseListener(highlightListener());
+        addKeyListener(boardViewListener());
     }
 
     public void setupBoard(boolean white) {
@@ -388,11 +391,13 @@ public class BoardGUI extends JComponent {
                 }
 
                 if (board[file][rank] != null) {
-                    board[file][rank].paint(g, file * pieceSize, rank * pieceSize, pieceSize);
+                    JLabel piece = new JLabel(new ImageIcon(board[file][rank].getIcon(pieceSize)));
+                    JPanel panel = (JPanel) getComponent((rank * 8) + file);
+                    panel.add(piece);
+                    //board[file][rank].paint(g, file * pieceSize, rank * pieceSize, pieceSize);
                 }
             }
         }
-
     }
 
     public Colours getBoardTheme() {
