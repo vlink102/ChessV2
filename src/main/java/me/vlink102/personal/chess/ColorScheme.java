@@ -4,8 +4,27 @@ import java.awt.*;
 
 public record ColorScheme(Color light, Color dark, Color movedHighlight, Color background) {
 
-    public Color getHighlighted() {
-        return new Color(235, 97, 80, 204);
+    public Color getHighlight(Move.Highlights mc) {
+        return switch (mc) {
+            case BRILLIANT -> new Color(27, 172, 166, 127);
+            case GREAT -> new Color(92, 139, 176, 127);
+            case BEST -> new Color(158, 186, 90, 127);
+            case EXCELLENT -> new Color(150, 188, 75, 127);
+            case GOOD -> new Color(150, 175, 139, 127);
+            case BOOK -> new Color(168, 136, 101, 127);
+            case INACCURACY -> new Color(240, 193, 92, 127);
+            case MISTAKE -> new Color(230, 145, 44, 127);
+            case BLUNDER -> new Color(179, 52, 48, 127);
+            case MISSED_WIN -> new Color(219, 172, 22, 127);
+            case FORCED -> new Color(164, 194, 91, 127);
+
+            case HIGHLIGHT -> new Color(235, 97, 80, 204);
+            case MOVE -> getMoved();
+        };
+    }
+
+    public Color getVignette() {
+        return new Color(251,251,191);
     }
 
     public Color getMoved() {

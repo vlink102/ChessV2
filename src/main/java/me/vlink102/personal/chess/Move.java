@@ -3,15 +3,30 @@ package me.vlink102.personal.chess;
 import me.vlink102.personal.chess.pieces.Pawn;
 
 public class Move {
-    private final Piece[][] board;
+    private final RawMove rawMove;
     private final Piece piece;
-    private final BoardCoordinate from;
-    private final BoardCoordinate to;
     private final CheckType check;
     private final boolean enPassant;
     private final Piece takes;
     private final Piece promotes;
     private final CastleType castleType;
+
+    public enum Highlights {
+        BRILLIANT,
+        GREAT,
+        BEST,
+        EXCELLENT,
+        GOOD,
+        BOOK,
+        INACCURACY,
+        MISTAKE,
+        BLUNDER,
+        MISSED_WIN,
+        FORCED,
+
+        HIGHLIGHT,
+        MOVE
+    }
 
     public enum CheckType {
         CHECK,
@@ -25,18 +40,14 @@ public class Move {
 
     /**
      * @param piece Piece moved
-     * @param from Square from
-     * @param to Square to
      * @param check Piece checked opopnent
      * @param enPassant
      * @param takes Piece taken, or null
      * @param promotes Pawn promotion
      */
-    public Move(Piece[][] board, Piece piece, BoardCoordinate from, BoardCoordinate to, CheckType check, boolean enPassant, Piece takes, Piece promotes, CastleType castleType) {
-        this.board = board;
+    public Move(RawMove move, Piece piece, CheckType check, boolean enPassant, Piece takes, Piece promotes, CastleType castleType) {
+        this.rawMove = move;
         this.piece = piece;
-        this.from = from;
-        this.to = to;
         this.check = check;
         this.enPassant = enPassant;
         this.takes = takes;
@@ -61,22 +72,21 @@ public class Move {
         } else {
             if (piece instanceof Pawn) {
                 if (takes != null) {
-                    move.append(from.getFile());
+                    move.append(rawMove.getFrom().getColString());
                     move.append("x");
-                    move.append(takes.getAbbr());
+                    move.append(rawMove.getTo().toNotation());
                 } else {
-                    move.append(to.toNotation());
+                    move.append(rawMove.getTo().toNotation());
                 }
                 if (promotes != null) {
                     move.append(promotes.getAbbr());
                 }
             } else {
                 move.append(piece.getAbbr());
-                move.append(from.getFile());
                 if (takes != null) {
                     move.append("x");
-                    move.append(to.toNotation());
                 }
+                move.append(rawMove.getTo().toNotation());
             }
 
             if (check != null) {
@@ -97,11 +107,11 @@ public class Move {
     }
 
     public BoardCoordinate getFrom() {
-        return from;
+        return rawMove.getFrom();
     }
 
     public BoardCoordinate getTo() {
-        return to;
+        return rawMove.getTo();
     }
 
     public CheckType getCheck() {

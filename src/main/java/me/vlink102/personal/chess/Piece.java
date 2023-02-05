@@ -9,7 +9,6 @@ public abstract class Piece {
     private final String abbr;
     private boolean white;
     private int moves;
-    private List<Move> history;
 
     public Piece(BoardGUI board, String abbr, boolean white) {
         this.board = board;
@@ -17,10 +16,6 @@ public abstract class Piece {
         this.white = white;
         this.moves = 0;
         this.icon = OnlineAssets.getPiece(board, this);
-    }
-
-    public void addMove(Move move) {
-        history.add(move);
     }
 
     /**
@@ -37,10 +32,10 @@ public abstract class Piece {
     }
 
     public boolean isDiagonal(BoardCoordinate from, BoardCoordinate to) {
-        return Math.abs(from.getFile() - to.getFile()) == Math.abs(from.getRank() - to.getRank());
+        return Math.abs(from.getCol() - to.getCol()) == Math.abs(from.getRow() - to.getRow());
     }
     public boolean isStraight(BoardCoordinate from, BoardCoordinate to) {
-        return (from.getFile() == to.getFile() && from.getRank() != to.getRank()) || (from.getFile() != to.getFile() && from.getRank() == to.getRank());
+        return (from.getCol() == to.getCol() && from.getRow() != to.getRow()) || (from.getCol() != to.getCol() && from.getRow() == to.getRow());
     }
 
     public String getAbbr() {
@@ -57,15 +52,12 @@ public abstract class Piece {
         this.moves ++;
     }
 
-    public List<Move> getHistory() {
-        return history;
-    }
-
     public void setIcon(Image icon) {
         this.icon = icon;
     }
 
-
-
-
+    @Override
+    public String toString() {
+        return "Piece{abbr='" + abbr + "', white=" + white + "}";
+    }
 }

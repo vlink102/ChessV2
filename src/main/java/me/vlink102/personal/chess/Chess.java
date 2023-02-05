@@ -1,42 +1,21 @@
 package me.vlink102.personal.chess;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.io.IOException;
-import java.net.URL;
 
-public class Chess extends JLayeredPane implements MouseListener, MouseMotionListener {
+public class Chess extends JLayeredPane {
     private static BoardGUI board;
-    public static Image getPiece() {
-        try {
-            return ImageIO.read(new URL("https://www.chess.com/chess-themes/pieces/neo/64/wp.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public Chess(int initialPieceSize) {
-        board = new BoardGUI(BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, true,true);
-        Dimension initialSize = new Dimension(initialPieceSize * 8, initialPieceSize * 8);
+        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, true,true);
 
-        board.setLayout(new GridLayout(8, 8));
-        board.setPreferredSize(initialSize);
-        board.setBounds(0, 0, initialSize.width, initialSize.height);
-        board.addMouseListener(this);
-        board.addMouseMotionListener(this);
         add(board, JLayeredPane.DEFAULT_LAYER);
 
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                JPanel square = new JPanel(new BorderLayout());
-                board.add(square);
-                square.setOpaque(false);
-            }
-        }
 
-        board.requestFocus();
+
     }
 
     public static void initUI(int initialPieceSize) {
@@ -57,9 +36,11 @@ public class Chess extends JLayeredPane implements MouseListener, MouseMotionLis
             public void componentResized(ComponentEvent e) {
                 board.setPieceSize(frame.getContentPane().getHeight() / 8);
 
-                //frame.getContentPane().setSize(/* todo*/);
+                board.setPreferredSize(new Dimension(board.getDimension(), board.getDimension()));
+                board.setBounds(0, 0, board.getPieceSize() * 8, board.getPieceSize() * 8);
 
                 board.repaint();
+                board.displayPieces();
             }
         });
 
@@ -69,6 +50,7 @@ public class Chess extends JLayeredPane implements MouseListener, MouseMotionLis
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        board.requestFocus();
     }
 
     public static JMenuBar getMenu() {
@@ -84,6 +66,19 @@ public class Chess extends JLayeredPane implements MouseListener, MouseMotionLis
             }
         });
         generalMenu.add(item);
+
+        JMenuItem getFEN = new JMenuItem("Copy FEN");
+        getFEN.getAccessibleContext().setAccessibleDescription("Copies a FEN (Forsyth-Edwards Notation) of the current board state to your clipboard");
+        getFEN.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String FEN = board.translateBoardToFEN(board.getGamePieces());
+                StringSelection selection = new StringSelection(FEN);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(selection, null);
+            }
+        });
+        generalMenu.add(getFEN);
 
         JMenu boardMenu = new JMenu("Boards");
         for (BoardGUI.Colours colours : BoardGUI.Colours.values()) {
@@ -117,40 +112,5 @@ public class Chess extends JLayeredPane implements MouseListener, MouseMotionLis
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> Chess.initUI(100));
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-
     }
 }

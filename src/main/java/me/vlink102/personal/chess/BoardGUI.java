@@ -5,33 +5,101 @@ import me.vlink102.personal.chess.pieces.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class BoardGUI extends JPanel {
+    private final Chess chess;
+
     private final OnlineAssets onlineAssets;
     private boolean useOnline;
     private PieceDesign pieceTheme;
     private Colours boardTheme;
     private int pieceSize;
-    private final Piece[][] gamePieces; // In raw format
-    private final HighlightType[][] highlights;
+    private final Piece[][] gamePieces;
+    private Move.Highlights[][] highlightedSquares;
     private final boolean playAsWhite;
     private BoardView view;
     private int dimension;
 
+    private boolean whiteTurn;
+    private int halfMoveClock;
+    private int fullMoveCount;
+    private boolean whiteCanCastleQueenside;
+    private boolean whiteCanCastleKingside;
+    private boolean blackCanCastleQueenside;
+    private boolean blackCanCastleKingside;
+
+    private List<Move> history;
+
     public enum BoardView {
         BLACK,
-        WHITE,
-        SIDE,
-        SIDE2
-    }
-    public enum HighlightType {
-        MOVE,
-        HIGHLIGHT
+        WHITE
     }
 
-    public BoardGUI(PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite) {
+    public enum MoveHighlightState {
+        MOVE_HIDDEN,
+        MOVE_VISIBLE,
+        SELECTED
+    }
+
+    public String translateBoardToFEN(Piece[][] board) {
+        StringBuilder fen = new StringBuilder();
+        for (int rank = 0; rank < 8; rank++) {
+            int empty = 0;
+            StringBuilder rankFen = new StringBuilder();
+            for (int file = 0; file < 8; file++) {
+                if(board[7 - rank][file] == null) {
+                    empty++;
+                } else {
+                    Piece piece = board[7 - rank][file];
+                    if (empty != 0) rankFen.append(empty);
+                    rankFen.append(piece.isWhite() ? piece.getAbbr().toUpperCase() : piece.getAbbr().toLowerCase());
+                    empty = 0;
+                }
+            }
+            if (empty != 0) rankFen.append(empty);
+            fen.append(rankFen);
+            if (!(rank == board.length - 1)) {
+                fen.append("/");
+            }
+        }
+        fen.append(" ");
+        fen.append(whiteTurn ? "w" : "b");
+        fen.append(" ");
+        fen.append(whiteCanCastleKingside ? "K" : "");
+        fen.append(whiteCanCastleQueenside ? "Q" : "");
+        fen.append(blackCanCastleKingside ? "k" : "");
+        fen.append(blackCanCastleQueenside ? "q" : "");
+        if ((!whiteCanCastleKingside) && (!whiteCanCastleQueenside) && (!blackCanCastleKingside) && (!blackCanCastleQueenside)) {
+            fen.append("-");
+        }
+        fen.append(" ");
+        fen.append(getEnpassantTargetSquare());
+        fen.append(" ");
+        fen.append(halfMoveClock);
+        fen.append(" ");
+        fen.append(fullMoveCount);
+        return fen.toString();
+    }
+
+    public String getEnpassantTargetSquare() {
+        if (history == null || !history.isEmpty()) {
+            Move lastMove = history.get(history.size() - 1);
+            if (lastMove.getPiece() instanceof Pawn pawn) {
+                if (pawn.isWhite()) {
+                    return new BoardCoordinate(lastMove.getTo().getRow() - 1, lastMove.getTo().getCol()).toNotation();
+                } else {
+                    return new BoardCoordinate(lastMove.getTo().getRow() + 1, lastMove.getTo().getCol()).toNotation();
+                }
+            }
+        }
+        return "-";
+    }
+
+    public BoardGUI(Chess chess, PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite) {
+        this.chess = chess;
         this.pieceTheme = pieceTheme;
         this.boardTheme = boardTheme;
         this.pieceSize = pSz;
@@ -41,31 +109,85 @@ public class BoardGUI extends JPanel {
         this.playAsWhite = playAsWhite;
         this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
         this.gamePieces = new Piece[8][8];
-        this.highlights = new HighlightType[8][8];
+        this.highlightedSquares = new Move.Highlights[8][8];
+
+        this.halfMoveClock = 0;
+        this.fullMoveCount = 1;
+
+        this.whiteTurn = true;
+        this.whiteCanCastleKingside = true;
+        this.whiteCanCastleQueenside = true;
+        this.blackCanCastleKingside = true;
+        this.blackCanCastleQueenside = true;
+
+        this.history = new ArrayList<>();
 
         setupBoard(true);
         setupBoard(false);
         addMouseListener(highlightListener());
+
+        PieceInteraction interaction = new PieceInteraction(chess, this);
+        addMouseListener(interaction);
+        addMouseMotionListener(interaction);
         addKeyListener(boardViewListener());
+
+        setLayout(new GridLayout(8, 8));
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                JPanel square = new JPanel(new BorderLayout());
+                square.setOpaque(false);
+                add(square);
+            }
+        }
     }
+
+
+    public void displayPieces() {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                JPanel panel = (JPanel) getComponent((row * 8) + col);
+                switch (view) {
+                    case WHITE -> {
+                        if (panel.getComponents().length > 0) {
+                            panel.removeAll();
+                        }
+                        if (gamePieces[7 - row][col] != null) {
+                            panel.add(new JLabel(new ImageIcon(gamePieces[7 - row][col].getIcon(pieceSize))));
+                        }
+                        panel.validate();
+                    }
+                    case BLACK -> {
+                        if (panel.getComponents().length > 0) {
+                            panel.removeAll();
+                        }
+                        if (gamePieces[row][7 - col] != null) {
+                            panel.add(new JLabel(new ImageIcon(gamePieces[row][7 - col].getIcon(pieceSize))));
+                        }
+                        panel.validate();
+                    }
+                }
+            }
+        }
+    }
+
 
     public void setupBoard(boolean white) {
         int backLine = white ? 0 : 7;
         for (int i = 0; i < 8; i++) {
-            gamePieces[i][white ? 1 : 6] = new Pawn(this, white);
+            gamePieces[white ? 1 : 6][i] = new Pawn(this, white);
         }
 
-        gamePieces[0][backLine] = new Rook(this, white);
-        gamePieces[7][backLine] = new Rook(this, white);
+        gamePieces[backLine][0] = new Rook(this, white, Move.CastleType.QUEENSIDE);
+        gamePieces[backLine][7] = new Rook(this, white, Move.CastleType.KINGSIDE);
 
-        gamePieces[1][backLine] = new Knight(this, white);
-        gamePieces[6][backLine] = new Knight(this, white);
+        gamePieces[backLine][1] = new Knight(this, white);
+        gamePieces[backLine][6] = new Knight(this, white);
 
-        gamePieces[2][backLine] = new Bishop(this, white);
-        gamePieces[5][backLine] = new Bishop(this, white);
+        gamePieces[backLine][2] = new Bishop(this, white);
+        gamePieces[backLine][5] = new Bishop(this, white);
 
-        gamePieces[3][backLine] = new Queen(this, white);
-        gamePieces[4][backLine] = new King(this, white);
+        gamePieces[backLine][3] = new Queen(this, white);
+        gamePieces[backLine][4] = new King(this, white);
     }
 
     public KeyListener boardViewListener() {
@@ -75,85 +197,79 @@ public class BoardGUI extends JPanel {
 
             @Override
             public void keyPressed(KeyEvent e) {
+                char c = e.getKeyChar();
                 switch (e.getKeyChar()) {
-                    case '-' -> setView(BoardView.SIDE);
-                    case '=' -> setView(BoardView.SIDE2);
                     case '[' -> setView(BoardView.BLACK);
                     case ']' -> setView(BoardView.WHITE);
+                    case '=' -> setView(playAsWhite ? BoardView.WHITE : BoardView.BLACK);
                 }
-                repaint();
+                if (c == '-' || c == '=' || c == '[' || c == ']') {
+                    displayPieces();
+                    repaint();
+                }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                setView(playAsWhite ? BoardView.WHITE : BoardView.BLACK);
-                repaint();
             }
         };
     }
+
     public MouseListener highlightListener() {
         return new MouseListener() {
-            int x0;
-            int y0;
+            int x0h;
+            int y0h;
 
             @Override
             public void mousePressed(MouseEvent e) { // TODO left click highlights square with piece
-                if (e.getButton() == MouseEvent.BUTTON3 || e.isControlDown()) {
-                    x0 = e.getX();
-                    y0 = e.getY();
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    x0h = e.getX();
+                    y0h = e.getY();
                 }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3 || e.isControlDown()) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
                     int x1 = e.getX();
                     int y1 = e.getY();
 
-                    int f0 = x0 / pieceSize;
-                    int r0 = y0 / pieceSize;
+                    int f0 = x0h / pieceSize;
+                    int r0 = y0h / pieceSize;
                     int f1 = x1 / pieceSize;
                     int r1 = y1 / pieceSize;
 
-                    if (f0 == f1 && r0 == r1) { // TODO use this for finding move square
-                        BoardCoordinate coordinate = convert(new BoardCoordinate(f1, r1, BoardCoordinate.CoordinateType.RAW), view);
-                        highlight(coordinate.getFile(), coordinate.getRank());
+                    if (f0 == f1 && r0 == r1) {
+                        BoardCoordinate coordinate = new BoardCoordinate(r1, f1);
+                        highlight(coordinate.getCol(), coordinate.getRow(), Move.Highlights.HIGHLIGHT);
                     } else {
-                        x0 = 0;
-                        y0 = 0;
+                        x0h = 0;
+                        y0h = 0;
                     }
                     repaint();
                 }
             }
 
-            @Override public void mouseEntered(MouseEvent e) {}
-            @Override public void mouseExited(MouseEvent e) {}
-            @Override public void mouseClicked(MouseEvent e) {}
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+            }
         };
     }
 
-    public BoardCoordinate convert(BoardCoordinate coordinate, BoardView view) {
-        int newFile = coordinate.getFile();
-        int newRank = coordinate.getRank();
-        switch (view) {
-            case WHITE -> {
-                newFile = 7 - coordinate.getFile();
-                newRank = 7 - coordinate.getRank();
-            }
-            case SIDE2 -> {
-                newFile = coordinate.getRank();
-                newRank = 7 - coordinate.getFile();
-            }
-            case SIDE -> {
-                newFile = 7 - coordinate.getRank();
-                newRank = coordinate.getFile();
-            }
+    public void highlight(int file, int rank, Move.Highlights type) {
+        if (type == highlightedSquares[rank][file]) {
+            highlightedSquares[rank][file] = null;
+        } else {
+            highlightedSquares[rank][file] = type;
         }
-        return new BoardCoordinate(newFile, newRank, BoardCoordinate.CoordinateType.RAW);
-    }
-
-    private void highlight(int file, int rank) {
-        highlights[file][rank] = (highlights[file][rank] == null ? HighlightType.HIGHLIGHT : null);
     }
 
     public enum Colours {
@@ -263,95 +379,13 @@ public class BoardGUI extends JPanel {
         }
     }
 
-    public static class BoardMatrixRotation {
-
-        private static Piece[][] rotatePieceMatrix(Piece[][] board, BoardView view) {
-            Piece[][] ret = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
-
-            switch (view) {
-                case WHITE -> rotateMatrix180(ret);
-                case SIDE -> rotateMatrix90CW(ret);
-                case SIDE2 -> rotateMatrix90AC(ret);
-            }
-            return ret;
-        }
-        private static HighlightType[][] rotateHighlightMatrix(HighlightType[][] highlightTypes, BoardView view) {
-            HighlightType[][] ret = Arrays.stream(highlightTypes).map(HighlightType[]::clone).toArray(HighlightType[][]::new);
-
-            switch (view) {
-                case WHITE -> rotateMatrix180(ret);
-                case SIDE -> rotateMatrix90CW(ret);
-                case SIDE2 -> rotateMatrix90AC(ret);
-            }
-            return ret;
-        }
-
-        private static <T> void transposeMatrix(T[][] board, int rows, int cols) {
-            for (int i = 0; i < rows; i++) {
-                for (int j = i; j < cols; j++) {
-                    T temp = board[j][i];
-                    board[j][i] = board[i][j];
-                    board[i][j] = temp;
-                }
-            }
-        }
-
-        private static <T> void rotateMatrix180(T[][] board) {
-            int rows = board.length;
-            int cols = board[0].length;
-            for (int i = 0; i <= (rows/2) - 1; i++) {
-                for (int j = 0; j < cols; j++) {
-                    T temp = board[i][j];
-                    board[i][j] = board[rows - i - 1][cols - j - 1];
-                    board[rows - i - 1][cols - j - 1] = temp;
-                }
-            }
-        }
-        private static <T> void rotateMatrix90CW(T[][] board) {
-            int rows = board.length;
-            int cols = board[0].length;
-            transposeMatrix(board, rows, cols);
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < rows / 2; j++) {
-                    T temp = board[i][j];
-                    board[i][j] = board[i][rows - j - 1];
-                    board[i][rows - j - 1] = temp;
-                }
-            }
-        }
-        private static <T> void rotateMatrix90AC(T[][] board) {
-            int rows = board.length;
-            int cols = board[0].length;
-            transposeMatrix(board, rows, cols);
-            for (int i = 0; i < cols; i++) {
-                for (int j = 0, k = cols - 1; j < k; j++, k--) {
-                    T temp = board[j][i];
-                    board[j][i] = board[k][i];
-                    board[k][i] = temp;
-                }
-            }
-        }
-
-        private static void printBoard(Piece[][] board) {
-            for (Piece[] row: board) {
-                for (Piece p: row) {
-                    System.out.print( ((p == null) ? "_" : p.getAbbr()) + " ");
-                }
-                System.out.println();
-            }
-        }
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         ColorScheme scheme = boardTheme.getScheme();
-        Color light = scheme.light();
-        Color dark = scheme.dark();
-        Piece[][] board = BoardMatrixRotation.rotatePieceMatrix(gamePieces, view);
-        HighlightType[][] highlightTypes = BoardMatrixRotation.rotateHighlightMatrix(highlights, view);
 
         if (useOnline) {
             Image image = OnlineAssets.getSavedBoard().getScaledInstance(pieceSize * 8, pieceSize * 8, Image.SCALE_FAST);
+            /*
             if (view == BoardView.SIDE || view == BoardView.SIDE2) {
                 double degrees = Math.toRadians(view == BoardView.SIDE ? 90 : -90);
                 double locX = image.getWidth(null) / 2d;
@@ -359,43 +393,73 @@ public class BoardGUI extends JPanel {
                 AffineTransform transform = AffineTransform.getRotateInstance(degrees, locX, locY);
                 ((Graphics2D)g).drawImage(image, transform, null);
             } else {
-                g.drawImage(image, 0, 0, null);
             }
+            */
+            g.drawImage(image, 0, 0, null);
         }
 
-        for (int rank = 0; rank <= 7; rank++) {
-            for (int file = 0; file <= 7; file++) {
 
-                if (view == BoardView.SIDE || view == BoardView.SIDE2) {
-                    g.setColor(((file + rank) % 2 == 0 ? dark : light));
-                } else {
-                    g.setColor(((file + rank) % 2 == 0 ? light : dark));
-                }
-
-                if (useOnline) {
-                    if (highlightTypes[file][rank] != null) {
-                        HighlightType type = highlightTypes[file][rank];
-                        g.setColor(type == HighlightType.HIGHLIGHT ? scheme.getHighlighted() : scheme.getMoved());
-                        g.fillRect((file) * pieceSize, (rank) * pieceSize, pieceSize, pieceSize);
-                    }
-                } else {
-                    g.fillRect((file) * pieceSize, (rank) * pieceSize, pieceSize, pieceSize);
-                    if (highlightTypes[file][rank] != null) {
-                        HighlightType type = highlightTypes[file][rank];
-                        Graphics2D g2d = (Graphics2D) g;
-                        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, type == HighlightType.HIGHLIGHT ? scheme.getHighlighted().getAlpha() / 255f : scheme.getMoved().getAlpha() / 255f));
-                        g.setColor(type == HighlightType.HIGHLIGHT ? scheme.getHighlighted() : scheme.getMoved());
-                        g.fillRect(file * pieceSize, rank * pieceSize, pieceSize, pieceSize);
-                        g2d.setComposite(AlphaComposite.SrcOver);
+        switch (view) {
+            case BLACK -> {
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        g.drawString(new BoardCoordinate(row, 7 - col).toNotation(), ((col * pieceSize) + (pieceSize / 2)), (row * pieceSize) + (pieceSize/ 2));
                     }
                 }
+            }
 
-                if (board[file][rank] != null) {
-                    JLabel piece = new JLabel(new ImageIcon(board[file][rank].getIcon(pieceSize)));
-                    JPanel panel = (JPanel) getComponent((rank * 8) + file);
-                    panel.add(piece);
-                    //board[file][rank].paint(g, file * pieceSize, rank * pieceSize, pieceSize);
+            case WHITE -> {
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        g.drawString(new BoardCoordinate(7 - row, col).toNotation(), ((col * pieceSize) + (pieceSize / 2)), (row * pieceSize) + (pieceSize/ 2));
+                    }
                 }
+            }
+        }
+        displayBoard(g, scheme);
+    }
+
+    public void displayBoard(Graphics g, ColorScheme scheme) {
+        switch (view) {
+            case BLACK -> {
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 7; col >= 0; col--) {
+                        drawBoardTile(g, scheme, row, col);
+                        g.setColor(((col + row) % 2 == 0 ? scheme.dark() : scheme.light()));
+                    }
+                }
+            }
+
+            case WHITE -> {
+                for (int row = 7; row >= 0; row--) {
+                    for (int col = 0; col < 8; col++) {
+                        drawBoardTile(g, scheme, row, col);
+                        g.setColor(((col + row) % 2 == 0 ? scheme.dark() : scheme.light()));
+                    }
+                }
+            }
+        }
+    }
+
+    public void drawBoardTile(Graphics g, ColorScheme scheme, int row, int col) {
+        g.setColor(((col + row) % 2 == 0 ? scheme.light() : scheme.dark()));
+
+        // todo fix highlighting
+
+        if (useOnline) {
+            if (highlightedSquares[row][col] != null) {
+                g.setColor(scheme.getHighlight(highlightedSquares[row][col]));
+                g.fillRect((col) * pieceSize, (row) * pieceSize, pieceSize, pieceSize);
+            }
+        } else {
+            g.fillRect((col) * pieceSize, (row) * pieceSize, pieceSize, pieceSize);
+            if (highlightedSquares[row][col] != null) {
+                Move.Highlights type = highlightedSquares[row][col];
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, scheme.getHighlight(type).getAlpha() / 255f));
+                g.setColor(scheme.getHighlight(type));
+                g.fillRect(col * pieceSize, row * pieceSize, pieceSize, pieceSize);
+                g2d.setComposite(AlphaComposite.SrcOver);
             }
         }
     }
@@ -450,10 +514,59 @@ public class BoardGUI extends JPanel {
     public void setPieceTheme(PieceDesign pieceTheme) {
         this.pieceTheme = pieceTheme;
         onlineAssets.updatePieceDesigns(this);
+        displayPieces();
         repaint();
     }
 
     public Piece[][] getGamePieces() {
         return gamePieces;
+    }
+
+    public void movePiece(RawMove rawMove) {
+        if (!rawMove.isSimilar()) {
+            Piece temp = gamePieces[rawMove.getFrom().getRow()][rawMove.getFrom().getCol()];
+            Piece takes = gamePieces[rawMove.getTo().getRow()][rawMove.getTo().getCol()];
+
+            gamePieces[rawMove.getTo().getRow()][rawMove.getTo().getCol()] = temp;
+            gamePieces[rawMove.getFrom().getRow()][rawMove.getFrom().getCol()] = null;
+
+            halfMoveClock++;
+            if (!whiteTurn) {
+                fullMoveCount++;
+            }
+            whiteTurn = !whiteTurn;
+
+            Move move = new Move(rawMove, gamePieces[rawMove.getTo().getRow()][rawMove.getTo().getCol()], null /*todo*/, false /*todo*/, takes, null /*todo*/, null /*todo*/);
+
+            history.add(move);
+
+            if (move.getPiece() instanceof Rook rook) {
+                if (rook.isWhite()) {
+                    switch (rook.getType()) {
+                        case KINGSIDE -> whiteCanCastleKingside = false;
+                        case QUEENSIDE -> whiteCanCastleQueenside = false;
+                    }
+                } else {
+                    switch (rook.getType()) {
+                        case KINGSIDE -> blackCanCastleKingside = false;
+                        case QUEENSIDE -> blackCanCastleQueenside = false;
+                    }
+                }
+            }
+            if (move.getPiece() instanceof King king) {
+                if (king.isWhite()) {
+                    whiteCanCastleKingside = false;
+                    whiteCanCastleQueenside = false;
+                } else {
+                    blackCanCastleKingside = false;
+                    blackCanCastleQueenside = false;
+                }
+            }
+        }
+
+    }
+
+    public List<Move> getHistory() {
+        return history;
     }
 }
