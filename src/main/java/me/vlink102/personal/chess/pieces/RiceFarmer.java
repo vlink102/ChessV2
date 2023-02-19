@@ -4,9 +4,9 @@ import me.vlink102.personal.chess.BoardCoordinate;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Piece;
 
-public class Knight extends Piece {
-    public Knight(BoardGUI board, boolean white) {
-        super(board, "N", white);
+public class RiceFarmer extends Piece {
+    public RiceFarmer(BoardGUI board, boolean white) {
+        super(board, "Z", white);
     }
 
     @Override
@@ -16,6 +16,6 @@ public class Knight extends Piece {
         int x1 = to.col();
         int y1 = to.row();
 
-        return (Math.abs(x1 - x0) == 2 && Math.abs(y1 - y0) == 1) || (Math.abs(x1 - x0) == 1 && Math.abs(y1 - y0) == 2);
+        return Math.abs(x0 - x1) <= 2 && Math.abs(y0 - y1) <= 2;
     }
 }

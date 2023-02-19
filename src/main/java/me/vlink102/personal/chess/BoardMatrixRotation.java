@@ -72,30 +72,28 @@ public class BoardMatrixRotation {
     }
 
     public static void printBoard(Piece[][] board, BoardGUI.BoardView view) {
-        System.out.println("\u001b[0m================");
-
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
+                System.out.print((row + col) % 2 == 0 ? "\033[47m" : "\033[40m");
                 switch (view) {
                     case BLACK -> {
                         if (board[row][7 - col] != null) {
-                            System.out.print((board[row][7 - col].isWhite() ? "\u001b[33m" : "\u001b[35m") + board[row][7 - col].getAbbr() + " ");
+                            System.out.print(" " + (board[row][7 - col].isWhite() ? "\033[1;95m" : "\033[1;96m") + board[row][7 - col].getAbbr() + " ");
                         } else {
-                            System.out.print("\u001b[0m_ ");
+                            System.out.print("   ");
                         }
                     }
                     case WHITE -> {
                         if (board[7 - row][col] != null) {
-                            System.out.print((board[7 - row][col].isWhite() ? "\u001b[33m" : "\u001b[35m") + board[7 - row][col].getAbbr() + " ");
+                            System.out.print(" " + (board[7 - row][col].isWhite() ? "\033[1;95m" : "\033[1;96m") + board[7 - row][col].getAbbr() + " ");
                         } else {
-                            System.out.print("\u001b[0m_ ");
+                            System.out.print("   ");
                         }
                     }
                 }
 
             }
-            System.out.print("\n");
+            System.out.print("\u001b[0m\n");
         }
-        System.out.println("\u001b[0m================");
     }
 }

@@ -19,7 +19,8 @@ public record ColorScheme(Color light, Color dark, Color movedHighlight, Color b
             case FORCED -> new Color(164, 194, 91, 127);
 
             case HIGHLIGHT -> new Color(235, 97, 80, 204);
-            case MOVE -> getMoved();
+            case MOVE, SELECTED -> getMoved();
+            case AVAILABLE -> new Color(0, 0, 0, 25);
         };
     }
 

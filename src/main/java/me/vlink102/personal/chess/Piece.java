@@ -1,7 +1,6 @@
 package me.vlink102.personal.chess;
 
 import java.awt.*;
-import java.util.List;
 
 public abstract class Piece {
     private final BoardGUI board;
@@ -32,10 +31,10 @@ public abstract class Piece {
     }
 
     public boolean isDiagonal(BoardCoordinate from, BoardCoordinate to) {
-        return Math.abs(from.getCol() - to.getCol()) == Math.abs(from.getRow() - to.getRow());
+        return Math.abs(from.col() - to.col()) == Math.abs(from.row() - to.row());
     }
     public boolean isStraight(BoardCoordinate from, BoardCoordinate to) {
-        return (from.getCol() == to.getCol() && from.getRow() != to.getRow()) || (from.getCol() != to.getCol() && from.getRow() == to.getRow());
+        return (from.col() == to.col() && from.row() != to.row()) || (from.col() != to.col() && from.row() == to.row());
     }
 
     public String getAbbr() {
@@ -60,4 +59,9 @@ public abstract class Piece {
     public String toString() {
         return "Piece{abbr='" + abbr + "', white=" + white + "}";
     }
+
+    public int getMoves() {
+        return moves;
+    }
+
 }

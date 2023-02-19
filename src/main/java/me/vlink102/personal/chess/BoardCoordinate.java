@@ -1,21 +1,6 @@
 package me.vlink102.personal.chess;
 
-public class BoardCoordinate {
-    private final int row;
-    private final int col;
-
-    public BoardCoordinate(int row, int col) {
-        this.row = row;
-        this.col = col;
-    }
-
-    public int getRow() {
-        return row;
-    }
-
-    public int getCol() {
-        return col;
-    }
+public record BoardCoordinate(int row, int col) {
 
     public String getRowString() {
         return String.valueOf(row + 1);
@@ -27,5 +12,28 @@ public class BoardCoordinate {
 
     public String toNotation() {
         return Character.toChars(col + 'a')[0] + String.valueOf(row + 1);
+    }
+
+    public static int parseRow(String row) {
+        return Integer.parseInt(row) - 1;
+    }
+
+    public static int parseCol(String col) {
+        return col.toCharArray()[0] - 'a';
+    }
+
+    public static boolean isValidTile(String tile) {
+        if (tile.length() != 2) return false;
+        String[] components = tile.split("");
+        if (!components[0].matches("[a-h]")) return false;
+        return components[1].matches("[1-8]");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BoardCoordinate that = (BoardCoordinate) o;
+        return row == that.row && col == that.col;
     }
 }

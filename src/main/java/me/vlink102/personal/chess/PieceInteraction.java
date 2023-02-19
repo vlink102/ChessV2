@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.Arrays;
 
 public class PieceInteraction implements MouseListener, MouseMotionListener {
     private final Chess chess;
@@ -40,8 +39,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
             movedPiece.setLocation(e.getX() - (boardGUI.getPieceSize() / 2), e.getY() - (boardGUI.getPieceSize() / 2));
 
             chess.add(movedPiece, JLayeredPane.DRAG_LAYER);
-            chess.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-
+            chess.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
     }
 
@@ -104,7 +102,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
             BoardCoordinate from = new BoardCoordinate(r0, f0);
             BoardCoordinate to = new BoardCoordinate(r1, f1);
 
-            boardGUI.movePiece(new RawMove(from, to));
+            boardGUI.movePiece(boardGUI.getGamePieces()[from.row()][from.col()], from, to);
         }
     }
 

@@ -2,35 +2,73 @@ package me.vlink102.personal.chess;
 
 import me.vlink102.personal.chess.pieces.Pawn;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Objects;
+
 public class Move {
-    private final RawMove rawMove;
+    private final BoardCoordinate from;
+    private final BoardCoordinate to;
     private final Piece piece;
-    private final CheckType check;
+    private final Check check;
     private final boolean enPassant;
-    private final Piece takes;
+    private final BoardCoordinate takeSquare;
+    private final Piece taken;
     private final Piece promotes;
     private final CastleType castleType;
 
-    public enum Highlights {
-        BRILLIANT,
-        GREAT,
-        BEST,
-        EXCELLENT,
-        GOOD,
-        BOOK,
-        INACCURACY,
-        MISTAKE,
-        BLUNDER,
-        MISSED_WIN,
-        FORCED,
+    private final boolean isImport;
+    private final String importContent;
 
-        HIGHLIGHT,
-        MOVE
+    public static Image getHighlightIcon(Highlights highlights) {
+        try {
+            if (highlights.isOnline()) {
+                return ImageIO.read(new URL(highlights.getURL()));
+            } else {
+                return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + highlights.getURL() + ".png")));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public enum CheckType {
-        CHECK,
-        CHECKMATE
+    public enum Highlights {
+        BRILLIANT(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpCWiDaX.png"),
+        GREAT(false, "great"),
+        BEST(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpKAZWos.png"),
+        EXCELLENT(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpOnfDmd.png"),
+        GOOD(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phplIugqj.png"),
+        BOOK(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpfMwiZv.png"),
+        INACCURACY(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phppqqBrb.png"),
+        MISTAKE(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpEgRwsV.png"),
+        BLUNDER(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpGZ1eLb.png"),
+        MISSED_WIN(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpcXUmZL.png"),
+        FORCED(false, "forced"),
+
+        HIGHLIGHT(false,null),
+        MOVE(false, null),
+        SELECTED(false, null),
+        AVAILABLE(false, null);
+
+        private final String iconUrl;
+        private final boolean online;
+
+        Highlights(boolean online, String iconUrl) {
+            this.iconUrl = iconUrl;
+            this.online = online;
+        }
+
+        public boolean isOnline() {
+            return online;
+        }
+
+        public String getURL() {
+            return iconUrl;
+        }
     }
 
     public enum CastleType {
@@ -38,68 +76,106 @@ public class Move {
         QUEENSIDE
     }
 
+    public enum Check {
+        CHECK,
+        MATE
+    }
+
     /**
-     * @param piece Piece moved
-     * @param check Piece checked opopnent
+     * @param moved
+     * @param from
+     * @param to
+     * @param check
      * @param enPassant
-     * @param takes Piece taken, or null
-     * @param promotes Pawn promotion
+     * @param takeSquare
+     * @param promotes
+     * @param castleType
      */
-    public Move(RawMove move, Piece piece, CheckType check, boolean enPassant, Piece takes, Piece promotes, CastleType castleType) {
-        this.rawMove = move;
-        this.piece = piece;
+    public Move(Piece moved, BoardCoordinate from, BoardCoordinate to, Check check, boolean enPassant, BoardCoordinate takeSquare, Piece pieceTaken, Piece promotes, CastleType castleType) {
+        this.piece = moved;
+        this.from = from;
+        this.to = to;
         this.check = check;
         this.enPassant = enPassant;
-        this.takes = takes;
+        this.takeSquare = takeSquare;
+        this.taken = pieceTaken;
         this.promotes = promotes;
         this.castleType = castleType;
+        this.isImport = false;
+        this.importContent = null;
+    }
+
+    /**
+     * Import History move constructor
+     */
+    public Move(String content) {
+        this.isImport = true;
+        this.importContent = content;
+
+        this.piece = null;
+        this.from = null;
+        this.to = null;
+        this.check = null;
+        this.enPassant = false;
+        this.takeSquare = null;
+        this.taken = null;
+        this.promotes = null;
+        this.castleType = null;
     }
 
     @Override
     public String toString() {
-        // TODO
-        // - check valid moves for all pieces
-        // - check if piece can move to square
-        // - check if type is same
-        // - prepend the from-square
-        StringBuilder move = new StringBuilder();
-
-        if (castleType != null) {
-            switch (castleType) {
-                case KINGSIDE -> move.append("O-O");
-                case QUEENSIDE -> move.append("O-O-O");
-            }
+        if (isImport) {
+            return importContent;
         } else {
-            if (piece instanceof Pawn) {
-                if (takes != null) {
-                    move.append(rawMove.getFrom().getColString());
-                    move.append("x");
-                    move.append(rawMove.getTo().toNotation());
-                } else {
-                    move.append(rawMove.getTo().toNotation());
-                }
-                if (promotes != null) {
-                    move.append(promotes.getAbbr());
+            assert from != null;
+            assert to != null;
+            assert piece != null;
+
+            // TODO
+            // - check valid moves for all pieces
+            // - check if piece can move to square
+            // - check if type is same
+            // - prepend the from-square
+            StringBuilder move = new StringBuilder();
+
+            if (castleType != null) {
+                switch (castleType) {
+                    case KINGSIDE -> move.append("O-O");
+                    case QUEENSIDE -> move.append("O-O-O");
                 }
             } else {
-                move.append(piece.getAbbr());
-                if (takes != null) {
-                    move.append("x");
+                if (piece instanceof Pawn) {
+                    if (taken != null) {
+                        move.append(from.getColString());
+                        move.append("x");
+                        move.append(to.toNotation());
+                    } else {
+                        move.append(to.toNotation());
+                    }
+                    if (promotes != null) {
+                        move.append(promotes.getAbbr());
+                    }
+                } else {
+                    move.append(piece.getAbbr());
+                    if (taken != null) {
+                        move.append("x");
+                    }
+                    move.append(to.toNotation());
                 }
-                move.append(rawMove.getTo().toNotation());
+
+                if (check != null) {
+                    switch (check) {
+                        case CHECK -> move.append("+");
+                        case MATE -> move.append("#");
+                    }
+                }
+
+                if (enPassant) move.append(" e.p.");
             }
 
-            if (check != null) {
-                switch (check) {
-                    case CHECK -> move.append("+");
-                    case CHECKMATE -> move.append("#");
-                }
-            }
-
-            if (enPassant) move.append(" e.p.");
+            return move.toString();
         }
-
-        return move.toString();
     }
 
     public Piece getPiece() {
@@ -107,14 +183,14 @@ public class Move {
     }
 
     public BoardCoordinate getFrom() {
-        return rawMove.getFrom();
+        return from;
     }
 
     public BoardCoordinate getTo() {
-        return rawMove.getTo();
+        return to;
     }
 
-    public CheckType getCheck() {
+    public Check getCheck() {
         return check;
     }
 
@@ -122,15 +198,23 @@ public class Move {
         return enPassant;
     }
 
-    public Piece getTakes() {
-        return takes;
+    public BoardCoordinate getTakeSquare() {
+        return takeSquare;
     }
 
     public Piece getPromotes() {
         return promotes;
     }
 
+    public Piece getTaken() {
+        return taken;
+    }
+
     public CastleType getCastleType() {
         return castleType;
+    }
+
+    public boolean isImport() {
+        return isImport;
     }
 }

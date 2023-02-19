@@ -11,10 +11,10 @@ public class King extends Piece {
 
     @Override
     public boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture) {
-        int x0 = from.getCol();
-        int y0 = from.getRow();
-        int x1 = to.getCol();
-        int y1 = to.getRow();
+        int x0 = from.col();
+        int y0 = from.row();
+        int x1 = to.col();
+        int y1 = to.row();
 
         return Math.abs(x0 - x1) <= 1 && Math.abs(y0 - y1) <= 1;
     }
