@@ -8,12 +8,10 @@ import java.io.IOException;
 import java.net.URL;
 
 public class OnlineAssets {
-    private final BoardGUI boardGUI;
     private static Image savedBoard;
     public static boolean hasResized;
 
     public OnlineAssets(BoardGUI boardGUI) {
-        this.boardGUI = boardGUI;
         savedBoard = getBoard(boardGUI);
         hasResized = false;
     }
@@ -35,7 +33,7 @@ public class OnlineAssets {
             }
         } else {
             try {
-                return ImageIO.read(new URL("https://www.chess.com/chess-themes/pieces/" + board.getPieceTheme().getLinkString() + "/300/" + (piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase() + ".png"));
+                return ImageIO.read(new URL("https://www.chess.com/chess-themes/pieces/" + board.getPieceTheme().getLinkString() + "/" + board.getPieceSize() + "/" + (piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase() + ".png"));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -50,10 +48,6 @@ public class OnlineAssets {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static Image getPiece(BoardGUI board, Piece piece, int dimensions) {
-        return getPiece(board, piece).getScaledInstance(dimensions, dimensions, Image.SCALE_SMOOTH);
     }
 
     public void updateSavedImage(BoardGUI boardGUI) {

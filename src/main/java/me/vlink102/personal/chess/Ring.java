@@ -19,11 +19,13 @@ class Ring {
         this(x, y, radius * 2, radius * 2, thickness, color);
     }
 
-    public void draw(Graphics2D gg, Color color) {
+    public void draw(Graphics g, Color color) {
+        Graphics2D gg = (Graphics2D) g.create();
         Stroke oldStroke = gg.getStroke();
         Color oldColor = gg.getColor();
 
         gg.setColor(color);
+        gg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 25 / 255f));
         gg.setStroke(new BasicStroke(getThickness()));
         gg.drawOval(getX() + getThickness() / 2, getY() + getThickness() / 2, getWidth() - getThickness(),
                 getHeight() - getThickness());
@@ -34,6 +36,7 @@ class Ring {
 
         gg.setStroke(oldStroke);
         gg.setColor(oldColor);
+        gg.dispose();
     }
 
     public int getX() {
