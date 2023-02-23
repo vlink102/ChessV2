@@ -3,7 +3,6 @@ package me.vlink102.personal.chess;
 import me.vlink102.personal.chess.pieces.*;
 
 import javax.swing.*;
-import javax.swing.text.rtf.RTFEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -1654,16 +1653,77 @@ public class BoardGUI extends JPanel {
             if (piece.isWhite()) {
                 return null;
             } else {
-                whiteGainedPoints += piece.points();
-                for (int i = 0; i < 8; i++) {
-
-                }
+                return getTradeType(piece, whiteAttackingPoints, blackAttackingPoints, whiteGainedPoints, blackGainedPoints, true);
             }
         } else {
             if (piece.isWhite()) {
-                blackGainedPoints += piece.points();
+                return getTradeType(piece, whiteAttackingPoints, blackAttackingPoints, whiteGainedPoints, blackGainedPoints, false);
             } else {
                 return null;
+            }
+        }
+    }
+
+    private int[] insert(int[] points, int toInsert) {
+        List<Integer> newPoints = new ArrayList<>();
+        for (int point : points) {
+            newPoints.add(point);
+        }
+        newPoints.add(toInsert);
+
+        int[] result = new int[newPoints.size()];
+
+        for (int i = 0; i < newPoints.size(); i++) {
+            result[i] = newPoints.get(i);
+        }
+
+        Arrays.sort(result);
+        return result;
+    }
+
+    private TradeType getTradeType(Piece piece, int[] whiteAttackingPoints, int[] blackAttackingPoints, int whiteGainedPoints, int blackGainedPoints, boolean whiteToMove) {
+        if (whiteToMove) { // fixme TODO
+            if (!piece.isWhite()) {
+                blackAttackingPoints = insert(blackAttackingPoints, piece.points());
+            }
+        } else {
+            if (piece.isWhite()) {
+                whiteAttackingPoints = insert(whiteAttackingPoints, piece.points());
+            }
+        }
+        if (whiteAttackingPoints.length == blackAttackingPoints.length) {
+            for (int i = 0; i < whiteAttackingPoints.length; i++) {
+                whiteGainedPoints += blackAttackingPoints[i];
+                blackGainedPoints += whiteAttackingPoints[i];
+            }
+        } else {
+            if (whiteAttackingPoints.length > blackAttackingPoints.length) {
+                for (int i = 0; i < blackAttackingPoints.length; i++) {
+                    whiteGainedPoints += blackAttackingPoints[i];
+                    blackGainedPoints += whiteAttackingPoints[i];
+                }
+            } else {
+                for (int i = 0; i < whiteAttackingPoints.length; i++) {
+                    blackGainedPoints += whiteAttackingPoints[i];
+                    whiteGainedPoints += blackAttackingPoints[i];
+                }
+            }
+        }
+
+        System.out.println();
+        System.out.println(Arrays.toString(whiteAttackingPoints));
+        System.out.println(Arrays.toString(blackAttackingPoints));
+        System.out.println(whiteGainedPoints);
+        System.out.println(blackGainedPoints);
+        System.out.println();
+
+        if (whiteGainedPoints == blackGainedPoints) {
+            return TradeType.EQUAL;
+        } else {
+            if (whiteGainedPoints > blackGainedPoints) {
+                return TradeType.WHITE;
+            } else {
+                return TradeType.BLACK;
             }
         }
     }
