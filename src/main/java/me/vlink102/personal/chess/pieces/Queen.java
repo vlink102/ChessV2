@@ -13,4 +13,9 @@ public class Queen extends Piece {
     public boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture) {
         return isDiagonal(from, to) || isStraight(from, to);
     }
+
+    @Override
+    public int points() {
+        return 9;
+    }
 }

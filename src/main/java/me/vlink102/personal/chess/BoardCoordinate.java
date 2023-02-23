@@ -1,6 +1,10 @@
 package me.vlink102.personal.chess;
 
 public record BoardCoordinate(int row, int col) {
+    public BoardCoordinate(int row, int col) {
+        this.row = Math.max(0, Math.min(7, row));
+        this.col = Math.max(0, Math.min(7, col));
+    }
 
     public String getRowString() {
         return String.valueOf(row + 1);

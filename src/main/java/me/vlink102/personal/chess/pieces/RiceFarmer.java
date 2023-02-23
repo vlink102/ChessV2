@@ -18,4 +18,9 @@ public class RiceFarmer extends Piece {
 
         return Math.abs(x0 - x1) <= 2 && Math.abs(y0 - y1) <= 2;
     }
+
+    @Override
+    public int points() {
+        return 5;
+    }
 }

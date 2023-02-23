@@ -53,4 +53,9 @@ public class Rook extends Piece {
     public boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture) {
         return isStraight(from, to);
     }
+
+    @Override
+    public int points() {
+        return 5;
+    }
 }

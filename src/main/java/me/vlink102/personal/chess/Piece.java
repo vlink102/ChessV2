@@ -17,6 +17,8 @@ public abstract class Piece {
 
     public abstract boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture);
 
+    public abstract int points();
+
     public boolean isDiagonal(BoardCoordinate from, BoardCoordinate to) {
         return Math.abs(from.col() - to.col()) == Math.abs(from.row() - to.row());
     }
@@ -49,6 +51,10 @@ public abstract class Piece {
 
     public int getMoves() {
         return moves;
+    }
+
+    public void swapSides() {
+        this.white = !this.white;
     }
 
 }

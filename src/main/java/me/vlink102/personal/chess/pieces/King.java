@@ -18,4 +18,9 @@ public class King extends Piece {
 
         return Math.abs(x0 - x1) <= 1 && Math.abs(y0 - y1) <= 1;
     }
+
+    @Override
+    public int points() {
+        return 0;
+    }
 }

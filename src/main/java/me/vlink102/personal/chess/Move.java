@@ -3,10 +3,8 @@ package me.vlink102.personal.chess;
 import me.vlink102.personal.chess.pieces.Pawn;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Objects;
 
@@ -24,19 +22,37 @@ public class Move {
     private final boolean isImport;
     private final String importContent;
 
-    public static Image getHighlightIcon(Highlights highlights) {
+    public static Image getMoveHighlightIcon(MoveHighlights highlights) {
         try {
-            if (highlights.isOnline()) {
-                return ImageIO.read(new URL(highlights.getURL()));
-            } else {
-                return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + highlights.getURL() + ".png")));
+            if (highlights.getURL() != null) {
+                if (highlights.isOnline()) {
+                    return ImageIO.read(new URL(highlights.getURL()));
+                } else {
+                    return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + highlights.getURL() + ".png")));
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
-    public enum Highlights {
+    public static Image getInfoIcon(InfoIcons icon) {
+        try {
+            if (icon.getURL() != null) {
+                if (icon.isOnline()) {
+                    return ImageIO.read(new URL(icon.getURL()));
+                } else {
+                    return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + icon.getURL() + ".png")));
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+    public enum MoveHighlights {
         BRILLIANT(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpCWiDaX.png"),
         GREAT(false, "great"),
         BEST(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpKAZWos.png"),
@@ -49,7 +65,14 @@ public class Move {
         MISSED_WIN(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpcXUmZL.png"),
         FORCED(false, "forced"),
 
+        CHECK(false, null),
+        CHECKMATE(false, null),
+
         HIGHLIGHT(false,null),
+        ORANGE_HIGHLIGHT(false, null),
+        BLUE_HIGHLIGHT(false, null),
+        GREEN_HIGHLIGHT(false, null),
+
         MOVE(false, null),
         SELECTED(false, null),
         AVAILABLE(false, null);
@@ -57,7 +80,33 @@ public class Move {
         private final String iconUrl;
         private final boolean online;
 
-        Highlights(boolean online, String iconUrl) {
+        MoveHighlights(boolean online, String iconUrl) {
+            this.iconUrl = iconUrl;
+            this.online = online;
+        }
+
+        public boolean isOnline() {
+            return online;
+        }
+
+        public String getURL() {
+            return iconUrl;
+        }
+    }
+
+    public enum InfoIcons {
+        CHECKMATE_BLACK(false, "checkmate_black"),
+        CHECKMATE_WHITE(false, "checkmate_white"),
+        DRAW_BLACK(false, "draw_black"),
+        DRAW_WHITE(false, "draw_white"),
+        RESIGN_BLACK(false, "resign_black"),
+        RESIGN_WHITE(false, "resign_white"),
+        WINNER(false, "winner");
+
+        private final String iconUrl;
+        private final boolean online;
+
+        InfoIcons(boolean online, String iconUrl) {
             this.iconUrl = iconUrl;
             this.online = online;
         }
@@ -144,6 +193,12 @@ public class Move {
                     case KINGSIDE -> move.append("O-O");
                     case QUEENSIDE -> move.append("O-O-O");
                 }
+                if (check != null) {
+                    switch (check) {
+                        case CHECK -> move.append("+");
+                        case MATE -> move.append("#");
+                    }
+                }
             } else {
                 if (piece instanceof Pawn) {
                     if (taken != null) {
@@ -216,5 +271,34 @@ public class Move {
 
     public boolean isImport() {
         return isImport;
+    }
+
+    public static class SimpleMove {
+        private final BoardCoordinate from;
+        private final BoardCoordinate to;
+        private final Piece piece;
+
+        public SimpleMove(Piece piece, BoardCoordinate from, BoardCoordinate to) {
+            this.piece = piece;
+            this.from = from;
+            this.to = to;
+        }
+
+        public BoardCoordinate getFrom() {
+            return from;
+        }
+
+        public BoardCoordinate getTo() {
+            return to;
+        }
+
+        public Piece getPiece() {
+            return piece;
+        }
+
+        @Override
+        public String toString() {
+            return piece.toString() + ": " + from.toNotation() + " -> " + to.toNotation();
+        }
     }
 }

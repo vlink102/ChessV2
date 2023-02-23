@@ -3,88 +3,35 @@ package me.vlink102.personal.chess;
 import java.awt.*;
 
 class Ring {
-    private int x, y, width, height, thickness;
-    private Color color;
+    private final int x, y, width, height, thickness;
+    private final Color color;
 
     public Ring(int x, int y, int width, int height, int thickness, Color color) {
-        setX(x);
-        setY(y);
-        setWidth(width);
-        setHeight(height);
-        setThickness(thickness);
-        setColor(color);
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.thickness = thickness;
+        this.color = color;
     }
 
     public Ring(int x, int y, int radius, int thickness, Color color) {
         this(x, y, radius * 2, radius * 2, thickness, color);
     }
 
-    public void draw(Graphics g, Color color) {
-        Graphics2D gg = (Graphics2D) g.create();
-        Stroke oldStroke = gg.getStroke();
-        Color oldColor = gg.getColor();
+    public void draw(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        Stroke oldStroke = g2d.getStroke();
 
-        gg.setColor(color);
-        gg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 25 / 255f));
-        gg.setStroke(new BasicStroke(getThickness()));
-        gg.drawOval(getX() + getThickness() / 2, getY() + getThickness() / 2, getWidth() - getThickness(),
-                getHeight() - getThickness());
-        gg.setColor(getColor());
-        gg.setStroke(new BasicStroke(getThickness() - 2));
-        gg.drawOval(getX() + getThickness() / 2, getY() + getThickness() / 2, getWidth() - getThickness(),
-                getHeight() - getThickness());
+        g2d.setColor(color);
+        g2d.setStroke(new BasicStroke(thickness));
+        g2d.drawOval(x + thickness / 2, y + thickness / 2, width - thickness,
+                height - thickness);
+        g2d.setColor(color);
+        g2d.setStroke(new BasicStroke(thickness - 2));
+        g2d.drawOval(x + thickness / 2, y + thickness / 2, width - thickness,
+                height - thickness);
 
-        gg.setStroke(oldStroke);
-        gg.setColor(oldColor);
-        gg.dispose();
+        g2d.setStroke(oldStroke);
     }
-
-    public int getX() {
-        return x;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public int getThickness() {
-        return thickness;
-    }
-
-    public void setThickness(int thickness) {
-        this.thickness = thickness;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
 }

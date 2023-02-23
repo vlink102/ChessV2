@@ -3,6 +3,7 @@ package me.vlink102.personal.chess;
 import me.vlink102.personal.chess.pieces.*;
 
 import javax.swing.*;
+import javax.swing.text.rtf.RTFEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -11,6 +12,7 @@ import java.util.Timer;
 
 public class BoardGUI extends JPanel {
     private final Chess chess;
+    private final PieceInteraction pieceInteraction;
 
     private Chess.BoardLayout currentLayout;
 
@@ -20,8 +22,9 @@ public class BoardGUI extends JPanel {
     private Colours boardTheme;
     private int pieceSize;
     private Piece[][] gamePieces;
-    private Move.Highlights[][] highlightedSquares;
+    private Move.MoveHighlights[][] highlightedSquares;
     private boolean[][] moveHighlights;
+    private Move.InfoIcons[][] gameHighlights;
     private boolean playAsWhite;
     private BoardView view;
     private int dimension;
@@ -31,6 +34,7 @@ public class BoardGUI extends JPanel {
     private boolean whiteTurn;
     private int halfMoveClock;
     private int fullMoveCount;
+    private int fiftyMoveRule;
     public boolean whiteCanCastleQueenside;
     public boolean whiteCanCastleKingside;
     public boolean blackCanCastleQueenside;
@@ -42,7 +46,27 @@ public class BoardGUI extends JPanel {
     private List<Move> history;
 
     private OpponentType opponentType;
-    private MoveStyle style;
+    private MoveStyle moveMethod;
+
+    private HintStyle.Move moveStyle;
+    private HintStyle.Capture captureStyle;
+
+    private GameOverType gameOver = null;
+
+    private List<String> gameFENHistory;
+
+    public enum GameOverType {
+        STALEMATE,
+        CHECKMATE_WHITE,
+        CHECKMATE_BLACK,
+        FIFTY_MOVE_RULE,
+        INSUFFICIENT_MATERIAL,
+        DRAW_BY_REPETITION,
+        DRAW_BY_AGREEMENT,
+        RESIGNATION_WHITE,
+        RESIGNATION_BLACK,
+        ILLEGAL_POSITION
+    }
 
     public enum BoardView {
         BLACK,
@@ -62,6 +86,24 @@ public class BoardGUI extends JPanel {
         BOTH
     }
 
+    public class HintStyle {
+        public enum Move {
+            DOT,
+            SQUARE
+        }
+
+        public enum Capture {
+            RING,
+            SQUARE
+        }
+    }
+
+    public enum TradeType {
+        WHITE,
+        BLACK,
+        EQUAL
+    }
+
     public void setOpponent(OpponentType type) {
         opponentType = type;
     }
@@ -71,11 +113,13 @@ public class BoardGUI extends JPanel {
         this.dimension = pieceSize * 8;
         this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
         this.gamePieces = new Piece[8][8];
-        this.highlightedSquares = new Move.Highlights[8][8];
+        this.highlightedSquares = new Move.MoveHighlights[8][8];
         this.moveHighlights = new boolean[8][8];
+        this.gameHighlights = new Move.InfoIcons[8][8];
 
         this.halfMoveClock = 0;
         this.fullMoveCount = 1;
+        this.fiftyMoveRule = 0;
 
         this.whiteTurn = true;
         this.whiteCanCastleKingside = true;
@@ -84,6 +128,7 @@ public class BoardGUI extends JPanel {
         this.blackCanCastleQueenside = true;
 
         this.history = new ArrayList<>();
+        this.gameFENHistory = new ArrayList<>();
 
         this.tileSelected = null;
         this.selected = null;
@@ -95,14 +140,14 @@ public class BoardGUI extends JPanel {
         setupBoard(layout);
         repaint();
         displayPieces();
-        chess.createPopUp("Success!", "Board reset", Move.Highlights.EXCELLENT);
+        chess.createPopUp("Success!", "Board reset", Move.MoveHighlights.EXCELLENT);
     }
 
     public void resetBoard() {
         resetBoard(currentLayout);
     }
 
-    public BoardGUI(Chess chess, PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite, Chess.BoardLayout layout, OpponentType type, MoveStyle style) {
+    public BoardGUI(Chess chess, PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite, Chess.BoardLayout layout, OpponentType type, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle) {
         this.chess = chess;
         this.useOnline = useOnline;
         this.boardTheme = boardTheme;
@@ -110,17 +155,67 @@ public class BoardGUI extends JPanel {
         this.pieceSize = pSz;
         this.playAsWhite = playAsWhite;
         this.opponentType = type;
-        this.style = style;
+        this.moveMethod = moveMethod;
+        this.captureStyle = captureStyle;
+        this.moveStyle = moveStyle;
         this.onlineAssets = new OnlineAssets(this);
 
         setupBoard(layout);
 
         addMouseListener(highlightListener());
 
-        PieceInteraction interaction = new PieceInteraction(chess, this);
-        addMouseListener(interaction);
-        addMouseMotionListener(interaction);
-        addKeyListener(boardViewListener());
+        this.pieceInteraction = new PieceInteraction(chess, this);
+        addMouseListener(pieceInteraction);
+        addMouseMotionListener(pieceInteraction);
+
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0, false), "black-view", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setView(BoardView.BLACK);
+                displayPieces();
+                repaint();
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_CLOSE_BRACKET, 0, false), "white-view", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setView(BoardView.WHITE);
+                displayPieces();
+                repaint();
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0, false), "default-view", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setView(playAsWhite ? BoardView.WHITE : BoardView.BLACK);
+                displayPieces();
+                repaint();
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0, false), "show-hanging", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showHangingPieces();
+                displayPieces();
+                repaint();
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0, false), "show-point-trades", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showTrades(true);
+                displayPieces();
+                repaint();
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0, false), "show-piece-trades", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showTrades(false);
+                displayPieces();
+                repaint();
+            }
+        });
 
         setLayout(new GridLayout(8, 8));
         for (int rank = 0; rank < 8; rank++) {
@@ -132,12 +227,21 @@ public class BoardGUI extends JPanel {
         }
     }
 
+    public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
+        InputMap im = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = getActionMap();
+
+        im.put(keyStroke, name);
+        am.put(name, action);
+    }
+
     public boolean validateFEN(String FEN) {
         String[] sections = FEN.split(" ");
         if (sections.length != 6) return false;
         if (sections[0].split("/").length != 8) return false;
         if (!sections[1].equalsIgnoreCase("w") && !sections[1].equalsIgnoreCase("b")) return false;
         if (!(Integer.parseInt(sections[4]) / 2 == Integer.parseInt(sections[5]) - 1)) return false;
+        if (!(sections[0].contains("k") && sections[0].contains("K"))) return false;
         return BoardCoordinate.isValidTile(sections[3]) || sections[3].equalsIgnoreCase("-");
     }
 
@@ -207,9 +311,6 @@ public class BoardGUI extends JPanel {
                         case " " -> gamePieces[rank][i] = null;
                     }
                 }
-
-                repaint();
-                displayPieces();
             }
 
             switch (currentLayout) {
@@ -253,22 +354,33 @@ public class BoardGUI extends JPanel {
 
             addImportHistory();
 
-            if (kingIsCheckmated(gamePieces, true)) {
-                chess.createPopUp("Warning: White is already checkmated", "Game state over", Move.Highlights.FORCED);
+            if (bothKingsInCheck(gamePieces)) {
+                chess.createPopUp("Warning: Both kings are in check", "Illegal game state", Move.MoveHighlights.MISTAKE);
+                gameOver = GameOverType.ILLEGAL_POSITION;
+            } else if (kingIsCheckmated(gamePieces, true)) {
+                chess.createPopUp("Warning: White king is already checkmated", "Game state over", (playAsWhite ? Move.InfoIcons.CHECKMATE_BLACK : Move.InfoIcons.WINNER));
+                gameOver = GameOverType.CHECKMATE_BLACK;
             } else if (kingIsCheckmated(gamePieces, false)) {
-                chess.createPopUp("Warning: Black is already checkmated", "Game state over", Move.Highlights.FORCED);
+                chess.createPopUp("Warning: Black king is already checkmated", "Game state over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE));
+                gameOver = GameOverType.CHECKMATE_WHITE;
             } else {
-                chess.createPopUp("Success!", "Loaded game state", Move.Highlights.EXCELLENT);
+                chess.createPopUp("Success!", "Loaded game state", Move.MoveHighlights.EXCELLENT);
+                gameOver = null;
             }
+
+            displayPieces();
+            repaint();
         } else {
             String result = fixFENString(FEN);
             if (result == null) {
-                chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Wrong number of Kings\n\n" + result, "Could not load game state", Move.Highlights.MISTAKE);
+                chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Wrong number of Kings\n\n" + result, "Could not load game state", Move.MoveHighlights.MISTAKE);
+                gameOver = GameOverType.ILLEGAL_POSITION;
             } else {
                 if (!validateFEN(result)) {
-                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Could not repair FEN String\n\n" + result, "Could not load game state", Move.Highlights.BLUNDER);
+                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Could not repair FEN String\n\n" + result, "Could not load game state", Move.MoveHighlights.BLUNDER);
+                    gameOver = GameOverType.ILLEGAL_POSITION;
                 } else {
-                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Successful:\n - Repaired broken FEN String\n\n" + result, "Game state repaired", Move.Highlights.EXCELLENT);
+                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Successful:\n - Repaired broken FEN String\n\n" + result, "Game state repaired", Move.MoveHighlights.EXCELLENT);
                     loadFEN(result);
                 }
             }
@@ -366,8 +478,6 @@ public class BoardGUI extends JPanel {
             int[] randomTile = getRandomNullIndex(board);
             int rRank = randomTile[0];
             int rFile = randomTile[1];
-            //int rRank = random.nextInt((white ? 1 : 6), (white ? 6 : 1));
-            //int rFile = random.nextInt((white ? 1 : 6), (white ? 6 : 1));
             if (board[rRank][rFile] == null) {
                 board[rRank][rFile] = new Pawn(this, white);
             }
@@ -686,17 +796,30 @@ public class BoardGUI extends JPanel {
         return tile == null ? "-" : tile.toNotation();
     }
 
-    public List<BoardCoordinate> getAllCastleSquares(boolean white) {
-        List<BoardCoordinate> castleSquares = new ArrayList<>();
-        castleSquares.addAll(defaultCastleSquares(white, Move.CastleType.KINGSIDE));
-        castleSquares.addAll(defaultCastleSquares(white, Move.CastleType.QUEENSIDE));
+    public List<BoardCoordinate> getAllCastleSquares(boolean white, Move.CastleType type) {
+        List<BoardCoordinate> castleSquares = rookCastleSquares(white, type);
+        if (currentLayout == Chess.BoardLayout.DEFAULT) {
+            castleSquares.addAll(defaultCastleSquares(white, type));
+        }
         return castleSquares;
     }
 
     public List<BoardCoordinate> defaultCastleSquares(boolean white, Move.CastleType type) {
         List<BoardCoordinate> coordinates = rookCastleSquares(white, type);
-        if (currentLayout == Chess.BoardLayout.DEFAULT) {
-            coordinates.add(new BoardCoordinate(white ? 0 : 7, type == Move.CastleType.KINGSIDE ? 6 : 2));
+        if (white) {
+            if (whiteCanCastleKingside) {
+                coordinates.add(new BoardCoordinate(0, 6));
+            }
+            if (whiteCanCastleQueenside) {
+                coordinates.add(new BoardCoordinate(0, 2));
+            }
+        } else {
+            if (blackCanCastleKingside) {
+                coordinates.add(new BoardCoordinate(7, 6));
+            }
+            if (blackCanCastleQueenside) {
+                coordinates.add(new BoardCoordinate(7, 2));
+            }
         }
         return coordinates;
     }
@@ -707,7 +830,37 @@ public class BoardGUI extends JPanel {
             for (int j = 0; j < 8; j++) {
                 if (gamePieces[i][j] != null && gamePieces[i][j] instanceof Rook rook) {
                     if (rook.isWhite() == white && rook.getType() == type)  {
-                        coordinates.add(new BoardCoordinate(i, j));
+                        boolean shouldAdd = false;
+                        if (white) {
+                            switch (type) {
+                                case KINGSIDE -> {
+                                    if (whiteCanCastleKingside) {
+                                        shouldAdd = true;
+                                    }
+                                }
+                                case QUEENSIDE -> {
+                                    if (whiteCanCastleQueenside) {
+                                        shouldAdd = true;
+                                    }
+                                }
+                            }
+                        } else {
+                            switch (type) {
+                                case KINGSIDE -> {
+                                    if (blackCanCastleKingside) {
+                                        shouldAdd = true;
+                                    }
+                                }
+                                case QUEENSIDE -> {
+                                    if (blackCanCastleQueenside) {
+                                        shouldAdd = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (shouldAdd) {
+                            coordinates.add(new BoardCoordinate(i, j));
+                        }
                     }
                 }
             }
@@ -724,7 +877,6 @@ public class BoardGUI extends JPanel {
     }
 
     public void displayPieces() {
-        /*
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 JPanel panel = (JPanel) getComponent((row * 8) + col);
@@ -740,8 +892,6 @@ public class BoardGUI extends JPanel {
                 panel.validate();
             }
         }
-
-         */
     }
 
     public void setupDefaultBoard(boolean white) {
@@ -754,22 +904,22 @@ public class BoardGUI extends JPanel {
         gamePieces[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
         gamePieces[backLine][7] = new Rook(this, white, new BoardCoordinate(backLine, 7));
 
-        gamePieces[backLine][1] = null;//new Knight(this, white);
-        gamePieces[backLine][6] = null;//new Knight(this, white);
+        gamePieces[backLine][1] = new Knight(this, white);
+        gamePieces[backLine][6] = new Knight(this, white);
 
-        gamePieces[backLine][2] = null;//new Bishop(this, white);
-        gamePieces[backLine][5] = null;//new Bishop(this, white);
+        gamePieces[backLine][2] = new Bishop(this, white);
+        gamePieces[backLine][5] = new Bishop(this, white);
 
-        gamePieces[backLine][3] = null;//new Queen(this, white);
+        gamePieces[backLine][3] = new Queen(this, white);
         gamePieces[backLine][4] = new King(this, white);
     }
 
     public Piece fromChar(char piece, boolean white, int index) {
         return switch (piece) {
             case 'R', 'X' -> new Rook(this, white, new BoardCoordinate(white ? 0 : 7, index));
-            case 'N' -> null; //new Knight(this, white);
-            case 'B' -> null; //new Bishop(this, white);
-            case 'Q' -> null; //new Queen(this, white);
+            case 'N' -> new Knight(this, white);
+            case 'B' -> new Bishop(this, white);
+            case 'Q' -> new Queen(this, white);
             case 'K' -> new King(this, white);
             default -> throw new IllegalStateException("Unexpected value found when generating fischer-random: " + piece);
         };
@@ -827,32 +977,62 @@ public class BoardGUI extends JPanel {
                 }
             }
         }
-
     }
 
-    public KeyListener boardViewListener() {
-        return new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {}
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                char c = e.getKeyChar();
-                switch (e.getKeyChar()) {
-                    case '[' -> setView(BoardView.BLACK);
-                    case ']' -> setView(BoardView.WHITE);
-                    case '=' -> setView(playAsWhite ? BoardView.WHITE : BoardView.BLACK);
-                }
-                if (c == '-' || c == '=' || c == '[' || c == ']') {
-                    displayPieces();
-                    repaint();
+    public void showHangingPieces() {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (gamePieces[i][j] != null) {
+                    if (isHanging(gamePieces, new BoardCoordinate(i, j))) {
+                        if (gamePieces[i][j].isWhite() == playAsWhite) {
+                            highlightedSquares[i][j] = Move.MoveHighlights.HIGHLIGHT;
+                        } else if (gamePieces[i][j].isWhite() != playAsWhite) {
+                            highlightedSquares[i][j] = Move.MoveHighlights.BLUE_HIGHLIGHT;
+                        }
+                    }
                 }
             }
+        }
+    }
 
-            @Override
-            public void keyReleased(KeyEvent e) {
+    public void showTrades(boolean points) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (gamePieces[i][j] != null) {
+                    BoardCoordinate tile = new BoardCoordinate(i, j);
+                    TradeType type = tradeOff(gamePieces, tile, whiteTurn, points);
+                    if (type != null) {
+                        switch (type) {
+                            case BLACK -> {
+                                if (!playAsWhite) {
+                                    highlightedSquares[i][j] = Move.MoveHighlights.GREEN_HIGHLIGHT;
+                                } else {
+                                    highlightedSquares[i][j] = Move.MoveHighlights.HIGHLIGHT;
+                                }
+                            }
+                            case EQUAL -> highlightedSquares[i][j] = Move.MoveHighlights.ORANGE_HIGHLIGHT;
+                            case WHITE -> {
+                                if (playAsWhite) {
+                                    highlightedSquares[i][j] = Move.MoveHighlights.GREEN_HIGHLIGHT;
+                                } else {
+                                    highlightedSquares[i][j] = Move.MoveHighlights.HIGHLIGHT;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        };
+        }
+    }
+
+    public void removeHighlights(Move.MoveHighlights highlights) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (highlightedSquares[i][j] == highlights) {
+                    highlightedSquares[i][j] = null;
+                }
+            }
+        }
     }
 
     public MouseListener highlightListener() {
@@ -869,6 +1049,11 @@ public class BoardGUI extends JPanel {
                     y0h = e.getY();
                 }
                 if (SwingUtilities.isLeftMouseButton(e)) {
+                    removeHighlights(Move.MoveHighlights.HIGHLIGHT);
+                    removeHighlights(Move.MoveHighlights.GREEN_HIGHLIGHT);
+                    removeHighlights(Move.MoveHighlights.ORANGE_HIGHLIGHT);
+                    removeHighlights(Move.MoveHighlights.BLUE_HIGHLIGHT);
+
                     int f1 = e.getX() / pieceSize;
                     int r1 = e.getY() / pieceSize;
 
@@ -876,38 +1061,58 @@ public class BoardGUI extends JPanel {
                     int c2 = view == BoardView.WHITE ? f1 : 7 - f1;
 
                     BoardCoordinate coordinate = new BoardCoordinate(r1, f1);
+
+                    int row = coordinate.row();
+                    int col = coordinate.col();
+
+                    switch (view) {
+                        case BLACK -> col = 7 - col;
+                        case WHITE -> row = 7 - row;
+                    }
+
                     if (gamePieces[r2][c2] != null) {
-                        int row = coordinate.row();
-                        int col = coordinate.col();
-
-                        switch (view) {
-                            case BLACK -> col = 7 - col;
-                            case WHITE -> row = 7 - row;
-                        }
-
                         BoardCoordinate clicked = new BoardCoordinate(row, col);
-                        if (tileSelected == null) {
-                            tileSelected = clicked;
-                            highlightedSquares[row][col] = Move.Highlights.SELECTED;
+                        updateSelectedPiece(row, col, clicked);
+                    }
+                    repaint();
+                    displayPieces();
+                }
+            }
 
-                            shouldDeselect = false;
-                        } else {
-                            if (!tileSelected.equals(clicked)) {
-                                highlightedSquares[tileSelected.row()][tileSelected.col()] = null;
-                                tileSelected = clicked;
-                                highlightedSquares[row][col] = Move.Highlights.SELECTED;
-                                shouldDeselect = false;
-                            } else {
-                                shouldDeselect = true;
+            private void updateSelectedPiece(int row, int col, BoardCoordinate clicked) {
+                List<Move> moves = availableMoves(gamePieces, selected, tileSelected, false);
+                if (tileSelected == null) {
+                    tileSelected = clicked;
+                    highlightedSquares[row][col] = Move.MoveHighlights.SELECTED;
+
+                    shouldDeselect = false;
+                } else {
+                    if (!tileSelected.equals(clicked)) {
+                        Piece selectedPiece = gamePieces[tileSelected.row()][tileSelected.col()];
+                        Piece clickedPiece = gamePieces[clicked.row()][clicked.col()];
+                        if (selectedPiece.isWhite() == playAsWhite) {
+                            if (clickedPiece.isWhite() != playAsWhite) {
+                                if (whiteTurn == playAsWhite) {
+                                    if (pieceInteraction.tileSelected.equals(tileSelected)) {
+                                        for (Move move : moves) {
+                                            if (move.getTo().equals(clicked)) {
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                        selected = gamePieces[tileSelected.row()][tileSelected.col()];
 
-
-                        repaint();
-                        displayPieces();
+                        highlightedSquares[tileSelected.row()][tileSelected.col()] = null;
+                        tileSelected = clicked;
+                        highlightedSquares[row][col] = Move.MoveHighlights.SELECTED;
+                        shouldDeselect = false;
+                    } else {
+                        shouldDeselect = true;
                     }
                 }
+                selected = gamePieces[tileSelected.row()][tileSelected.col()];
             }
 
             @Override
@@ -921,7 +1126,16 @@ public class BoardGUI extends JPanel {
 
                     BoardCoordinate coordinate = new BoardCoordinate(r1, f1);
                     if (f0 == f1 && r0 == r1) {
-                        highlight(coordinate.row(), coordinate.col(), Move.Highlights.HIGHLIGHT);
+                        if (e.isAltDown()) {
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.BLUE_HIGHLIGHT);
+                        } else if (e.isControlDown()) {
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.ORANGE_HIGHLIGHT);
+                        } else if (e.isShiftDown()) {
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.GREEN_HIGHLIGHT);
+                        } else {
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.HIGHLIGHT);
+                        }
+
                         x0h = 0;
                         y0h = 0;
                         repaint();
@@ -944,7 +1158,7 @@ public class BoardGUI extends JPanel {
 
                         BoardCoordinate clicked = new BoardCoordinate(row, col);
 
-                        if (tileSelected.equals(clicked)) {
+                        if (tileSelected != null && tileSelected.equals(clicked)) {
                             tileSelected = null;
                             highlightedSquares[row][col] = null;
                             selected = null;
@@ -982,26 +1196,26 @@ public class BoardGUI extends JPanel {
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (highlightedSquares[i][j] == Move.Highlights.MOVE || highlightedSquares[i][j] == Move.Highlights.SELECTED) {
+                if (highlightedSquares[i][j] == Move.MoveHighlights.MOVE || highlightedSquares[i][j] == Move.MoveHighlights.SELECTED) {
                     highlightedSquares[i][j] = null;
                 }
             }
         }
 
-        highlight(r2, c2, Move.Highlights.MOVE);
-        highlight(r3, c3, Move.Highlights.MOVE);
+        highlight(r2, c2, Move.MoveHighlights.MOVE);
+        highlight(r3, c3, Move.MoveHighlights.MOVE);
     }
 
-    public void highlight(int row, int col, Move.Highlights type) {
+    public void highlight(int row, int col, Move.MoveHighlights type) {
         switch (view) {
             case BLACK -> col = 7 - col;
             case WHITE -> row = 7 - row;
         }
 
-        if (type == Move.Highlights.SELECTED) {
+        if (type == Move.MoveHighlights.SELECTED) {
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
-                    if (highlightedSquares[i][j] == Move.Highlights.HIGHLIGHT) {
+                    if (highlightedSquares[i][j] == Move.MoveHighlights.HIGHLIGHT) {
                         highlightedSquares[i][j] = null;
                     }
                 }
@@ -1009,7 +1223,7 @@ public class BoardGUI extends JPanel {
             BoardCoordinate clicked = new BoardCoordinate(row, col);
             if (tileSelected == null) {
                 tileSelected = clicked;
-                highlightedSquares[row][col] = Move.Highlights.SELECTED;
+                highlightedSquares[row][col] = Move.MoveHighlights.SELECTED;
             } else {
                 if (tileSelected.equals(clicked)) {
                     tileSelected = null;
@@ -1017,11 +1231,11 @@ public class BoardGUI extends JPanel {
                 } else {
                     highlightedSquares[tileSelected.row()][tileSelected.col()] = null;
                     tileSelected = clicked;
-                    highlightedSquares[row][col] = Move.Highlights.SELECTED;
+                    highlightedSquares[row][col] = Move.MoveHighlights.SELECTED;
                 }
             }
             selected = tileSelected != null ? gamePieces[tileSelected.row()][tileSelected.col()] : null;
-        } else if (type == Move.Highlights.MOVE) {
+        } else if (type == Move.MoveHighlights.MOVE) {
             moveHighlights[row][col] = true;
         } else {
             if (type == highlightedSquares[row][col]) {
@@ -1143,161 +1357,104 @@ public class BoardGUI extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         ColorScheme scheme = boardTheme.getScheme();
-        Graphics2D g2d = (Graphics2D) g.create();
-
-
         if (useOnline) {
             Image image = OnlineAssets.getSavedBoard().getScaledInstance(pieceSize * 8, pieceSize * 8, Image.SCALE_FAST);
-            /*
-            if (view == BoardView.SIDE || view == BoardView.SIDE2) {
-                double degrees = Math.toRadians(view == BoardView.SIDE ? 90 : -90);
-                double locX = image.getWidth(null) / 2d;
-                double locY = image.getHeight(null) / 2d;
-                AffineTransform transform = AffineTransform.getRotateInstance(degrees, locX, locY);
-                ((Graphics2D)g).drawImage(image, transform, null);
-            } else {
-            }
-            */
             g.drawImage(image, 0, 0, null);
         }
+        List<Move> moves = selected == null ? new ArrayList<>() : availableMoves(gamePieces, selected, tileSelected, false);
 
-        /*
-        switch (view) {
-            case BLACK -> {
-                for (int row = 0; row < 8; row++) {
-                    for (int col = 0; col < 8; col++) {
-                        g.drawString(new BoardCoordinate(row, 7 - col).toNotation(), ((col * pieceSize) + (pieceSize / 2)), (row * pieceSize) + (pieceSize/ 2));
-                    }
-                }
-            }
+        List<BoardCoordinate> castleRookSquares = new ArrayList<>();
 
-            case WHITE -> {
-                for (int row = 0; row < 8; row++) {
-                    for (int col = 0; col < 8; col++) {
-                        g.drawString(new BoardCoordinate(7 - row, col).toNotation(), ((col * pieceSize) + (pieceSize / 2)), (row * pieceSize) + (pieceSize/ 2));
-                    }
-                }
+        for (Move move : moves) {
+            if (move.getCastleType() != null) {
+                castleRookSquares.add(getRook(gamePieces, move.getPiece().isWhite(), move.getCastleType()));
             }
         }
-         */
-        displayBoard(g, scheme);
-    }
 
-    public void displayBoard(Graphics g, ColorScheme scheme) {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 int r1 = view == BoardView.WHITE ? 7 - row : row;
                 int c1 = view == BoardView.WHITE ? col : 7 - col;
-                if (useOnline) {
-                    if (highlightedSquares[r1][c1] != null) {
-                        g.setColor(scheme.getHighlight(highlightedSquares[r1][c1]));
-                        g.fillRect((col) * pieceSize, (row) * pieceSize, pieceSize, pieceSize);
-                    } else if (moveHighlights[r1][c1]) {
-                        g.setColor(scheme.getHighlight(Move.Highlights.MOVE));
-                        g.fillRect((col) * pieceSize, (row) * pieceSize, pieceSize, pieceSize);
-                    }
-                } else {
-                    g.setColor((row + col) % 2 == 0 ? scheme.light() : scheme.dark());
-                    g.fillRect((col) * pieceSize, (row) * pieceSize, pieceSize, pieceSize);
-                    if (highlightedSquares[r1][c1] != null) {
-                        Move.Highlights type = highlightedSquares[r1][c1];
-                        drawCompositeTile(g, scheme, row, col, type);
-                    } else if (moveHighlights[r1][c1]) {
-                        drawCompositeTile(g, scheme, row, col, Move.Highlights.MOVE);
-                    }
-                }
-                for (int i = 0; i < 8; i++) {
-                    for (int j = 0; j < 8; j++) {
-                        drawAvailableIndicator(g, i, j, false);
-                    }
-                }
-                /*
-                if (tileSelected != null) {
-                    if (gamePieces[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
-                        if (Chess.shouldShowAvailableSquares) {
-                            displayHints(g);
-                        }
-                    } else {
-                        if (Chess.shouldShowOppositionAvailableSquares) {
-                            displayHints(g);
-                        }
-                    }
+
+                if (!useOnline) {
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setColor((row + col) % 2 == 0 ? scheme.dark() : scheme.light());
+                    g2d.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
+                    g2d.dispose();
                 }
 
-                 */
+                if (highlightedSquares[row][col] != null) {
+                    g.setColor(scheme.getHighlight(highlightedSquares[row][col]));
+                    g.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
+                } else if (moveHighlights[row][col]) {
+                    g.setColor(scheme.getHighlight(Move.MoveHighlights.MOVE));
+                    g.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
+                }
+
+                if (gameHighlights[row][col] != null && Move.getInfoIcon(gameHighlights[row][col]) != null) {
+                    displayIcon(g, new BoardCoordinate(r1, c1), gameHighlights[row][col]);
+                } else if (highlightedSquares[row][col] != null && Move.getMoveHighlightIcon(highlightedSquares[row][col]) != null) {
+                    displayIcon(g, new BoardCoordinate(r1, c1), highlightedSquares[row][col]);
+                }
+
+                for (Move move : moves) {
+                    if (move.getTo().equals(new BoardCoordinate(row, col))) {
+                        if (gamePieces[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
+                            if (Chess.shouldShowAvailableSquares) {
+                                drawHint(g, scheme, r1, c1, move.getTaken() != null);
+                            }
+                        } else {
+                            if (Chess.shouldShowOppositionAvailableSquares) {
+                                drawHint(g, scheme, r1, c1, move.getTaken() != null);
+                            }
+                        }
+                    }
+                }
+                for (BoardCoordinate castleRookSquare : castleRookSquares) {
+                    if (castleRookSquare.equals(new BoardCoordinate(row, col))) {
+                        if (gamePieces[castleRookSquare.row()][castleRookSquare.col()].isWhite() == playAsWhite) {
+                            if (Chess.shouldShowAvailableSquares) {
+                                drawHint(g, scheme, r1, c1, true);
+                            }
+                        } else {
+                            if (Chess.shouldShowOppositionAvailableSquares) {
+                                drawHint(g, scheme, r1, c1, true);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    private void displayHints(Graphics g) { // fix darkness for online and offline TODO
-        List<Move> coordinates = availableMoves(gamePieces, selected, tileSelected);
-        for (Move coordinate : coordinates) {
-            int r2 = view == BoardView.WHITE ? 7 - coordinate.getTo().row() : coordinate.getTo().row();
-            int c2 = view == BoardView.WHITE ? coordinate.getTo().col() : 7 - coordinate.getTo().col();
-
-            if (coordinate.getCastleType() != null) {
-                switch (coordinate.getCastleType()) {
-                    case KINGSIDE -> {
-                        BoardCoordinate rook = getRook(gamePieces, coordinate.getPiece().isWhite(), Move.CastleType.KINGSIDE);
-
-                        int r3 = view == BoardView.WHITE ? 7 - rook.row() : rook.row();
-                        int c3 = view == BoardView.WHITE ? rook.col() : 7 - rook.col();
-                        drawAvailableIndicator(g, r3, c3, true);
-                    }
-                    case QUEENSIDE -> {
-                        BoardCoordinate rook = getRook(gamePieces, coordinate.getPiece().isWhite(), Move.CastleType.QUEENSIDE);
-                        int r3 = view == BoardView.WHITE ? 7 - rook.row() : rook.row();
-                        int c3 = view == BoardView.WHITE ? rook.col() : 7 - rook.col();
-                        drawAvailableIndicator(g, r3, c3, true);
-                    }
+    public void drawHint(Graphics g, ColorScheme scheme, int row, int col, boolean takes) {
+        Color color = scheme.getHighlight(Move.MoveHighlights.AVAILABLE);
+        if (takes) {
+            switch (captureStyle) {
+                case RING -> {
+                    Ring ring = new Ring(col * pieceSize, row * pieceSize, pieceSize, pieceSize, pieceSize / 10, color);
+                    ring.draw(g);
                 }
-            }
-            if (!coordinate.getTo().equals(new BoardCoordinate(r2,c2))) {
-                drawAvailableIndicator(g, r2, c2, coordinate.getTaken() != null);
-            }
-        }
-    }
-
-    private void drawAvailableIndicator(Graphics g, int row, int col, boolean takes) {
-        //Graphics2D g2d = (Graphics2D) g.create();
-        Color hintColor = new Color(0, 0, 0, 25);
-        /*
-        if (useOnline) {
-            if (takes) {
-
-            } else {
-                g2d.setComposite(AlphaComposite.SrcOver.derive(0.1f));
-                g2d.setColor(hintColor);
-                g2d.fillRect((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
-
+                case SQUARE -> {
+                    Graphics2D g2d = (Graphics2D) g;
+                    Stroke oldStroke = g2d.getStroke();
+                    g2d.setColor(color);
+                    g2d.setStroke(new BasicStroke(pieceSize / 10f));
+                    g2d.drawRect((col * pieceSize) + (pieceSize / 20), (row * pieceSize) + (pieceSize / 20), pieceSize - (pieceSize / 10), pieceSize - (pieceSize / 10));
+                    g2d.setStroke(oldStroke);
+                }
             }
         } else {
-            if (takes) {
-                //Ring ring = new Ring(col * pieceSize, row * pieceSize, pieceSize, pieceSize, pieceSize / 10, hintColor);
-                //ring.draw(g2d, hintColor);
-            } else {
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, hintColor.getAlpha() / 255f));
-                g.setColor(hintColor);
-                g.fillRect((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
-
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, color.getAlpha() / 255f));
+            g.setColor(color);
+            switch (moveStyle) {
+                case DOT -> g.fillOval((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
+                case SQUARE -> g.fillRect((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
             }
 
+            g2d.dispose();
         }
-         */
-        //g2d.setComposite(AlphaComposite.SrcOver.derive(0.1f));
-        g.setColor(hintColor);
-        ((Graphics2D) g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, g.getColor().getAlpha() / 255f));
-        g.fillRect((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
-        ((Graphics2D) g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        //g2d.dispose();
-    }
-
-    private void drawCompositeTile(Graphics g, ColorScheme scheme, int row, int col, Move.Highlights type) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, scheme.getHighlight(type).getAlpha() / 255f));
-        g.setColor(scheme.getHighlight(type));
-        g.fillRect(col * pieceSize, row * pieceSize, pieceSize, pieceSize);
-        g2d.dispose();
     }
 
     public Colours getBoardTheme() {
@@ -1425,90 +1582,210 @@ public class BoardGUI extends JPanel {
         return null;
     }
 
-    public Move randomMove(Piece[][] board, Piece piece, BoardCoordinate coordinate) {
-        //TODO
-        return null;
+    public TradeType tradeOff(Piece[][] board, BoardCoordinate tile, boolean whiteToMove, boolean points) {
+        if (points) {
+            return pointTradeOff(board, tile, whiteToMove);
+        } else {
+            return pieceTradeOff(board, tile, whiteToMove);
+        }
     }
 
-    public void runAvailableTests() {
-        List<Move> moves = availableMoves(gamePieces, selected, tileSelected);
-        List<Move> moves2 = availableMoves(gamePieces, selected, tileSelected);
-        for (Move move : moves) {
-            for (Move move1 : moves2) {
-                if (move1.getTo().equals(move.getTo())) {
-                    System.out.println("bruh");
+    public TradeType pieceTradeOff(Piece[][] board, BoardCoordinate tile, boolean whiteToMove) {
+        Piece piece = board[tile.row()][tile.col()];
+
+        int whiteAttackers = attackers(board, tile, true);
+        int blackAttackers = attackers(board, tile, false);
+
+        if ((whiteAttackers == 0 && whiteToMove) || (blackAttackers == 0 && !whiteToMove)) {
+            return null;
+        }
+
+        if (whiteToMove) {
+            if (piece.isWhite()) {
+                return null;
+            } else {
+                if (whiteAttackers == blackAttackers) {
+                    return TradeType.EQUAL;
+                } else {
+                    if (whiteAttackers > blackAttackers) {
+                        return TradeType.WHITE;
+                    } else {
+                        return TradeType.BLACK;
+                    }
                 }
+            }
+        } else {
+            if (piece.isWhite()) {
+                if (whiteAttackers == blackAttackers) {
+                    return TradeType.EQUAL;
+                } else {
+                    if (blackAttackers > whiteAttackers) {
+                        return TradeType.BLACK;
+                    } else {
+                        return TradeType.WHITE;
+                    }
+                }
+            } else {
+                return null;
             }
         }
     }
 
-    public List<Move> availableMoves(Piece[][] board, Piece piece, BoardCoordinate coordinate) {
+    public TradeType pointTradeOff(Piece[][] board, BoardCoordinate tile, boolean whiteToMove) {
+        Piece piece = board[tile.row()][tile.col()];
+
+        int whiteAttackers = attackers(board, tile, true);
+        int blackAttackers = attackers(board, tile, false);
+
+        int[] whiteAttackingPoints = attackingPoints(board, tile, true);
+        int[] blackAttackingPoints = attackingPoints(board, tile, false);
+
+        Arrays.sort(whiteAttackingPoints);
+        Arrays.sort(blackAttackingPoints);
+
+        int whiteGainedPoints = 0;
+        int blackGainedPoints = 0;
+
+        if ((whiteAttackers == 0 && whiteToMove) || (blackAttackers == 0 && !whiteToMove)) {
+            return null;
+        }
+
+        if (whiteToMove) {
+            if (piece.isWhite()) {
+                return null;
+            } else {
+                whiteGainedPoints += piece.points();
+                for (int i = 0; i < 8; i++) {
+
+                }
+            }
+        } else {
+            if (piece.isWhite()) {
+                blackGainedPoints += piece.points();
+            } else {
+                return null;
+            }
+        }
+    }
+
+    public boolean isHanging(Piece[][] board, BoardCoordinate tile) {
+        Piece piece = board[tile.row()][tile.col()];
+        int defenders = attackers(board, tile, piece.isWhite());
+        int attackers = attackers(board, tile, !piece.isWhite());
+        return defenders == 0 && attackers > 0;
+    }
+
+    public int attackers(Piece[][] board, BoardCoordinate tile, boolean white) {
+        Piece[][] newBoard = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
+        Piece piece = newBoard[tile.row()][tile.col()];
+        return getAttackers(newBoard, piece, tile, white).size();
+    }
+
+    public int[] attackingPoints(Piece[][] board, BoardCoordinate tile, boolean white) {
+        Piece[][] newBoard = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
+        Piece piece = newBoard[tile.row()][tile.col()];
+
+        List<Move.SimpleMove> moves = getAttackers(newBoard, piece, tile, white);
+        int[] points = new int[moves.size()];
+        for (int i = 0; i < moves.size(); i++) {
+            points[i] = moves.get(i).getPiece().points();
+        }
+        return points;
+    }
+
+    public int getOptimalPointTradeOff(int[] attacking, int used) {
+        int c = 0;
+        for (int i = 0; i < used; i++) {
+            c += attacking[i];
+        }
+        return c;
+    }
+
+    public int getPoints(int[] attacking) {
+        int c = 0;
+        for (int j : attacking) {
+            c += j;
+        }
+        return c;
+    }
+
+    public Move getRandomMove(Piece[][] board) {
+        List<Move> moves = getAllValidMoves(board, !playAsWhite, false);
+        Random random = new Random();
+        return moves.get(random.nextInt(moves.size()));
+    }
+
+    public List<Move> availableMoves(Piece[][] board, Piece piece, BoardCoordinate coordinate, boolean isCheckingForMate) {
         List<Move> moves = new ArrayList<>();
+        if (piece == null || coordinate == null) {
+            return moves;
+        }
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 BoardCoordinate possibleTile = new BoardCoordinate(i, j);
                 BoardCoordinate epTake = getEnpassantTakeSquare();
-                if (getEnpassantTargetSquare() != null && gamePieces[epTake.row()][epTake.col()].isWhite() != piece.isWhite() && possibleTile.equals(getEnpassantTargetSquare()) && piece instanceof Pawn && piece.validMove(coordinate, possibleTile, true)) {
+                if (getEnpassantTargetSquare() != null && board[epTake.row()][epTake.col()].isWhite() != piece.isWhite() && possibleTile.equals(getEnpassantTargetSquare()) && piece instanceof Pawn && piece.validMove(coordinate, possibleTile, true)) {
                     if (kingAvoidsCheck(board, piece, getEnpassantTakeSquare(), coordinate, possibleTile)) {
+                        Piece[][] newBoard = moveResult(board, epTake, coordinate, possibleTile);
+
                         BoardCoordinate epSQt = getEnpassantTakeSquare();
-                        Piece taken = gamePieces[epSQt.row()][epSQt.col()];
+                        Piece taken = board[epSQt.row()][epSQt.col()];
+
                         Move.Check check = null;
-                        if (kingIsInCheck(gamePieces, !piece.isWhite())) {
+
+                        if (!isCheckingForMate && kingIsInCheck(newBoard, !piece.isWhite())) {
                             check = Move.Check.CHECK;
 
-                            if (kingIsCheckmated(gamePieces, !piece.isWhite())) {
+                            if (kingIsCheckmated(newBoard, !piece.isWhite())) {
                                 check = Move.Check.MATE;
                             }
                         }
                         moves.add(new Move(piece, coordinate, possibleTile, check, true, epSQt, taken, null, null));
                     }
-                } else if (piece instanceof King king && getAllCastleSquares(piece.isWhite()).contains(possibleTile) && piece.getMoves() == 0) {
-                    if (defaultCastleSquares(piece.isWhite(), Move.CastleType.KINGSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleKingside : blackCanCastleKingside)) {
-                        if (!kingIsInCheck(castleResult(piece.isWhite(), Move.CastleType.KINGSIDE), piece.isWhite())) {
-                            if (canCastle(piece.isWhite(), Move.CastleType.KINGSIDE)) {
-                                BoardCoordinate kingFrom = getKing(getSide(piece.isWhite(), gamePieces));
-                                BoardCoordinate kingTo = newKingFile(piece.isWhite(), Move.CastleType.KINGSIDE);
-                                Move.Check check = null;
-                                if (kingIsInCheck(gamePieces, !piece.isWhite())) {
-                                    check = Move.Check.CHECK;
+                } else if (piece instanceof King && getRook(board, piece.isWhite(), Move.CastleType.KINGSIDE) != null && defaultCastleSquares(piece.isWhite(), Move.CastleType.KINGSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleKingside : blackCanCastleKingside)) {
+                    Piece[][] newBoard = castleResult(piece.isWhite(), Move.CastleType.KINGSIDE);
+                    if (!kingIsInCheck(newBoard, piece.isWhite())) {
+                        if (canCastle(piece.isWhite(), Move.CastleType.KINGSIDE)) {
 
-                                    if (kingIsCheckmated(gamePieces, !piece.isWhite())) {
-                                        check = Move.Check.MATE;
-                                    }
+                            BoardCoordinate kingFrom = getKing(getSide(piece.isWhite(), board));
+                            BoardCoordinate kingTo = newKingFile(piece.isWhite(), Move.CastleType.KINGSIDE);
+                            Move.Check check = null;
+                            if (!isCheckingForMate && kingIsInCheck(newBoard, !piece.isWhite())) {
+                                check = Move.Check.CHECK;
+                                if (kingIsCheckmated(newBoard, !piece.isWhite())) {
+                                    check = Move.Check.MATE;
                                 }
-                                moves.add(new Move(king, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.KINGSIDE));
                             }
+                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.KINGSIDE));
                         }
                     }
-                    if (defaultCastleSquares(piece.isWhite(), Move.CastleType.QUEENSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleQueenside : blackCanCastleQueenside)) {
-                        if (!kingIsInCheck(castleResult(piece.isWhite(), Move.CastleType.QUEENSIDE), piece.isWhite())) {
-                            if (canCastle(piece.isWhite(), Move.CastleType.QUEENSIDE)) {
-                                BoardCoordinate kingFrom = getKing(getSide(piece.isWhite(), gamePieces));
-                                BoardCoordinate kingTo = newKingFile(piece.isWhite(), Move.CastleType.QUEENSIDE);
-                                Move.Check check = null;
-                                if (kingIsInCheck(gamePieces, !piece.isWhite())) {
-                                    check = Move.Check.CHECK;
-
-                                    if (kingIsCheckmated(gamePieces, !piece.isWhite())) {
-                                        check = Move.Check.MATE;
-                                    }
+                } else if (piece instanceof King && getRook(board, piece.isWhite(), Move.CastleType.QUEENSIDE) != null && defaultCastleSquares(piece.isWhite(), Move.CastleType.QUEENSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleQueenside : blackCanCastleQueenside)) {
+                    Piece[][] newBoard = castleResult(piece.isWhite(), Move.CastleType.QUEENSIDE);
+                    if (!kingIsInCheck(newBoard, piece.isWhite())) {
+                        if (canCastle(piece.isWhite(), Move.CastleType.QUEENSIDE)) {
+                            BoardCoordinate kingFrom = getKing(getSide(piece.isWhite(), board));
+                            BoardCoordinate kingTo = newKingFile(piece.isWhite(), Move.CastleType.QUEENSIDE);
+                            Move.Check check = null;
+                            if (!isCheckingForMate && kingIsInCheck(newBoard, !piece.isWhite())) {
+                                check = Move.Check.CHECK;
+                                if (kingIsCheckmated(newBoard, !piece.isWhite())) {
+                                    check = Move.Check.MATE;
                                 }
-
-                                moves.add(new Move(king, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE));
                             }
+
+                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE));
                         }
                     }
                 } else {
-                    Piece taken = gamePieces[possibleTile.row()][possibleTile.col()];
+                    Piece taken = board[possibleTile.row()][possibleTile.col()];
                     boolean capture = taken != null;
-
                     if (piece.validMove(coordinate, possibleTile, capture) && (!capture || (taken.isWhite() != piece.isWhite())) && notBlocked(board, coordinate, possibleTile)) {
                         if (kingAvoidsCheck(board, piece, possibleTile, coordinate, possibleTile)) {
+                            Piece[][] newBoard = moveResult(board, possibleTile, coordinate, possibleTile);
                             Move.Check check = null;
-                            if (kingIsInCheck(gamePieces, !piece.isWhite())) {
+                            if (!isCheckingForMate && kingIsInCheck(newBoard, !piece.isWhite())) {
                                 check = Move.Check.CHECK;
-
-                                if (kingIsCheckmated(gamePieces, !piece.isWhite())) {
+                                if (kingIsCheckmated(newBoard, !piece.isWhite())) {
                                     check = Move.Check.MATE;
                                 }
                             }
@@ -1521,8 +1798,12 @@ public class BoardGUI extends JPanel {
         return moves;
     }
 
+    public boolean bothKingsInCheck(Piece[][] board) {
+        return kingIsInCheck(board, true) && kingIsInCheck(board, false);
+    }
+
     public boolean kingIsCheckmated(Piece[][] board, boolean white) {
-        List<Move> moves = getAllMoves(board, white);
+        List<Move> moves = getAllValidMoves(board, white, true);
         for (Move move : moves) {
             if (kingAvoidsCheck(board, move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo())) {
                 return false;
@@ -1531,14 +1812,29 @@ public class BoardGUI extends JPanel {
         return true;
     }
 
-    public List<Move> getAllMoves(Piece[][] board, boolean white) {
-        Piece[][] side = getSide(white, board);
+    public List<Move> getAllValidMoves(Piece[][] board, boolean white, boolean isCheckingForMate) {
         List<Move> allMoves = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (side[i][j] != null) {
-                    Piece piece = side[i][j];
-                    allMoves.addAll(availableMoves(side, piece, new BoardCoordinate(i, j)));
+                if (board[i][j] != null && board[i][j].isWhite() == white) {
+                    Piece piece = board[i][j];
+                    allMoves.addAll(availableMoves(board, piece, new BoardCoordinate(i, j), isCheckingForMate));
+                }
+            }
+        }
+        return allMoves;
+    }
+
+    public List<Move.SimpleMove> getAttackers(Piece[][] board, Piece piece, BoardCoordinate tile, boolean white) {
+        List<Move.SimpleMove> allMoves = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                BoardCoordinate from = new BoardCoordinate(i, j);
+                Piece pieceFrom = board[i][j];
+                if (pieceFrom != null && !from.equals(tile)) {
+                    if (pieceFrom.isWhite() == white && pieceFrom.validMove(from, tile, true) && notBlocked(board, from, tile)) {
+                        allMoves.add(new Move.SimpleMove(pieceFrom, from, tile));
+                    }
                 }
             }
         }
@@ -1546,7 +1842,6 @@ public class BoardGUI extends JPanel {
     }
 
     public boolean kingIsInCheck(Piece[][] board, boolean white) {
-        Piece[][] opponent = getSide(!white, board);
         BoardCoordinate king = getKing(getSide(white, board));
 
         return tileIsInCheck(board, king, white);
@@ -1569,11 +1864,7 @@ public class BoardGUI extends JPanel {
     }
 
     public boolean kingAvoidsCheck(Piece[][] board, Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to) {
-        Piece[][] newBoard = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
-        Piece moved = newBoard[from.row()][from.col()];
-        newBoard[from.row()][from.col()] = null;
-        newBoard[takes.row()][takes.col()] = null;
-        newBoard[to.row()][to.col()] = moved;
+        Piece[][] newBoard = moveResult(board, takes, from, to);
 
         return !kingIsInCheck(newBoard, piece.isWhite());
     }
@@ -1675,6 +1966,11 @@ public class BoardGUI extends JPanel {
         halfMoveClock++;
         if (!whiteTurn) {
             fullMoveCount++;
+            gameFENHistory.add(translateBoardToFEN(gamePieces));
+            fiftyMoveRule++;
+        }
+        if (piece instanceof Pawn || taken != null) {
+            fiftyMoveRule = 0;
         }
         whiteTurn = !whiteTurn;
     }
@@ -1696,6 +1992,19 @@ public class BoardGUI extends JPanel {
 
         newBoard[kingTo.row()][kingTo.col()] = king;
         newBoard[rookTo.row()][rookTo.col()] = rook;
+
+        return newBoard;
+    }
+
+    public Piece[][] moveResult(Piece[][] board, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to) {
+        Piece[][] newBoard = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
+        Piece moved = newBoard[from.row()][from.col()];
+
+        newBoard[from.row()][from.col()] = null;
+        if (takes != null) {
+            newBoard[takes.row()][takes.col()] = null;
+        }
+        newBoard[to.row()][to.col()] = moved;
 
         return newBoard;
     }
@@ -1742,6 +2051,7 @@ public class BoardGUI extends JPanel {
         halfMoveClock++;
         if (!whiteTurn) {
             fullMoveCount++;
+            gameFENHistory.add(translateBoardToFEN(gamePieces));
         }
         whiteTurn = !whiteTurn;
     }
@@ -1787,100 +2097,331 @@ public class BoardGUI extends JPanel {
     }
 
     public void deselect() {
+        pieceInteraction.setTileSelected(null);
+
         tileSelected = null;
         selected = null;
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (highlightedSquares[i][j] == Move.Highlights.SELECTED) {
+                if (highlightedSquares[i][j] == Move.MoveHighlights.SELECTED) {
                     highlightedSquares[i][j] = null;
                 }
             }
         }
     }
 
+    public boolean isStaleMate(Piece[][] board) {
+        List<Move> moves = getAllValidMoves(board, whiteTurn, false);
+        return moves.isEmpty();
+    }
+
+    public boolean isDrawByRepetition() {
+        for (String s : gameFENHistory) {
+            int c = 0;
+            for (String s1 : gameFENHistory) {
+                if (s.equals(s1)) {
+                    c++;
+                }
+            }
+            if (c >= 3) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String simplifyFEN(String FEN) {
+        String result = FEN;
+        result = result.split(" ")[0];
+        result = result.replaceAll("\\d", "");
+        result = result.replaceAll("/", "");
+        return result;
+    }
+
+    public boolean isDrawByInsufficientMaterial(String truncated) {
+        String k_vs_KN = anagramRegex("kKN");
+        String kn_vs_K = anagramRegex("knK");
+        String k_vs_KB = anagramRegex("kKB");
+        String kb_vs_K = anagramRegex("kbK");
+
+        if (truncated.matches(k_vs_KN)) {
+            return true;
+        }
+        if (truncated.matches(kn_vs_K)) {
+            return true;
+        }
+        if (truncated.matches(k_vs_KB)) {
+            return true;
+        }
+        if (truncated.matches(kb_vs_K)) {
+            return true;
+        }
+
+        String kb_vs_KB = anagramRegex("kbKB");
+        if (truncated.matches(kb_vs_KB)) {
+            boolean bishop1White = false;
+            boolean bishop2White = false;
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    Piece piece = gamePieces[i][j];
+                    if (piece != null) {
+                        if (piece instanceof Bishop bishop && (i + j) % 2 == 0) {
+                            if (!bishop1White) {
+                                bishop1White = true;
+                            } else {
+                                bishop2White = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return bishop1White == bishop2White;
+        }
+
+        return false;
+    }
+
+    public void displayIcon(Graphics g, BoardCoordinate coordinate, Move.MoveHighlights icon) {
+        if (coordinate.row() == 0 && view == BoardView.BLACK || coordinate.row() == 7 && view == BoardView.WHITE) {
+            g.drawImage(Objects.requireNonNull(Move.getMoveHighlightIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
+        } else {
+            g.drawImage(Objects.requireNonNull(Move.getMoveHighlightIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
+        }
+    }
+
+    public void displayIcon(Graphics g, BoardCoordinate coordinate, Move.InfoIcons icon) {
+        if (coordinate.row() == 0 && view == BoardView.BLACK || coordinate.row() == 7 && view == BoardView.WHITE) {
+            g.drawImage(Objects.requireNonNull(Move.getInfoIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
+        } else {
+            g.drawImage(Objects.requireNonNull(Move.getInfoIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
+        }
+    }
+
+    public void createGameOverScreen(GameOverType type) {
+        BoardCoordinate whiteKing = getKing(getSide(true, gamePieces));
+        BoardCoordinate blackKing = getKing(getSide(false, gamePieces));
+        switch (type) {
+            case CHECKMATE_BLACK -> {
+                highlightedSquares[whiteKing.row()][whiteKing.col()] = Move.MoveHighlights.CHECKMATE;
+                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
+                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+            }
+            case CHECKMATE_WHITE -> {
+                highlightedSquares[blackKing.row()][blackKing.col()] = Move.MoveHighlights.CHECKMATE;
+                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
+                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+            }
+            case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
+                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+            }
+            case RESIGNATION_BLACK -> {
+                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
+                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+            }
+            case RESIGNATION_WHITE -> {
+                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
+                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+            }
+        }
+        displayPieces();
+        repaint();
+        switch (type) {
+            case CHECKMATE_BLACK -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE));
+            case CHECKMATE_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK));
+            case STALEMATE -> chess.createPopUp("Draw by stalemate", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+            case FIFTY_MOVE_RULE -> chess.createPopUp("Draw by 50-move-rule", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+            case ILLEGAL_POSITION -> chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE);
+            case DRAW_BY_AGREEMENT -> chess.createPopUp("Draw by agreement", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+            case RESIGNATION_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
+            case RESIGNATION_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
+            case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+            case INSUFFICIENT_MATERIAL -> chess.createPopUp("Draw by insufficient material", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+        }
+    }
+
+    public GameOverType gameOver() {
+        if (kingIsCheckmated(gamePieces, playAsWhite)) {
+            return playAsWhite ? GameOverType.CHECKMATE_BLACK : GameOverType.CHECKMATE_WHITE;
+        }
+        if (kingIsCheckmated(gamePieces, !playAsWhite)) {
+            return playAsWhite ? GameOverType.CHECKMATE_WHITE : GameOverType.CHECKMATE_BLACK;
+        }
+        if (fiftyMoveRule >= 50) {
+            return GameOverType.FIFTY_MOVE_RULE;
+        }
+        if (isStaleMate(gamePieces)) {
+            return GameOverType.STALEMATE;
+        }
+        if (isDrawByRepetition()) {
+            return GameOverType.DRAW_BY_REPETITION;
+        }
+        if (isDrawByInsufficientMaterial(simplifyFEN(translateBoardToFEN(gamePieces)))) {
+            return GameOverType.INSUFFICIENT_MATERIAL;
+        }
+        return null;
+    }
+
+    public String anagramRegex(String truncatedFEN) {
+        StringBuilder lookahead = new StringBuilder();
+        StringBuilder matchPart = new StringBuilder("^");
+        String positiveLookaheadPrefix = "(?=";
+        String positiveLookaheadSuffix = ")";
+        HashMap<String, Integer> inputCharacterFrequencyMap = new HashMap<>();
+        for (int i = 0; i < truncatedFEN.length(); i++) {
+            String s = String.valueOf(truncatedFEN.charAt(i));
+            inputCharacterFrequencyMap.put(s, inputCharacterFrequencyMap.getOrDefault(s + 1, 1));
+        }
+        for (String string : inputCharacterFrequencyMap.keySet()) {
+            lookahead.append(positiveLookaheadPrefix);
+            for (int i = 0; i < inputCharacterFrequencyMap.get(string); i++) {
+                lookahead.append(".*");
+                if (string.equals(" ")) {
+                    lookahead.append("\\s");
+                } else {
+                    lookahead.append(string);
+                }
+                matchPart.append(".");
+            }
+            lookahead.append(positiveLookaheadSuffix);
+        }
+        matchPart.append("$");
+        return lookahead.toString() + matchPart;
+    }
+
+    public void highlightChecks() {
+        removeHighlights(Move.MoveHighlights.CHECK);
+        if (kingIsInCheck(gamePieces, true)) {
+            BoardCoordinate king = getKing(getSide(true, gamePieces));
+            highlightedSquares[king.row()][king.col()] = Move.MoveHighlights.CHECK;
+        }
+        if (kingIsInCheck(gamePieces, false)) {
+            BoardCoordinate king = getKing(getSide(false, gamePieces));
+            highlightedSquares[king.row()][king.col()] = Move.MoveHighlights.CHECK;
+        }
+    }
+
+    public void endComputerTurn() {
+        gameOver = gameOver();
+        if (gameOver != null) {
+            createGameOverScreen(gameOver);
+        } else {
+            highlightChecks();
+            displayPieces();
+            repaint();
+        }
+    }
+
     public void endTurn() {
         deselect();
 
-        switch (opponentType) {
-            case AI_1 -> {
-                // TODO best move
-            }
-            case AI_2 -> {
-                // TODO random move
-            }
-            case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    swapPlaySide();
+        gameOver = gameOver();
+        if (gameOver != null) {
+            createGameOverScreen(gameOver);
+        } else {
+            highlightChecks();
+            switch (opponentType) {
+                case AI_1 -> {
+                    // TODO best move
                 }
-            }, 500);
+                case AI_2 -> new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Move move = getRandomMove(gamePieces);
+                        if (move.getCastleType() != null) {
+                            rawCastle(!playAsWhite, move.getCastleType());
+                        } else {
+                            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                        }
+                        endComputerTurn();
+                    }
+                }, 500);
+                case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        swapPlaySide();
+                    }
+                }, 500);
+            }
+            displayPieces();
+            repaint();
         }
     }
 
     public void movePiece(Piece piece, BoardCoordinate from, BoardCoordinate to) {
         if (!from.equals(to)) {
             boolean white = piece.isWhite();
-            BoardCoordinate epSQtake = getEnpassantTakeSquare();
-            BoardCoordinate epSQtarget = getEnpassantTargetSquare();
-            
+
+            List<Move> moves = availableMoves(gamePieces, piece, from, false);
             if (whiteTurn == white && whiteTurn == playAsWhite) {
-                if (to.equals(epSQtarget) && gamePieces[epSQtake.row()][epSQtake.col()].isWhite() != piece.isWhite()  && piece instanceof Pawn && piece.validMove(from, to, true)) {
-                    if (kingAvoidsCheck(gamePieces, piece, epSQtake, from, to)) {
+                for (Move move : moves) {
+                    if (move.getTo().equals(to)) {
+                        moveHighlight(move.getFrom(), move.getTo());
+                        if (move.getCastleType() != null) {
+                            rawCastle(piece.isWhite(), move.getCastleType());
+                        } else {
+                            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                        }
+                        endTurn();
+                        break;
+                    }
+                }
+                displayPieces();
+                repaint();
+            }
+
+            /*
+            if (whiteTurn == white && whiteTurn == playAsWhite) {
+                if (getEnpassantTargetSquare() != null && gamePieces[epSQtake.row()][epSQtake.col()].isWhite() != piece.isWhite() && to.equals(getEnpassantTargetSquare()) && piece instanceof Pawn && piece.validMove(from, to, true)) {
+                    if (kingAvoidsCheck(gamePieces, piece, getEnpassantTakeSquare(), from, to)) {
                         moveHighlight(from, to);
                         rawMove(piece, epSQtake, from, to);
                         endTurn();
                     }
-                } else if (piece instanceof King && getAllCastleSquares(white).contains(to) && piece.getMoves() == 0) {
-                    if (defaultCastleSquares(white, Move.CastleType.KINGSIDE).contains(to) && (white ? whiteCanCastleKingside : blackCanCastleKingside)) {
-                        if (!kingIsInCheck(castleResult(white, Move.CastleType.KINGSIDE), white)) {
-                            if (canCastle(white, Move.CastleType.KINGSIDE)) {
-                                BoardCoordinate kingFrom = getKing(getSide(white, gamePieces));
-                                BoardCoordinate kingTo = newKingFile(white, Move.CastleType.KINGSIDE);
-
-                                moveHighlight(kingFrom, kingTo);
-                                rawCastle(white, Move.CastleType.KINGSIDE);
-
-                                endTurn();
-                            }
+                } else if (piece instanceof King && getRook(gamePieces, piece.isWhite(), Move.CastleType.KINGSIDE) != null && getAllCastleSquares(piece.isWhite(), Move.CastleType.KINGSIDE).contains(to) && (piece.isWhite() ? whiteCanCastleKingside : blackCanCastleKingside)) {
+                    if (!kingIsInCheck(castleResult(piece.isWhite(), Move.CastleType.KINGSIDE), piece.isWhite())) {
+                        if (canCastle(piece.isWhite(), Move.CastleType.KINGSIDE)) {
+                            moveHighlight(from, to);
+                            rawCastle(piece.isWhite(), Move.CastleType.KINGSIDE);
+                            endTurn();
                         }
                     }
-                    if (defaultCastleSquares(white, Move.CastleType.QUEENSIDE).contains(to) && (white ? whiteCanCastleQueenside : blackCanCastleQueenside)) {
-                        if (!kingIsInCheck(castleResult(white, Move.CastleType.QUEENSIDE), white)) {
-                            if (canCastle(white, Move.CastleType.QUEENSIDE)) {
-                                BoardCoordinate kingFrom = getKing(getSide(white, gamePieces));
-                                BoardCoordinate kingTo = newKingFile(white, Move.CastleType.QUEENSIDE);
-
-                                moveHighlight(kingFrom, kingTo);
-                                rawCastle(white, Move.CastleType.QUEENSIDE);
-
-                                endTurn();
-                            }
+                } else if (piece instanceof King && getRook(gamePieces, piece.isWhite(), Move.CastleType.QUEENSIDE) != null && getAllCastleSquares(piece.isWhite(), Move.CastleType.QUEENSIDE).contains(to) && (piece.isWhite() ? whiteCanCastleQueenside : blackCanCastleQueenside)) {
+                    if (!kingIsInCheck(castleResult(piece.isWhite(), Move.CastleType.QUEENSIDE), piece.isWhite())) {
+                        if (canCastle(piece.isWhite(), Move.CastleType.QUEENSIDE)) {
+                            moveHighlight(from, to);
+                            rawCastle(piece.isWhite(), Move.CastleType.QUEENSIDE);
+                            endTurn();
                         }
                     }
                 } else {
-                    Piece takes = gamePieces[to.row()][to.col()];
-                    boolean capture = takes != null;
-                    if (piece.validMove(from, to, capture) && (!capture || (takes.isWhite() != white)) && notBlocked(gamePieces, from, to)) {
+                    Piece taken = gamePieces[to.row()][to.col()];
+                    boolean capture = taken != null;
+
+                    if (piece.validMove(from, to, capture) && (!capture || (taken.isWhite() != piece.isWhite())) && notBlocked(gamePieces, from, to)) {
                         if (kingAvoidsCheck(gamePieces, piece, to, from, to)) {
                             moveHighlight(from, to);
                             rawMove(piece, to, from, to);
-
                             endTurn();
                         }
                     }
                 }
             }
-            repaint();
-            displayPieces();
+             */
         }
+        
     }
+
 
     public List<Move> getHistory() {
         return history;
     }
 
     public void swapPlaySide() {
+        deselect();
         playAsWhite = !playAsWhite;
         view = view == BoardView.WHITE ? BoardView.BLACK : BoardView.WHITE;
         displayPieces();
@@ -1899,11 +2440,27 @@ public class BoardGUI extends JPanel {
         return tileSelected;
     }
 
-    public MoveStyle getStyle() {
-        return style;
+    public MoveStyle getMoveMethod() {
+        return moveMethod;
     }
 
-    public void setStyle(MoveStyle style) {
-        this.style = style;
+    public void setMoveMethod(MoveStyle moveMethod) {
+        this.moveMethod = moveMethod;
+    }
+
+    public void setCaptureStyle(HintStyle.Capture captureStyle) {
+        this.captureStyle = captureStyle;
+    }
+
+    public void setMoveStyle(HintStyle.Move moveStyle) {
+        this.moveStyle = moveStyle;
+    }
+
+    public HintStyle.Capture getCaptureStyle() {
+        return captureStyle;
+    }
+
+    public HintStyle.Move getMoveStyle() {
+        return moveStyle;
     }
 }

@@ -32,4 +32,9 @@ public class Pawn extends Piece {
         }
         return false;
     }
+
+    @Override
+    public int points() {
+        return 1;
+    }
 }

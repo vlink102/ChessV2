@@ -18,4 +18,9 @@ public class Knight extends Piece {
 
         return (Math.abs(x1 - x0) == 2 && Math.abs(y1 - y0) == 1) || (Math.abs(x1 - x0) == 1 && Math.abs(y1 - y0) == 2);
     }
+
+    @Override
+    public int points() {
+        return 3;
+    }
 }

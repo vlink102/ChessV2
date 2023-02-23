@@ -1,8 +1,6 @@
 package me.vlink102.personal.chess;
 
-import javax.swing.*;
 import java.util.Arrays;
-import java.util.HashMap;
 
 public class BoardMatrixRotation {
     static Piece[][] rotatePieceMatrix(Piece[][] board, BoardGUI.BoardView view) {
@@ -14,8 +12,8 @@ public class BoardMatrixRotation {
         return ret;
     }
 
-    public static Move.Highlights[][] rotateHighlightMatrix(Move.Highlights[][] highlightTypes, BoardGUI.BoardView view) {
-        Move.Highlights[][] ret = Arrays.stream(highlightTypes).map(Move.Highlights[]::clone).toArray(Move.Highlights[][]::new);
+    public static Move.MoveHighlights[][] rotateHighlightMatrix(Move.MoveHighlights[][] highlightTypes, BoardGUI.BoardView view) {
+        Move.MoveHighlights[][] ret = Arrays.stream(highlightTypes).map(Move.MoveHighlights[]::clone).toArray(Move.MoveHighlights[][]::new);
 
         switch (view) {
             case WHITE -> rotateMatrix180(ret);

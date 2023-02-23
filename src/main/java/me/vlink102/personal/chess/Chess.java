@@ -8,9 +8,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class Chess extends JLayeredPane {
     private static BoardGUI board;
@@ -25,7 +22,7 @@ public class Chess extends JLayeredPane {
     }
 
     public Chess(int initialPieceSize) {
-        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, false, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH);
+        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, false, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING);
 
         add(board, JLayeredPane.DEFAULT_LAYER);
     }
@@ -57,6 +54,37 @@ public class Chess extends JLayeredPane {
         });
 
         frame.setJMenuBar(getMenu());
+
+        board.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                char c = e.getKeyChar();
+                switch (e.getKeyChar()) {
+                    case '[' -> board.setView(BoardGUI.BoardView.BLACK);
+                    case ']' -> board.setView(BoardGUI.BoardView.WHITE);
+                    case '=' -> board.setView(board.isPlayAsWhite() ? BoardGUI.BoardView.WHITE : BoardGUI.BoardView.BLACK);
+                    case 'h' -> board.showHangingPieces();
+                    case 't' -> board.showTrades(true);
+                    case 'y' -> board.showTrades(false);
+                }
+                if (c == '-' || c == '=' || c == '[' || c == ']' || c == 'h' || c == 't' || c == 'y') {
+                    board.displayPieces();
+                    board.repaint();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
+
+
 
         frame.setSize(initialSize);
         frame.pack();
@@ -108,7 +136,7 @@ public class Chess extends JLayeredPane {
         inputLoad.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ImageIcon imageIcon = new ImageIcon(Move.getHighlightIcon(Move.Highlights.BOOK).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+                ImageIcon imageIcon = new ImageIcon(Move.getMoveHighlightIcon(Move.MoveHighlights.BOOK).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
                 Object FEN = JOptionPane.showInputDialog(null, "Enter FEN String:", "Load game state", JOptionPane.PLAIN_MESSAGE, imageIcon, null, "");
                 if (FEN != null) {
                     board.loadFEN(FEN.toString());
@@ -309,10 +337,10 @@ public class Chess extends JLayeredPane {
         dragMethod.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.setStyle(BoardGUI.MoveStyle.DRAG);
+                board.setMoveMethod(BoardGUI.MoveStyle.DRAG);
             }
         });
-        if (board.getStyle() == BoardGUI.MoveStyle.DRAG) {
+        if (board.getMoveMethod() == BoardGUI.MoveStyle.DRAG) {
             dragMethod.setSelected(true);
         }
         moveMethodGroup.add(dragMethod);
@@ -323,10 +351,10 @@ public class Chess extends JLayeredPane {
         clickMethod.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.setStyle(BoardGUI.MoveStyle.CLICK);
+                board.setMoveMethod(BoardGUI.MoveStyle.CLICK);
             }
         });
-        if (board.getStyle() == BoardGUI.MoveStyle.CLICK) {
+        if (board.getMoveMethod() == BoardGUI.MoveStyle.CLICK) {
             clickMethod.setSelected(true);
         }
         moveMethodGroup.add(clickMethod);
@@ -337,10 +365,10 @@ public class Chess extends JLayeredPane {
         bothMethod.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.setStyle(BoardGUI.MoveStyle.BOTH);
+                board.setMoveMethod(BoardGUI.MoveStyle.BOTH);
             }
         });
-        if (board.getStyle() == BoardGUI.MoveStyle.BOTH) {
+        if (board.getMoveMethod() == BoardGUI.MoveStyle.BOTH) {
             bothMethod.setSelected(true);
         }
         moveMethodGroup.add(bothMethod);
@@ -426,6 +454,66 @@ public class Chess extends JLayeredPane {
             }
         });
         hintMenu.add(showOppositionAvailableSquares);
+
+        JMenuItem hintStyles = new JMenu("Styles");
+        JMenuItem captureStyles = new JMenu("Capture");
+        ButtonGroup captureGroup = new ButtonGroup();
+        JMenuItem captureRect = new JRadioButtonMenuItem("Square");
+        captureRect.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setCaptureStyle(BoardGUI.HintStyle.Capture.SQUARE);
+            }
+        });
+        if (board.getCaptureStyle() == BoardGUI.HintStyle.Capture.SQUARE) {
+            captureRect.setSelected(true);
+        }
+        captureGroup.add(captureRect);
+        captureStyles.add(captureRect);
+        JMenuItem captureRing = new JRadioButtonMenuItem("Ring");
+        captureRing.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setCaptureStyle(BoardGUI.HintStyle.Capture.RING);
+            }
+        });
+        if (board.getCaptureStyle() == BoardGUI.HintStyle.Capture.RING) {
+            captureRing.setSelected(true);
+        }
+        captureGroup.add(captureRing);
+        captureStyles.add(captureRing);
+        hintStyles.add(captureStyles);
+
+        JMenuItem moveStyles = new JMenu("Move");
+        ButtonGroup moveGroup = new ButtonGroup();
+        JMenuItem moveRectangular = new JRadioButtonMenuItem("Square");
+        moveRectangular.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setMoveStyle(BoardGUI.HintStyle.Move.SQUARE);
+            }
+        });
+        if (board.getMoveStyle() == BoardGUI.HintStyle.Move.SQUARE) {
+            moveRectangular.setSelected(true);
+        }
+        moveGroup.add(moveRectangular);
+        moveStyles.add(moveRectangular);
+
+        JMenuItem moveDot = new JRadioButtonMenuItem("Dot");
+        moveDot.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setMoveStyle(BoardGUI.HintStyle.Move.DOT);
+            }
+        });
+        if (board.getMoveStyle() == BoardGUI.HintStyle.Move.DOT) {
+            moveDot.setSelected(true);
+        }
+        moveGroup.add(moveDot);
+        moveStyles.add(moveDot);
+        hintStyles.add(moveStyles);
+
+        hintMenu.add(hintStyles);
         options.add(hintMenu);
 
         settings.add(generalMenu);
@@ -437,8 +525,14 @@ public class Chess extends JLayeredPane {
         return settings;
     }
 
-    public void createPopUp(String message, String title, Move.Highlights highlights) {
-        ImageIcon imageIcon = new ImageIcon(Move.getHighlightIcon(highlights).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+    public void createPopUp(String message, String title, Move.MoveHighlights highlights) {
+        ImageIcon imageIcon = new ImageIcon(Move.getMoveHighlightIcon(highlights).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+        requestFocus();
+    }
+
+    public void createPopUp(String message, String title, Move.InfoIcons highlights) {
+        ImageIcon imageIcon = new ImageIcon(Move.getInfoIcon(highlights).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
         JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
         requestFocus();
     }

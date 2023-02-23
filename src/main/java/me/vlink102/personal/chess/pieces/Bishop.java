@@ -5,7 +5,6 @@ import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Piece;
 
 public class Bishop extends Piece {
-
     public Bishop(BoardGUI board, boolean white) {
         super(board, "B", white);
     }
@@ -13,5 +12,10 @@ public class Bishop extends Piece {
     @Override
     public boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture) {
         return isDiagonal(from, to);
+    }
+
+    @Override
+    public int points() {
+        return 3;
     }
 }
