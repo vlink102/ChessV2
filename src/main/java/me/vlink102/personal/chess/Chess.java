@@ -22,7 +22,7 @@ public class Chess extends JLayeredPane {
     }
 
     public Chess(int initialPieceSize) {
-        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, false, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING);
+        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, true, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING);
 
         add(board, JLayeredPane.DEFAULT_LAYER);
     }
@@ -213,7 +213,7 @@ public class Chess extends JLayeredPane {
         resign.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Resign
+                board.resign();
             }
         });
         gameOptions.add(resign);
@@ -222,7 +222,7 @@ public class Chess extends JLayeredPane {
         draw.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Draw
+                board.offerDraw();
             }
         });
         gameOptions.add(draw);
@@ -231,8 +231,8 @@ public class Chess extends JLayeredPane {
         abort.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (board.getHistory() == null || board.getHistory().size() <= 1) {
-                    // TODO Abort
+                if (board.getHistory() == null || board.getHistory().size() <= 2) {
+                    board.abort();
                 }
             }
         });

@@ -7,6 +7,10 @@
     <list default="true" id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="stuff">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ColorScheme.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ColorScheme.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Move.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Move.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/PieceInteraction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/PieceInteraction.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +67,7 @@
   <component name="RunManager">
     <configuration name="me.vlink102.personal.chess.Chess" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="me.vlink102.personal.chess.Chess" />
-      <module name="ChessTesting" />
+      <module name="ChessV2" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="me.vlink102.personal.chess.*" />
@@ -103,6 +107,7 @@
       <workItem from="1677060866171" duration="17184000" />
       <workItem from="1677086181315" duration="2536000" />
       <workItem from="1677088725664" duration="59459000" />
+      <workItem from="1677273233357" duration="11626000" />
     </task>
     <task id="LOCAL-00001" summary="stuff">
       <created>1674428968387</created>
@@ -200,13 +205,13 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/ChessV2$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1677086286117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/Chess$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1676929617502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/ChessTesting$Chess.ic" NAME="Chess Coverage Results" MODIFIED="1674336826244" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/Chess$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1676929617502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/ChessV2$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1677086286117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
   </component>

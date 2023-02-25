@@ -25,6 +25,7 @@ public record ColorScheme(Color light, Color dark, Color movedHighlight, Color b
             case BLUE_HIGHLIGHT -> new Color(82, 176, 220, 204);
             case GREEN_HIGHLIGHT -> new Color(172, 206, 89, 204);
 
+            case CUSTOM_HIGHLIGHT -> null;
             case MOVE, SELECTED -> getMoved();
             case AVAILABLE -> new Color(0, 0, 0, 25);
         };

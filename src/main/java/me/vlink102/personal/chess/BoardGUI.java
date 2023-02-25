@@ -22,7 +22,8 @@ public class BoardGUI extends JPanel {
     private int pieceSize;
     private Piece[][] gamePieces;
     private Move.MoveHighlights[][] highlightedSquares;
-    private boolean[][] moveHighlights;
+    private Move.MoveHighlights[][] highlightIconAccompaniment;
+    private Move.MoveHighlights[][] moveHighlights;
     private Move.InfoIcons[][] gameHighlights;
     private boolean playAsWhite;
     private BoardView view;
@@ -64,7 +65,13 @@ public class BoardGUI extends JPanel {
         DRAW_BY_AGREEMENT,
         RESIGNATION_WHITE,
         RESIGNATION_BLACK,
-        ILLEGAL_POSITION
+        ILLEGAL_POSITION,
+        ABORTED_WHITE,
+        ABORTED_BLACK,
+        ABANDONMENT_WHITE,
+        ABANDONMENT_BLACK,
+        TIME_WHITE,
+        TIME_BLACK
     }
 
     public enum BoardView {
@@ -113,7 +120,8 @@ public class BoardGUI extends JPanel {
         this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
         this.gamePieces = new Piece[8][8];
         this.highlightedSquares = new Move.MoveHighlights[8][8];
-        this.moveHighlights = new boolean[8][8];
+        this.highlightIconAccompaniment = new Move.MoveHighlights[8][8];
+        this.moveHighlights = new Move.MoveHighlights[8][8];
         this.gameHighlights = new Move.InfoIcons[8][8];
 
         this.halfMoveClock = 0;
@@ -215,6 +223,13 @@ public class BoardGUI extends JPanel {
                 repaint();
             }
         });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_4, 0, false), "show-pressured-tiles", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                displayPieces();
+                repaint();
+            }
+        });
 
         setLayout(new GridLayout(8, 8));
         for (int rank = 0; rank < 8; rank++) {
@@ -224,6 +239,9 @@ public class BoardGUI extends JPanel {
                 add(square);
             }
         }
+
+        Move.loadCachedIcons(pieceSize);
+        Move.loadCachedHighlights(pieceSize);
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -353,6 +371,9 @@ public class BoardGUI extends JPanel {
 
             addImportHistory();
 
+            displayPieces();
+            repaint();
+
             if (bothKingsInCheck(gamePieces)) {
                 chess.createPopUp("Warning: Both kings are in check", "Illegal game state", Move.MoveHighlights.MISTAKE);
                 gameOver = GameOverType.ILLEGAL_POSITION;
@@ -364,11 +385,8 @@ public class BoardGUI extends JPanel {
                 gameOver = GameOverType.CHECKMATE_WHITE;
             } else {
                 chess.createPopUp("Success!", "Loaded game state", Move.MoveHighlights.EXCELLENT);
-                gameOver = null;
+                gameOver = gameOver();
             }
-
-            displayPieces();
-            repaint();
         } else {
             String result = fixFENString(FEN);
             if (result == null) {
@@ -1091,7 +1109,7 @@ public class BoardGUI extends JPanel {
                         Piece clickedPiece = gamePieces[clicked.row()][clicked.col()];
                         if (selectedPiece.isWhite() == playAsWhite) {
                             if (clickedPiece.isWhite() != playAsWhite) {
-                                if (whiteTurn == playAsWhite) {
+                                if (whiteTurn == playAsWhite && pieceInteraction.tileSelected != null) {
                                     if (pieceInteraction.tileSelected.equals(tileSelected)) {
                                         for (Move move : moves) {
                                             if (move.getTo().equals(clicked)) {
@@ -1126,13 +1144,13 @@ public class BoardGUI extends JPanel {
                     BoardCoordinate coordinate = new BoardCoordinate(r1, f1);
                     if (f0 == f1 && r0 == r1) {
                         if (e.isAltDown()) {
-                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.BLUE_HIGHLIGHT);
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.BLUE_HIGHLIGHT, false, false);
                         } else if (e.isControlDown()) {
-                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.ORANGE_HIGHLIGHT);
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.ORANGE_HIGHLIGHT, false, false);
                         } else if (e.isShiftDown()) {
-                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.GREEN_HIGHLIGHT);
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.GREEN_HIGHLIGHT, false, false);
                         } else {
-                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.HIGHLIGHT);
+                            highlight(coordinate.row(), coordinate.col(), Move.MoveHighlights.HIGHLIGHT, false, false);
                         }
 
                         x0h = 0;
@@ -1185,7 +1203,8 @@ public class BoardGUI extends JPanel {
     }
 
     public void moveHighlight(BoardCoordinate from, BoardCoordinate to) {
-        moveHighlights = new boolean[8][8];
+        moveHighlights = new Move.MoveHighlights[8][8];
+        highlightIconAccompaniment = new Move.MoveHighlights[8][8];
 
         int r2 = view == BoardView.WHITE ? 7 - from.row() : from.row();
         int c2 = view == BoardView.WHITE ? from.col() : 7 - from.col();
@@ -1201,11 +1220,11 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        highlight(r2, c2, Move.MoveHighlights.MOVE);
-        highlight(r3, c3, Move.MoveHighlights.MOVE);
+        highlight(r2, c2, Move.MoveHighlights.MOVE, true, true);
+        highlight(r3, c3, Move.MoveHighlights.MOVE, false, true);
     }
 
-    public void highlight(int row, int col, Move.MoveHighlights type) {
+    public void highlight(int row, int col, Move.MoveHighlights type, boolean from, boolean isMoveHighlight) {
         switch (view) {
             case BLACK -> col = 7 - col;
             case WHITE -> row = 7 - row;
@@ -1234,8 +1253,11 @@ public class BoardGUI extends JPanel {
                 }
             }
             selected = tileSelected != null ? gamePieces[tileSelected.row()][tileSelected.col()] : null;
-        } else if (type == Move.MoveHighlights.MOVE) {
-            moveHighlights[row][col] = true;
+        } else if (isMoveHighlight) {
+            moveHighlights[row][col] = type;
+            if (!from) {
+                highlightIconAccompaniment[row][col] = type;
+            }
         } else {
             if (type == highlightedSquares[row][col]) {
                 highlightedSquares[row][col] = null;
@@ -1385,15 +1407,9 @@ public class BoardGUI extends JPanel {
                 if (highlightedSquares[row][col] != null) {
                     g.setColor(scheme.getHighlight(highlightedSquares[row][col]));
                     g.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
-                } else if (moveHighlights[row][col]) {
-                    g.setColor(scheme.getHighlight(Move.MoveHighlights.MOVE));
+                } else if (moveHighlights[row][col] != null) {
+                    g.setColor(scheme.getHighlight(moveHighlights[row][col]));
                     g.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
-                }
-
-                if (gameHighlights[row][col] != null && Move.getInfoIcon(gameHighlights[row][col]) != null) {
-                    displayIcon(g, new BoardCoordinate(r1, c1), gameHighlights[row][col]);
-                } else if (highlightedSquares[row][col] != null && Move.getMoveHighlightIcon(highlightedSquares[row][col]) != null) {
-                    displayIcon(g, new BoardCoordinate(r1, c1), highlightedSquares[row][col]);
                 }
 
                 for (Move move : moves) {
@@ -1421,6 +1437,18 @@ public class BoardGUI extends JPanel {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                int r1 = view == BoardView.WHITE ? 7 - i : i;
+                int c1 = view == BoardView.WHITE ? j : 7 - j;
+                if (gameHighlights[i][j] != null && Move.cachedIcons.get(gameHighlights[i][j]) != null) {
+                    displayIcon(g, new BoardCoordinate(r1, c1), gameHighlights[i][j]);
+                } else if (highlightIconAccompaniment[i][j] != null && Move.cachedHighlights.get(highlightIconAccompaniment[i][j]) != null) {
+                    displayIcon(g, new BoardCoordinate(r1, c1), highlightIconAccompaniment[i][j]);
                 }
             }
         }
@@ -1653,69 +1681,25 @@ public class BoardGUI extends JPanel {
             if (piece.isWhite()) {
                 return null;
             } else {
-                return getTradeType(piece, whiteAttackingPoints, blackAttackingPoints, whiteGainedPoints, blackGainedPoints, true);
-            }
-        } else {
-            if (piece.isWhite()) {
-                return getTradeType(piece, whiteAttackingPoints, blackAttackingPoints, whiteGainedPoints, blackGainedPoints, false);
-            } else {
-                return null;
-            }
-        }
-    }
-
-    private int[] insert(int[] points, int toInsert) {
-        List<Integer> newPoints = new ArrayList<>();
-        for (int point : points) {
-            newPoints.add(point);
-        }
-        newPoints.add(toInsert);
-
-        int[] result = new int[newPoints.size()];
-
-        for (int i = 0; i < newPoints.size(); i++) {
-            result[i] = newPoints.get(i);
-        }
-
-        Arrays.sort(result);
-        return result;
-    }
-
-    private TradeType getTradeType(Piece piece, int[] whiteAttackingPoints, int[] blackAttackingPoints, int whiteGainedPoints, int blackGainedPoints, boolean whiteToMove) {
-        if (whiteToMove) { // fixme TODO
-            if (!piece.isWhite()) {
                 blackAttackingPoints = insert(blackAttackingPoints, piece.points());
+                int x = Math.min(blackAttackingPoints.length, whiteAttackingPoints.length);
+                for (int i = 0; i < x; i++) {
+                    whiteGainedPoints += blackAttackingPoints[i];
+                    blackGainedPoints += whiteAttackingPoints[i];
+                }
             }
         } else {
             if (piece.isWhite()) {
                 whiteAttackingPoints = insert(whiteAttackingPoints, piece.points());
-            }
-        }
-        if (whiteAttackingPoints.length == blackAttackingPoints.length) {
-            for (int i = 0; i < whiteAttackingPoints.length; i++) {
-                whiteGainedPoints += blackAttackingPoints[i];
-                blackGainedPoints += whiteAttackingPoints[i];
-            }
-        } else {
-            if (whiteAttackingPoints.length > blackAttackingPoints.length) {
-                for (int i = 0; i < blackAttackingPoints.length; i++) {
+                int x = Math.min(blackAttackingPoints.length, whiteAttackingPoints.length);
+                for (int i = 0; i < x; i++) {
                     whiteGainedPoints += blackAttackingPoints[i];
                     blackGainedPoints += whiteAttackingPoints[i];
                 }
             } else {
-                for (int i = 0; i < whiteAttackingPoints.length; i++) {
-                    blackGainedPoints += whiteAttackingPoints[i];
-                    whiteGainedPoints += blackAttackingPoints[i];
-                }
+                return null;
             }
         }
-
-        System.out.println();
-        System.out.println(Arrays.toString(whiteAttackingPoints));
-        System.out.println(Arrays.toString(blackAttackingPoints));
-        System.out.println(whiteGainedPoints);
-        System.out.println(blackGainedPoints);
-        System.out.println();
 
         if (whiteGainedPoints == blackGainedPoints) {
             return TradeType.EQUAL;
@@ -1726,6 +1710,22 @@ public class BoardGUI extends JPanel {
                 return TradeType.BLACK;
             }
         }
+    }
+
+    private int[] insert(int[] points, int toInsert) {
+        List<Integer> newPoints = new ArrayList<>();
+        newPoints.add(toInsert);
+        for (int point : points) {
+            newPoints.add(point);
+        }
+
+        int[] result = new int[newPoints.size()];
+
+        for (int i = 0; i < newPoints.size(); i++) {
+            result[i] = newPoints.get(i);
+        }
+
+        return result;
     }
 
     public boolean isHanging(Piece[][] board, BoardCoordinate tile) {
@@ -1777,7 +1777,7 @@ public class BoardGUI extends JPanel {
 
     public List<Move> availableMoves(Piece[][] board, Piece piece, BoardCoordinate coordinate, boolean isCheckingForMate) {
         List<Move> moves = new ArrayList<>();
-        if (piece == null || coordinate == null) {
+        if (piece == null || coordinate == null || gameOver != null) {
             return moves;
         }
         for (int i = 0; i < 8; i++) {
@@ -1863,13 +1863,16 @@ public class BoardGUI extends JPanel {
     }
 
     public boolean kingIsCheckmated(Piece[][] board, boolean white) {
-        List<Move> moves = getAllValidMoves(board, white, true);
-        for (Move move : moves) {
-            if (kingAvoidsCheck(board, move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo())) {
-                return false;
+        if (kingIsInCheck(board, white)) {
+            List<Move> moves = getAllValidMoves(board, white, true);
+            for (Move move : moves) {
+                if (kingAvoidsCheck(board, move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo())) {
+                    return false;
+                }
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     public List<Move> getAllValidMoves(Piece[][] board, boolean white, boolean isCheckingForMate) {
@@ -1891,7 +1894,7 @@ public class BoardGUI extends JPanel {
             for (int j = 0; j < 8; j++) {
                 BoardCoordinate from = new BoardCoordinate(i, j);
                 Piece pieceFrom = board[i][j];
-                if (pieceFrom != null && !from.equals(tile)) {
+                if (pieceFrom != null && pieceFrom != piece && !from.equals(tile)) {
                     if (pieceFrom.isWhite() == white && pieceFrom.validMove(from, tile, true) && notBlocked(board, from, tile)) {
                         allMoves.add(new Move.SimpleMove(pieceFrom, from, tile));
                     }
@@ -2173,14 +2176,14 @@ public class BoardGUI extends JPanel {
 
     public boolean isStaleMate(Piece[][] board) {
         List<Move> moves = getAllValidMoves(board, whiteTurn, false);
-        return moves.isEmpty();
+        return moves.isEmpty() && !kingIsInCheck(board, whiteTurn);
     }
 
     public boolean isDrawByRepetition() {
         for (String s : gameFENHistory) {
             int c = 0;
             for (String s1 : gameFENHistory) {
-                if (s.equals(s1)) {
+                if (s.split(" ")[0].equals(s1.split(" ")[0])) {
                     c++;
                 }
             }
@@ -2200,11 +2203,15 @@ public class BoardGUI extends JPanel {
     }
 
     public boolean isDrawByInsufficientMaterial(String truncated) {
+        String k_vs_K = anagramRegex("kK");
         String k_vs_KN = anagramRegex("kKN");
         String kn_vs_K = anagramRegex("knK");
         String k_vs_KB = anagramRegex("kKB");
         String kb_vs_K = anagramRegex("kbK");
 
+        if (truncated.matches(k_vs_K)) {
+            return true;
+        }
         if (truncated.matches(k_vs_KN)) {
             return true;
         }
@@ -2245,65 +2252,105 @@ public class BoardGUI extends JPanel {
     }
 
     public void displayIcon(Graphics g, BoardCoordinate coordinate, Move.MoveHighlights icon) {
-        if (coordinate.row() == 0 && view == BoardView.BLACK || coordinate.row() == 7 && view == BoardView.WHITE) {
-            g.drawImage(Objects.requireNonNull(Move.getMoveHighlightIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
-        } else {
-            g.drawImage(Objects.requireNonNull(Move.getMoveHighlightIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
+        if (Move.cachedHighlights.get(icon) != null) {
+            if ((coordinate.row() == 0 && view == BoardView.BLACK) || (coordinate.row() == 7 && view == BoardView.WHITE)) {
+                g.drawImage(Move.cachedHighlights.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
+            } else {
+                g.drawImage(Move.cachedHighlights.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
+            }
         }
     }
 
     public void displayIcon(Graphics g, BoardCoordinate coordinate, Move.InfoIcons icon) {
-        if (coordinate.row() == 0 && view == BoardView.BLACK || coordinate.row() == 7 && view == BoardView.WHITE) {
-            g.drawImage(Objects.requireNonNull(Move.getInfoIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
-        } else {
-            g.drawImage(Objects.requireNonNull(Move.getInfoIcon(icon)).getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
+        if (Move.cachedIcons.get(icon) != null) {
+            if ((coordinate.row() == 0 && view == BoardView.BLACK) || (coordinate.row() == 7 && view == BoardView.WHITE)) {
+                g.drawImage(Move.cachedIcons.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
+            } else {
+                g.drawImage(Move.cachedIcons.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
+            }
         }
     }
 
     public void createGameOverScreen(GameOverType type) {
-        BoardCoordinate whiteKing = getKing(getSide(true, gamePieces));
-        BoardCoordinate blackKing = getKing(getSide(false, gamePieces));
-        switch (type) {
-            case CHECKMATE_BLACK -> {
-                highlightedSquares[whiteKing.row()][whiteKing.col()] = Move.MoveHighlights.CHECKMATE;
-                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
-                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+        if (type != null) {
+            BoardCoordinate whiteKing = getKing(getSide(true, gamePieces));
+            BoardCoordinate blackKing = getKing(getSide(false, gamePieces));
+            switch (type) {
+                case CHECKMATE_BLACK -> {
+                    highlightedSquares[whiteKing.row()][whiteKing.col()] = Move.MoveHighlights.CHECKMATE;
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+                }
+                case CHECKMATE_WHITE -> {
+                    highlightedSquares[blackKing.row()][blackKing.col()] = Move.MoveHighlights.CHECKMATE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+                }
+                case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                }
+                case RESIGNATION_BLACK -> {
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+                }
+                case RESIGNATION_WHITE -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+                }
             }
-            case CHECKMATE_WHITE -> {
-                highlightedSquares[blackKing.row()][blackKing.col()] = Move.MoveHighlights.CHECKMATE;
-                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
-                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
-            }
-            case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
-                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
-                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
-            }
-            case RESIGNATION_BLACK -> {
-                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
-                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
-            }
-            case RESIGNATION_WHITE -> {
-                gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
-                gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+            displayPieces();
+            repaint();
+            switch (type) {
+                case CHECKMATE_BLACK -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE));
+                case CHECKMATE_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK));
+                case STALEMATE -> chess.createPopUp("Draw by stalemate", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+                case FIFTY_MOVE_RULE -> chess.createPopUp("Draw by 50-move-rule", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+                case ILLEGAL_POSITION -> chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE);
+                case DRAW_BY_AGREEMENT -> chess.createPopUp("Draw by agreement", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+                case RESIGNATION_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
+                case RESIGNATION_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
+                case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+                case INSUFFICIENT_MATERIAL -> chess.createPopUp("Draw by insufficient material", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
+                case TIME_BLACK -> {
+                    if (playAsWhite) {
+                        chess.createPopUp("You Lost: Black wins on time", "Game Over", Move.MoveHighlights.FORCED);
+                    } else {
+                        chess.createPopUp("You Won: Black wins on time", "Game Over", Move.InfoIcons.WINNER);
+                    }
+                }
+                case TIME_WHITE -> {
+                    if (playAsWhite) {
+                        chess.createPopUp("You Won: White wins on time", "Game Over", Move.InfoIcons.WINNER);
+                    } else {
+                        chess.createPopUp("You Lost: White wins on time", "Game Over", Move.MoveHighlights.FORCED);
+                    }
+                }
+                case ABORTED_BLACK -> chess.createPopUp("Game ended: Black aborted game", "Game Over", Move.MoveHighlights.FORCED);
+                case ABORTED_WHITE -> chess.createPopUp("Game ended: White aborted game", "Game Over", Move.MoveHighlights.FORCED);
+                case ABANDONMENT_BLACK -> {
+                    if (playAsWhite) {
+                        chess.createPopUp("You Lost: Black wins by abandonment", "Game Over", Move.MoveHighlights.FORCED);
+                    } else {
+                        chess.createPopUp("You Won: Black wins by abandonment", "Game Over", Move.InfoIcons.WINNER);
+                    }
+                }
+                case ABANDONMENT_WHITE -> {
+                    if (playAsWhite) {
+                        chess.createPopUp("You Won: White wins by abandonment", "Game Over", Move.InfoIcons.WINNER);
+                    } else {
+                        chess.createPopUp("You Lost: White wins by abandonment", "Game Over", Move.MoveHighlights.FORCED);
+                    }
+                }
             }
         }
-        displayPieces();
-        repaint();
-        switch (type) {
-            case CHECKMATE_BLACK -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE));
-            case CHECKMATE_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK));
-            case STALEMATE -> chess.createPopUp("Draw by stalemate", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-            case FIFTY_MOVE_RULE -> chess.createPopUp("Draw by 50-move-rule", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-            case ILLEGAL_POSITION -> chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE);
-            case DRAW_BY_AGREEMENT -> chess.createPopUp("Draw by agreement", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-            case RESIGNATION_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
-            case RESIGNATION_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
-            case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-            case INSUFFICIENT_MATERIAL -> chess.createPopUp("Draw by insufficient material", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-        }
+
     }
 
     public GameOverType gameOver() {
+        if (isStaleMate(gamePieces)) {
+            return GameOverType.STALEMATE;
+        }
         if (kingIsCheckmated(gamePieces, playAsWhite)) {
             return playAsWhite ? GameOverType.CHECKMATE_BLACK : GameOverType.CHECKMATE_WHITE;
         }
@@ -2312,9 +2359,6 @@ public class BoardGUI extends JPanel {
         }
         if (fiftyMoveRule >= 50) {
             return GameOverType.FIFTY_MOVE_RULE;
-        }
-        if (isStaleMate(gamePieces)) {
-            return GameOverType.STALEMATE;
         }
         if (isDrawByRepetition()) {
             return GameOverType.DRAW_BY_REPETITION;
@@ -2398,13 +2442,13 @@ public class BoardGUI extends JPanel {
                         }
                         endComputerTurn();
                     }
-                }, 500);
+                }, 250);
                 case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
                         swapPlaySide();
                     }
-                }, 500);
+                }, 250);
             }
             displayPieces();
             repaint();
@@ -2429,8 +2473,6 @@ public class BoardGUI extends JPanel {
                         break;
                     }
                 }
-                displayPieces();
-                repaint();
             }
 
             /*
@@ -2472,9 +2514,32 @@ public class BoardGUI extends JPanel {
             }
              */
         }
+        displayPieces();
+        repaint();
         
     }
 
+    public void resign() {
+        gameOver = playAsWhite ? GameOverType.RESIGNATION_WHITE : GameOverType.RESIGNATION_BLACK;
+        createGameOverScreen(gameOver);
+    }
+
+    public void offerDraw() {
+        switch (opponentType) {
+            case AI_2, AI_1 -> {
+                // TODO if ai is up material then dont (random chance like 20%) idk
+            }
+            case MANUAL, AUTO_SWAP -> {
+                gameOver = GameOverType.DRAW_BY_AGREEMENT;
+                createGameOverScreen(gameOver);
+            }
+        }
+    }
+
+    public void abort() {
+        gameOver = playAsWhite ? GameOverType.ABORTED_WHITE : GameOverType.ABORTED_BLACK;
+        createGameOverScreen(gameOver);
+    }
 
     public List<Move> getHistory() {
         return history;
@@ -2522,5 +2587,9 @@ public class BoardGUI extends JPanel {
 
     public HintStyle.Move getMoveStyle() {
         return moveStyle;
+    }
+
+    public GameOverType getGameOver() {
+        return gameOver;
     }
 }

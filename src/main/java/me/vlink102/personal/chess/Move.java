@@ -6,6 +6,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class Move {
@@ -52,6 +53,32 @@ public class Move {
         return null;
     }
 
+    public static HashMap<MoveHighlights, Image> cachedHighlights = new HashMap<>();
+
+    public static void loadCachedHighlights(int pieceSize) {
+        for (MoveHighlights value : MoveHighlights.values()) {
+            Image image = getMoveHighlightIcon(value);
+            if (image == null) {
+                cachedHighlights.put(value, null);
+            } else {
+                cachedHighlights.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_FAST));
+            }
+        }
+    }
+
+    public static HashMap<InfoIcons, Image> cachedIcons = new HashMap<>();
+
+    public static void loadCachedIcons(int pieceSize) {
+        for (InfoIcons value : InfoIcons.values()) {
+            Image image = getInfoIcon(value);
+            if (image == null) {
+                cachedIcons.put(value, null);
+            } else {
+                cachedIcons.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_FAST));
+            }
+        }
+    }
+
     public enum MoveHighlights {
         BRILLIANT(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpCWiDaX.png"),
         GREAT(false, "great"),
@@ -72,6 +99,8 @@ public class Move {
         ORANGE_HIGHLIGHT(false, null),
         BLUE_HIGHLIGHT(false, null),
         GREEN_HIGHLIGHT(false, null),
+
+        CUSTOM_HIGHLIGHT(false, null),
 
         MOVE(false, null),
         SELECTED(false, null),
