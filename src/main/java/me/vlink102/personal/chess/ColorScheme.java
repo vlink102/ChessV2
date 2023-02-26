@@ -18,17 +18,32 @@ public record ColorScheme(Color light, Color dark, Color movedHighlight, Color b
             case MISSED_WIN -> new Color(219, 172, 22, 127);
             case FORCED -> new Color(164, 194, 91, 127);
 
-            case CHECKMATE -> new Color(128, 0, 0);
-            case CHECK, HIGHLIGHT -> new Color(235, 97, 80, 204);
+            case HIGHLIGHT, HANGING_BAD, TRADE_PIECE_BAD, TRADE_POINT_BAD -> new Color(235, 97, 80, 204);
 
-            case ORANGE_HIGHLIGHT -> new Color(255, 170, 0, 204);
+            case ORANGE_HIGHLIGHT, TRADE_POINT_EQUAL, TRADE_PIECE_EQUAL -> new Color(255, 170, 0, 204);
             case BLUE_HIGHLIGHT -> new Color(82, 176, 220, 204);
-            case GREEN_HIGHLIGHT -> new Color(172, 206, 89, 204);
+            case GREEN_HIGHLIGHT, HANGING_GOOD, TRADE_PIECE_GOOD, TRADE_POINT_GOOD -> new Color(172, 206, 89, 204);
 
             case CUSTOM_HIGHLIGHT -> null;
             case MOVE, SELECTED -> getMoved();
             case AVAILABLE -> new Color(0, 0, 0, 25);
         };
+    }
+
+    public enum StaticColors {
+        CHECK(new Color(235, 97, 80, 204)),
+        MATE(new Color(128, 0, 0));
+
+        private final Color color;
+
+        StaticColors(Color color) {
+            this.color = color;
+
+        }
+
+        public Color getColor() {
+            return color;
+        }
     }
 
     public Color getVignette() {

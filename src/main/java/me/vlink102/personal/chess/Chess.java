@@ -21,76 +21,64 @@ public class Chess extends JLayeredPane {
         DEFAULT
     }
 
-    public Chess(int initialPieceSize) {
-        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN,initialPieceSize, true, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING);
+    public Chess(int initialPieceSize, int initialBoardSize) {
+        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN, initialPieceSize, true, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING, initialBoardSize);
 
         add(board, JLayeredPane.DEFAULT_LAYER);
     }
 
-    public static void initUI(int initialPieceSize) {
-        Dimension initialSize = new Dimension(initialPieceSize * 8, initialPieceSize * 8);
+    public static void initUI(int initialPieceSize, int initialBoardSize) {
+        Dimension initialSize = new Dimension(initialPieceSize * initialBoardSize, initialPieceSize * initialBoardSize);
         JFrame frame = new JFrame("Chess - vlink102 - Prototype v5");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.add(new Chess(initialPieceSize));
+        frame.add(new Chess(initialPieceSize, initialBoardSize));
         frame.setResizable(true);
         frame.getContentPane().setPreferredSize(initialSize);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setResizable(true);
 
-        frame.setMinimumSize(new Dimension(32 * 8, 32 * 8));
+        frame.setMinimumSize(new Dimension(32 * initialBoardSize, 32 * initialBoardSize));
         frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
 
         frame.getContentPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                board.setPieceSize(frame.getContentPane().getHeight() / 8);
+                board.setPieceSize(frame.getContentPane().getHeight() / board.getBoardSize());
 
                 board.setPreferredSize(new Dimension(board.getDimension(), board.getDimension()));
-                board.setBounds(0, 0, board.getPieceSize() * 8, board.getPieceSize() * 8);
+                board.setBounds(0, 0, board.getPieceSize() * board.getBoardSize(), board.getPieceSize() * board.getBoardSize());
 
-                board.repaint();
+                OnlineAssets.updateSavedImage(board);
                 board.displayPieces();
+                board.repaint();
             }
         });
+
+        Timer timer = new Timer(250, Chess::refreshGUI);
+        timer.start();
+        lastSize = board.getPieceSize();
 
         frame.setJMenuBar(getMenu());
-
-        board.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                char c = e.getKeyChar();
-                switch (e.getKeyChar()) {
-                    case '[' -> board.setView(BoardGUI.BoardView.BLACK);
-                    case ']' -> board.setView(BoardGUI.BoardView.WHITE);
-                    case '=' -> board.setView(board.isPlayAsWhite() ? BoardGUI.BoardView.WHITE : BoardGUI.BoardView.BLACK);
-                    case 'h' -> board.showHangingPieces();
-                    case 't' -> board.showTrades(true);
-                    case 'y' -> board.showTrades(false);
-                }
-                if (c == '-' || c == '=' || c == '[' || c == ']' || c == 'h' || c == 't' || c == 'y') {
-                    board.displayPieces();
-                    board.repaint();
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-        });
-
-
 
         frame.setSize(initialSize);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         board.requestFocus();
+    }
+
+    static int lastSize;
+
+    private static void refreshGUI(ActionEvent event) {
+        if (lastSize != board.getPieceSize() && board.getGameOver() == null) {
+            OnlineAssets.updatePieceDesigns(board);
+
+            Move.loadCachedIcons(board.getPieceSize());
+            Move.loadCachedHighlights(board.getPieceSize());
+
+            board.displayPieces();
+            board.repaint();
+            lastSize = board.getPieceSize();
+        }
     }
 
     public static JMenuBar getMenu() {
@@ -538,7 +526,7 @@ public class Chess extends JLayeredPane {
     }
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> Chess.initUI(100));
+        EventQueue.invokeLater(() -> Chess.initUI(50, 20));
     }
 
     public enum OS {

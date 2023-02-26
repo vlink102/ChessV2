@@ -41,17 +41,20 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
             int r1 = y / boardGUI.getPieceSize();
 
             switch (boardGUI.getView()) {
-                case BLACK -> f1 = 7 - f1;
-                case WHITE -> r1 = 7 - r1;
+                case BLACK -> f1 = BoardGUI.decBoardSize - f1;
+                case WHITE -> r1 = BoardGUI.decBoardSize - r1;
             }
 
             BoardCoordinate clicked = new BoardCoordinate(r1, f1);
-            List<Move> moves = boardGUI.availableMoves(boardGUI.getGamePieces(), boardGUI.getSelected(), boardGUI.getTileSelected(), false);
+            List<Move> moves = (boardGUI.getSelected() == null || boardGUI.getTileSelected() == null) ? new ArrayList<>() : boardGUI.availableMoves(boardGUI.getGamePieces(), boardGUI.getSelected(), boardGUI.getTileSelected(), false);
 
             switch (boardGUI.getMoveMethod()) {
                 case BOTH -> {
                     movedPiece = null;
-                    if (updateTileSelected(clicked, moves)) return;
+                    if (updateTileSelected(clicked, moves)) {
+                        chess.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                        return;
+                    }
 
                     addToDragLayer(e);
                 }
@@ -158,12 +161,12 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
 
                     switch (boardGUI.getView()) {
                         case BLACK -> {
-                            f0 = 7 - f0;
-                            f1 = 7 - f1;
+                            f0 = BoardGUI.decBoardSize - f0;
+                            f1 = BoardGUI.decBoardSize - f1;
                         }
                         case WHITE -> {
-                            r0 = 7 - r0;
-                            r1 = 7 - r1;
+                            r0 = BoardGUI.decBoardSize - r0;
+                            r1 = BoardGUI.decBoardSize - r1;
                         }
                     }
 

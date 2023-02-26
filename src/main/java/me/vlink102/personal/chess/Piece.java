@@ -12,7 +12,7 @@ public abstract class Piece {
         this.abbr = abbr;
         this.white = white;
         this.moves = 0;
-        this.icon = OnlineAssets.getPiece(board, this);
+        this.icon = OnlineAssets.getSavedPiece(board, this);
     }
 
     public abstract boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture);

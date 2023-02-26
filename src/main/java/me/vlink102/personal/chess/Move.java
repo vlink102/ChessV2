@@ -3,7 +3,9 @@ package me.vlink102.personal.chess;
 import me.vlink102.personal.chess.pieces.Pawn;
 
 import javax.imageio.ImageIO;
+import javax.tools.Tool;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
@@ -22,6 +24,11 @@ public class Move {
 
     private final boolean isImport;
     private final String importContent;
+
+    private static final String GAME_ICONS_DIR = "game-icons/";
+    private static final String MOVE_RATING_DIR = "game-icons/move-ratings/";
+    private static final String TRADE_ICONS_DIR = "game-icons/trade-icons/";
+    private static final String SPECIAL_PIECES_DIR = "special-pieces/";
 
     public static Image getMoveHighlightIcon(MoveHighlights highlights) {
         try {
@@ -53,52 +60,74 @@ public class Move {
         return null;
     }
 
+    public static Image getResource(String string) {
+        URL res = Chess.class.getResource(string);
+        return Toolkit.getDefaultToolkit().getImage(res);
+    }
+
+    public static BufferedImage getBufferedResource(String string) {
+        URL res = Chess.class.getResource(string);
+        try {
+            return ImageIO.read(Objects.requireNonNull(res));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static HashMap<MoveHighlights, Image> cachedHighlights = new HashMap<>();
 
-    public static void loadCachedHighlights(int pieceSize) {
+    public static synchronized void loadCachedHighlights(int pieceSize) {
         for (MoveHighlights value : MoveHighlights.values()) {
             Image image = getMoveHighlightIcon(value);
             if (image == null) {
                 cachedHighlights.put(value, null);
             } else {
-                cachedHighlights.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_FAST));
+                cachedHighlights.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH));
             }
         }
     }
 
     public static HashMap<InfoIcons, Image> cachedIcons = new HashMap<>();
 
-    public static void loadCachedIcons(int pieceSize) {
+    public static synchronized void loadCachedIcons(int pieceSize) {
         for (InfoIcons value : InfoIcons.values()) {
             Image image = getInfoIcon(value);
             if (image == null) {
                 cachedIcons.put(value, null);
             } else {
-                cachedIcons.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_FAST));
+                cachedIcons.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH));
             }
         }
     }
 
     public enum MoveHighlights {
-        BRILLIANT(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpCWiDaX.png"),
-        GREAT(false, "great"),
-        BEST(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpKAZWos.png"),
-        EXCELLENT(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpOnfDmd.png"),
-        GOOD(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phplIugqj.png"),
-        BOOK(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpfMwiZv.png"),
-        INACCURACY(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phppqqBrb.png"),
-        MISTAKE(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpEgRwsV.png"),
-        BLUNDER(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpGZ1eLb.png"),
-        MISSED_WIN(true, "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpcXUmZL.png"),
-        FORCED(false, "forced"),
-
-        CHECK(false, null),
-        CHECKMATE(false, null),
+        BRILLIANT(false, MOVE_RATING_DIR + "brilliant"),
+        GREAT(false, MOVE_RATING_DIR + "great"),
+        BEST(false, MOVE_RATING_DIR + "best"),
+        EXCELLENT(false, MOVE_RATING_DIR + "excellent"),
+        GOOD(false, MOVE_RATING_DIR + "good"),
+        BOOK(false, MOVE_RATING_DIR + "book"),
+        INACCURACY(false, MOVE_RATING_DIR + "inaccuracy"),
+        MISTAKE(false, MOVE_RATING_DIR + "mistake"),
+        BLUNDER(false, MOVE_RATING_DIR + "blunder"),
+        MISSED_WIN(false, MOVE_RATING_DIR + "missed_win"),
+        FORCED(false, MOVE_RATING_DIR + "forced"),
 
         HIGHLIGHT(false,null),
         ORANGE_HIGHLIGHT(false, null),
         BLUE_HIGHLIGHT(false, null),
         GREEN_HIGHLIGHT(false, null),
+
+        HANGING_GOOD(false, TRADE_ICONS_DIR + "free_piece"),
+        HANGING_BAD(false, TRADE_ICONS_DIR + "hanging"),
+
+        TRADE_POINT_EQUAL(false, TRADE_ICONS_DIR + "equal_trade"),
+        TRADE_POINT_GOOD(false, TRADE_ICONS_DIR + "upvote"),
+        TRADE_POINT_BAD(false, TRADE_ICONS_DIR + "downvote"),
+
+        TRADE_PIECE_EQUAL(false, TRADE_ICONS_DIR + "equal_trade"),
+        TRADE_PIECE_GOOD(false, TRADE_ICONS_DIR + "upvote"),
+        TRADE_PIECE_BAD(false, TRADE_ICONS_DIR + "downvote"),
 
         CUSTOM_HIGHLIGHT(false, null),
 
@@ -124,13 +153,16 @@ public class Move {
     }
 
     public enum InfoIcons {
-        CHECKMATE_BLACK(false, "checkmate_black"),
-        CHECKMATE_WHITE(false, "checkmate_white"),
-        DRAW_BLACK(false, "draw_black"),
-        DRAW_WHITE(false, "draw_white"),
-        RESIGN_BLACK(false, "resign_black"),
-        RESIGN_WHITE(false, "resign_white"),
-        WINNER(false, "winner");
+        CHECKMATE_BLACK(false, GAME_ICONS_DIR + "checkmate_black"),
+        CHECKMATE_WHITE(false, GAME_ICONS_DIR + "checkmate_white"),
+        DRAW_BLACK(false, GAME_ICONS_DIR + "draw_black"),
+        DRAW_WHITE(false, GAME_ICONS_DIR + "draw_white"),
+        RESIGN_BLACK(false, GAME_ICONS_DIR + "resign_black"),
+        RESIGN_WHITE(false, GAME_ICONS_DIR + "resign_white"),
+        WINNER(false, GAME_ICONS_DIR + "winner"),
+        TIME_WHITE(false, GAME_ICONS_DIR + "white_time"),
+        TIME_BLACK(false, GAME_ICONS_DIR + "black_time"),
+        ABORTED(false, GAME_ICONS_DIR + "aborted");
 
         private final String iconUrl;
         private final boolean online;

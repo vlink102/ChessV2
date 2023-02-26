@@ -21,6 +21,6 @@ public class King extends Piece {
 
     @Override
     public int points() {
-        return 0;
+        return 10;
     }
 }

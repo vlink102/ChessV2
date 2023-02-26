@@ -5,12 +5,558 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="stuff">
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/SpecialPiece.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/asian/DragonHorse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/asian/DragonKing.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Amazon.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Camel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Elephant.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Empress.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Man.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Minister.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Princess.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/aborted.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/black_time.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/best.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/blunder.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/book.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/brilliant.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/excellent.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/good.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/inaccuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/missed_win.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/mistake.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/trade-icons/downvote.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/trade-icons/equal_trade.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/trade-icons/free_piece.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/trade-icons/hanging.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/trade-icons/upvote.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/game-icons/white_time.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/ba.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bdh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bdk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/be.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bem.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bmi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/bpr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wa.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wdh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wdk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/we.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wem.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wmi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/special-pieces/wpr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/8_bit.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/bases.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/blue.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/brown.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/bubblegum.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/burled_wood.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/dark_wood.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/dash.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/glass.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/graffiti.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/green.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/icy_sea.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/light.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/lolz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/marble.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/metal.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/neon.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/newspaper.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/orange.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/overlay.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/parchment.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/purple.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/red.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/sand.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/sky.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/stone.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/tan.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/tournament.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/translucent.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/boards/walnut.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_chesskid/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_plastic/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_staunton/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/3d_wood/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/8_bit/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/alpha/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bases/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/blindfold/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/book/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/bubblegum/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/cases/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/classic/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/club/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/condal/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/dash/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/game_room/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/glass/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/gothic/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/graffiti/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/icy_sea/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/light/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/lolz/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/marble/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/maya/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/metal/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/modern/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/nature/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neo_wood/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/neon/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/newspaper/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/ocean/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/sky/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/space/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tigers/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/tournament/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/vintage/wr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/bk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/bp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/wb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/wk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/wn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/wp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/wq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/themes/pieces/wood/wr.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardCoordinate.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardCoordinate.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardMatrixRotation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardMatrixRotation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ColorScheme.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ColorScheme.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Move.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Move.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/OnlineAssets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/OnlineAssets.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Piece.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Piece.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/PieceInteraction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/PieceInteraction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/King.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/King.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/checkmate_black.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/checkmate_black.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/checkmate_white.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/checkmate_white.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/draw_black.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/draw_black.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/draw_white.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/draw_white.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/forced.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/forced.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/great.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/move-ratings/great.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/resign_black.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/resign_black.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/resign_white.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/resign_white.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/winner.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/game-icons/winner.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,31 +580,41 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="2Kdbmh3Ta9tjGojpVXIsgKYxe2l" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;extract.method.default.visibility&quot;: &quot;private&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/ethan/Library/Mobile Documents/com~apple~CloudDocs/Misc/Java/ChessTesting/src/main/resources&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;service.view.auto.scroll.to.source&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "extract.method.default.visibility": "private",
+    "last_opened_file_path": "C:/Users/Ethan/IdeaProjects/ChessV2/src/main/resources/special-pieces",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "service.view.auto.scroll.to.source": "true",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/src/main/resources" />
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\special-pieces" />
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons\move-ratings" />
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\themes\pieces" />
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\themes\boards" />
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\themes" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons" />
+      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons\trade-icons" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="me.vlink102.personal.chess" />
@@ -107,7 +663,10 @@
       <workItem from="1677060866171" duration="17184000" />
       <workItem from="1677086181315" duration="2536000" />
       <workItem from="1677088725664" duration="59459000" />
-      <workItem from="1677273233357" duration="11626000" />
+      <workItem from="1677273233357" duration="11869000" />
+      <workItem from="1677318424816" duration="21100000" />
+      <workItem from="1677343145353" duration="15093000" />
+      <workItem from="1677410280259" duration="20141000" />
     </task>
     <task id="LOCAL-00001" summary="stuff">
       <created>1674428968387</created>
@@ -158,7 +717,14 @@
       <option name="project" value="LOCAL" />
       <updated>1677190201516</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="stuff">
+      <created>1677286646095</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1677286646095</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -70,20 +70,20 @@ public class BoardMatrixRotation {
     }
 
     public static void printBoard(Piece[][] board, BoardGUI.BoardView view) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BoardGUI.boardSize; row++) {
+            for (int col = 0; col < BoardGUI.boardSize; col++) {
                 System.out.print((row + col) % 2 == 0 ? "\033[47m" : "\033[40m");
                 switch (view) {
                     case BLACK -> {
-                        if (board[row][7 - col] != null) {
-                            System.out.print(" " + (board[row][7 - col].isWhite() ? "\033[1;95m" : "\033[1;96m") + board[row][7 - col].getAbbr() + " ");
+                        if (board[row][BoardGUI.decBoardSize - col] != null) {
+                            System.out.print(" " + (board[row][BoardGUI.decBoardSize - col].isWhite() ? "\033[1;95m" : "\033[1;96m") + board[row][BoardGUI.decBoardSize - col].getAbbr() + " ");
                         } else {
                             System.out.print("   ");
                         }
                     }
                     case WHITE -> {
-                        if (board[7 - row][col] != null) {
-                            System.out.print(" " + (board[7 - row][col].isWhite() ? "\033[1;95m" : "\033[1;96m") + board[7 - row][col].getAbbr() + " ");
+                        if (board[BoardGUI.decBoardSize - row][col] != null) {
+                            System.out.print(" " + (board[BoardGUI.decBoardSize - row][col].isWhite() ? "\033[1;95m" : "\033[1;96m") + board[BoardGUI.decBoardSize - row][col].getAbbr() + " ");
                         } else {
                             System.out.print("   ");
                         }
