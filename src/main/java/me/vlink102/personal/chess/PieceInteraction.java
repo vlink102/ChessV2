@@ -78,7 +78,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
 
         if (!(componentClicked instanceof JPanel)) {
             movedPiece = (JLabel) componentClicked;
-            movedPiece.setLocation(e.getX() - (boardGUI.getPieceSize() / 2), e.getY() - (boardGUI.getPieceSize() / 2));
+            movedPiece.setLocation(e.getX() - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset + Chess.offSet, e.getY() - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset - Chess.heightOffSet);
 
             chess.add(movedPiece, JLayeredPane.DRAG_LAYER);
             chess.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -213,7 +213,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         y = Math.min(y, yMax);
         y = Math.max(y, 0);
 
-        movedPiece.setLocation(x - (boardGUI.getPieceSize() / 2), y - (boardGUI.getPieceSize() / 2));
+        movedPiece.setLocation(x - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset + Chess.offSet, y - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset - Chess.heightOffSet);
     }
 
     @Override

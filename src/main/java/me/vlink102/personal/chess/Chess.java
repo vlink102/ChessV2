@@ -1,5 +1,8 @@
 package me.vlink102.personal.chess;
 
+import com.github.weisj.darklaf.LafManager;
+import com.github.weisj.darklaf.theme.DarculaTheme;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -8,13 +11,28 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Objects;
 
 public class Chess extends JLayeredPane {
     private static BoardGUI board;
+    public static JFrame frame;
+
+    public static Font def;
+    public static Font bold;
 
     public static boolean shouldRelocateBackline = true;
     public static boolean shouldShowAvailableSquares = true;
     public static boolean shouldShowOppositionAvailableSquares = false;
+
+    public static int boardToFrameOffset = 50;
+    public static int sidePanelWidth = 400;
+
+    public static final int defaultOffset = 20;
+    public static int offSet = 0;
+    public static int heightOffSet = 0;
+
+    public static MenuScheme menuScheme = new MenuScheme(new Color(49,46,43), new Color(39,37,34), new Color(31,30,27), new Color(43,41,39), new Color(64,61,57), new Color(152,151,149));
 
     public enum BoardLayout {
         CHESS960,
@@ -22,38 +40,70 @@ public class Chess extends JLayeredPane {
     }
 
     public Chess(int initialPieceSize, int initialBoardSize) {
-        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN, initialPieceSize, true, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING, initialBoardSize);
+        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN, initialPieceSize, true, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING, BoardGUI.GameType.DEFAULT, BoardGUI.CoordinateDisplayType.OUTSIDE, initialBoardSize);
 
-        add(board, JLayeredPane.DEFAULT_LAYER);
+        add(board, DEFAULT_LAYER);
+        add(board.getSidePanelGUI(), DEFAULT_LAYER);
+        add(board.getCoordinateGUI(), DEFAULT_LAYER);
     }
 
     public static void initUI(int initialPieceSize, int initialBoardSize) {
-        Dimension initialSize = new Dimension(initialPieceSize * initialBoardSize, initialPieceSize * initialBoardSize);
-        JFrame frame = new JFrame("Chess - vlink102 - Prototype v5");
+        LafManager.install(new DarculaTheme());
+        LafManager.setDecorationsEnabled(true);
+
+        Image imageIcon = Move.getResource("/icon.png");
+
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream def = classLoader.getResourceAsStream("fonts/montserrat-700.2213e098.ttf");
+        InputStream bold = classLoader.getResourceAsStream("fonts/montserrat-800.2d88ac8b.ttf");
+        try {
+            Chess.def = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(def));
+            Chess.bold = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(bold));
+            ge.registerFont(Chess.def);
+            ge.registerFont(Chess.bold);
+        } catch (FontFormatException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        if ((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet > screen.getWidth()) {
+            ImageIcon icon = new ImageIcon(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+            JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 100\n - Board size: 8\n\nClick OK to continue...", "Board too large, reduced game size",  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
+            initialPieceSize = 100;
+            initialBoardSize = 8;
+        }
+        Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (Chess.boardToFrameOffset * 2) + heightOffSet);
+        frame = new JFrame("Chess [vlink102] Github b13.8.8");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.add(new Chess(initialPieceSize, initialBoardSize));
         frame.setResizable(true);
         frame.getContentPane().setPreferredSize(initialSize);
-        frame.setResizable(true);
 
         frame.setMinimumSize(new Dimension(32 * initialBoardSize, 32 * initialBoardSize));
         frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
+        frame.getContentPane().setBackground(menuScheme.getBackground());
+
+        frame.setIconImage(imageIcon);
 
         frame.getContentPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                board.setPieceSize(frame.getContentPane().getHeight() / board.getBoardSize());
-
-                board.setPreferredSize(new Dimension(board.getDimension(), board.getDimension()));
-                board.setBounds(0, 0, board.getPieceSize() * board.getBoardSize(), board.getPieceSize() * board.getBoardSize());
-
-                OnlineAssets.updateSavedImage(board);
-                board.displayPieces();
-                board.repaint();
+                refreshWindow();
             }
         });
 
-        Timer timer = new Timer(250, Chess::refreshGUI);
+        frame.addWindowStateListener(new WindowAdapter() {
+            @Override
+            public void windowStateChanged(WindowEvent e) {
+                if (e.getNewState() == Frame.ICONIFIED || e.getNewState() == Frame.MAXIMIZED_BOTH) {
+                    frame.getContentPane().setSize(e.getWindow().getSize());
+                    refreshWindow();
+                }
+            }
+        });
+
+        Timer timer = new Timer(250, refreshGUI());
         timer.start();
         lastSize = board.getPieceSize();
 
@@ -66,19 +116,47 @@ public class Chess extends JLayeredPane {
         board.requestFocus();
     }
 
+    public static void refreshWindow() {
+        board.setPieceSize((frame.getContentPane().getHeight() - ((boardToFrameOffset * 2))) / board.getBoardSize());
+
+        Dimension dimension = new Dimension(board.getPieceSize() * board.getBoardSize(), board.getPieceSize() * board.getBoardSize());
+        board.setPreferredSize(dimension);
+        updateBoardBounds();
+        updateSidePanelBounds();
+        updateCoordinatePanelBounds();
+
+        OnlineAssets.updateSavedImage(board);
+        board.displayPieces();
+        board.repaint();
+    }
+
+    public static void updateBoardBounds() {
+        board.setBounds((boardToFrameOffset + Chess.offSet), boardToFrameOffset - heightOffSet, (board.getPieceSize() * board.getBoardSize()), (board.getPieceSize() * board.getBoardSize()));
+    }
+
+    public static void updateSidePanelBounds() {
+        board.getSidePanelGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + Chess.offSet, boardToFrameOffset - heightOffSet, sidePanelWidth - Chess.offSet, board.getHeight() + Chess.offSet);
+    }
+
+    public static void updateCoordinatePanelBounds() {
+        board.getCoordinateGUI().setBounds(boardToFrameOffset, boardToFrameOffset - heightOffSet, board.getWidth() + Chess.offSet, board.getHeight() + Chess.offSet);
+    }
+
     static int lastSize;
 
-    private static void refreshGUI(ActionEvent event) {
-        if (lastSize != board.getPieceSize() && board.getGameOver() == null) {
-            OnlineAssets.updatePieceDesigns(board);
+    private static ActionListener refreshGUI() {
+        return e -> {
+            if (lastSize != board.getPieceSize() && board.getGameOver() == null) {
+                OnlineAssets.updatePieceDesigns(board);
 
-            Move.loadCachedIcons(board.getPieceSize());
-            Move.loadCachedHighlights(board.getPieceSize());
+                Move.loadCachedIcons(board.getPieceSize());
+                Move.loadCachedHighlights(board.getPieceSize());
 
-            board.displayPieces();
-            board.repaint();
-            lastSize = board.getPieceSize();
-        }
+                board.displayPieces();
+                board.repaint();
+                lastSize = board.getPieceSize();
+            }
+        };
     }
 
     public static JMenuBar getMenu() {
@@ -363,6 +441,52 @@ public class Chess extends JLayeredPane {
         moveMethod.add(bothMethod);
         generalMenu.add(moveMethod);
 
+        JMenuItem coordinateDisplay = new JMenu("Coordinate Display");
+        coordinateDisplay.getAccessibleContext().setAccessibleDescription("Changes the way coordinates are viewed on the board");
+        ButtonGroup coordinateGroup = new ButtonGroup();
+        JMenuItem insideDisplay = new JRadioButtonMenuItem("Inside");
+        insideDisplay.getAccessibleContext().setAccessibleDescription("Coordinates are shown in the corner of the board squares");
+        insideDisplay.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setCoordinateDisplayType(BoardGUI.CoordinateDisplayType.INSIDE);
+            }
+        });
+        if (board.getCoordinateDisplayType() == BoardGUI.CoordinateDisplayType.INSIDE) {
+            insideDisplay.setSelected(true);
+        }
+        coordinateDisplay.add(insideDisplay);
+        coordinateGroup.add(insideDisplay);
+        JMenuItem outsideDisplay = new JRadioButtonMenuItem("Outside");
+        outsideDisplay.getAccessibleContext().setAccessibleDescription("Coordinates are shown outside the board");
+        outsideDisplay.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setCoordinateDisplayType(BoardGUI.CoordinateDisplayType.OUTSIDE);
+            }
+        });
+        if (board.getCoordinateDisplayType() == BoardGUI.CoordinateDisplayType.OUTSIDE) {
+            outsideDisplay.setSelected(true);
+            board.setCoordinateDisplayType(BoardGUI.CoordinateDisplayType.OUTSIDE);
+        }
+        coordinateDisplay.add(outsideDisplay);
+        coordinateGroup.add(outsideDisplay);
+        JMenuItem noneDisplay = new JRadioButtonMenuItem("None");
+        noneDisplay.getAccessibleContext().setAccessibleDescription("No coordinates are shown");
+        noneDisplay.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setCoordinateDisplayType(BoardGUI.CoordinateDisplayType.NONE);
+            }
+        });
+        if (board.getCoordinateDisplayType() == BoardGUI.CoordinateDisplayType.NONE) {
+            noneDisplay.setSelected(true);
+        }
+        coordinateDisplay.add(noneDisplay);
+        coordinateGroup.add(noneDisplay);
+
+        generalMenu.add(coordinateDisplay);
+
         JMenuItem item = new JMenuItem("Quit Game", KeyEvent.VK_ESCAPE);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
         item.getAccessibleContext().setAccessibleDescription("Exits the application");
@@ -510,6 +634,7 @@ public class Chess extends JLayeredPane {
         settings.add(boardMenu);
         settings.add(pieceMenu);
         settings.add(options);
+
         return settings;
     }
 
@@ -526,7 +651,7 @@ public class Chess extends JLayeredPane {
     }
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> Chess.initUI(50, 20));
+        EventQueue.invokeLater(() -> Chess.initUI(100, 20));
     }
 
     public enum OS {

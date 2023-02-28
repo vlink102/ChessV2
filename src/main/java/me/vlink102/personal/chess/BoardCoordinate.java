@@ -7,10 +7,18 @@ public record BoardCoordinate(int row, int col) {
     }
 
     public String getRowString() {
-        return String.valueOf(row + 1);
+        return getRowString(row);
     }
 
     public String getColString() {
+        return getColString(col);
+    }
+
+    public static String getRowString(int row) {
+        return String.valueOf(row + 1);
+    }
+
+    public static String getColString(int col) {
         return String.valueOf(Character.toChars(col + 'a')[0]);
     }
 

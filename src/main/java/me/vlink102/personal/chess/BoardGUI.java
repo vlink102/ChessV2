@@ -16,9 +16,15 @@ public class BoardGUI extends JPanel {
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
 
+    private final SidePanelGUI sidePanelGUI;
+    private final CoordinateGUI coordinateGUI;
+    private CoordinateDisplayType coordinateDisplayType;
+
     private Chess.BoardLayout currentLayout;
     public static int boardSize;
     public static int decBoardSize;
+
+    private GameType gameType;
 
     private final OnlineAssets onlineAssets;
     private boolean useOnline;
@@ -31,6 +37,7 @@ public class BoardGUI extends JPanel {
     private Move.MoveHighlights[][] moveHighlights;
     private Move.InfoIcons[][] gameHighlights;
     private ColorScheme.StaticColors[][] staticHighlights;
+    private List<Piece> capturedPieces;
     private boolean playAsWhite;
     private BoardView view;
     private int dimension;
@@ -92,6 +99,12 @@ public class BoardGUI extends JPanel {
         MANUAL
     }
 
+    public enum GameType {
+        DEFAULT,
+        ATOMIC,
+        FOG_OF_WAR
+    }
+
     public enum MoveStyle {
         DRAG,
         CLICK,
@@ -108,6 +121,12 @@ public class BoardGUI extends JPanel {
             RING,
             SQUARE
         }
+    }
+
+    public enum CoordinateDisplayType {
+        NONE,
+        INSIDE,
+        OUTSIDE
     }
 
     public enum TradeType {
@@ -132,6 +151,7 @@ public class BoardGUI extends JPanel {
         this.moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
         this.gameHighlights = new Move.InfoIcons[boardSize][boardSize];
         this.staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
+        this.capturedPieces = new ArrayList<>();
 
         this.halfMoveClock = 0;
         this.fullMoveCount = 1;
@@ -163,15 +183,11 @@ public class BoardGUI extends JPanel {
         resetBoard(currentLayout);
     }
 
-    public BoardGUI(Chess chess, PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite, Chess.BoardLayout layout, OpponentType type, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, int boardSize) {
+    public BoardGUI(Chess chess, PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite, Chess.BoardLayout layout, OpponentType type, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, GameType gameType, CoordinateDisplayType coordinateDisplayType, int boardSize) {
         BoardGUI.boardSize = Math.max(boardSize, 4);
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-        if (pSz * BoardGUI.boardSize > screen.width || pSz * BoardGUI.boardSize > screen.height) {
-            BoardGUI.boardSize = 8;
-            this.pieceSize = 100;
-        } else {
-            this.pieceSize = pSz;
-        }
+        BoardGUI.boardSize = boardSize;
+        this.pieceSize = pSz;
         BoardGUI.decBoardSize = BoardGUI.boardSize - 1;
         this.chess = chess;
         if (boardSize != 8) {
@@ -179,6 +195,8 @@ public class BoardGUI extends JPanel {
         } else {
             this.useOnline = useOnline;
         }
+        this.gameType = gameType;
+        this.coordinateDisplayType = coordinateDisplayType;
         this.boardTheme = boardTheme;
         this.pieceTheme = pieceTheme;
         this.playAsWhite = playAsWhite;
@@ -188,6 +206,7 @@ public class BoardGUI extends JPanel {
         this.moveStyle = moveStyle;
         this.onlineAssets = new OnlineAssets(this);
 
+        setFont(Chess.def);
 
         setupBoard(layout);
 
@@ -291,11 +310,13 @@ public class BoardGUI extends JPanel {
             }
         }
 
-
         OnlineAssets.updatePieceDesigns(this);
 
         Move.loadCachedIcons(pieceSize);
         Move.loadCachedHighlights(pieceSize);
+
+        this.sidePanelGUI = new SidePanelGUI(this);
+        this.coordinateGUI = new CoordinateGUI(this);
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -1624,6 +1645,7 @@ public class BoardGUI extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
         ColorScheme scheme = boardTheme.getScheme();
         if (useOnline) {
             Image image = OnlineAssets.getSavedBoard();
@@ -1643,6 +1665,8 @@ public class BoardGUI extends JPanel {
             for (int col = 0; col < boardSize; col++) {
                 int r1 = view == BoardView.WHITE ? decBoardSize - row : row;
                 int c1 = view == BoardView.WHITE ? col : decBoardSize - col;
+
+                // TODO coordinate inner
 
                 if (!useOnline) {
                     Graphics2D g2d = (Graphics2D) g.create();
@@ -1698,10 +1722,13 @@ public class BoardGUI extends JPanel {
                 if (gameHighlights[i][j] != null && Move.cachedIcons.get(gameHighlights[i][j]) != null) {
                     displayIcon(g, new BoardCoordinate(r1, c1), gameHighlights[i][j]);
                 } else if (highlightIconAccompaniment[i][j] != null && Move.cachedHighlights.get(highlightIconAccompaniment[i][j]) != null) {
-                    displayIcon(g, new BoardCoordinate(r1, c1), highlightIconAccompaniment[i][j]);
+                    displayIcon(chess.getGraphics(), new BoardCoordinate(r1, c1), highlightIconAccompaniment[i][j]); // create iconpanel TODO
                 }
             }
         }
+
+        sidePanelGUI.repaint();
+        coordinateGUI.repaint();
     }
 
     public void drawHint(Graphics g, ColorScheme scheme, int row, int col, boolean takes) {
@@ -2246,6 +2273,8 @@ public class BoardGUI extends JPanel {
         gamePieces[from.row()][from.col()] = null;
         gamePieces[takes.row()][takes.col()] = null;
         gamePieces[to.row()][to.col()] = moved;
+
+        capturedPieces.add(taken);
 
         Move.Check check = null;
         if (kingIsInCheck(gamePieces, !piece.isWhite())) {
@@ -2816,5 +2845,28 @@ public class BoardGUI extends JPanel {
 
     public int getBoardSize() {
         return boardSize;
+    }
+
+    public GameType getGameType() {
+        return gameType;
+    }
+
+    public SidePanelGUI getSidePanelGUI() {
+        return sidePanelGUI;
+    }
+
+    public CoordinateDisplayType getCoordinateDisplayType() {
+        return coordinateDisplayType;
+    }
+
+    public void setCoordinateDisplayType(CoordinateDisplayType coordinateDisplayType) {
+        this.coordinateDisplayType = coordinateDisplayType;
+        Chess.offSet = (coordinateDisplayType == BoardGUI.CoordinateDisplayType.OUTSIDE ? Chess.defaultOffset : 0);
+        Chess.heightOffSet = (coordinateDisplayType == CoordinateDisplayType.OUTSIDE ? Chess.defaultOffset / 2 : 0);
+        Chess.refreshWindow();
+    }
+
+    public CoordinateGUI getCoordinateGUI() {
+        return coordinateGUI;
     }
 }

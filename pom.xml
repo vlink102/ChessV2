@@ -34,6 +34,14 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.github.weisj</groupId>
+            <artifactId>darklaf-core</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+    </dependencies>
+
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
