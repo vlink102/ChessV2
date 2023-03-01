@@ -10,16 +10,22 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class Chess extends JLayeredPane {
     private static BoardGUI board;
     public static JFrame frame;
 
+    public static BufferedImage[] iconSprites = new BufferedImage[75];
+
     public static Font def;
     public static Font bold;
+    public static Font icons;
 
     public static boolean shouldRelocateBackline = true;
     public static boolean shouldShowAvailableSquares = true;
@@ -32,7 +38,7 @@ public class Chess extends JLayeredPane {
     public static int offSet = 0;
     public static int heightOffSet = 0;
 
-    public static MenuScheme menuScheme = new MenuScheme(new Color(49,46,43), new Color(39,37,34), new Color(31,30,27), new Color(43,41,39), new Color(64,61,57), new Color(152,151,149));
+    public static MenuScheme menuScheme = new MenuScheme(new Color(49,46,43), new Color(39,37,34), new Color(31,30,27), new Color(43,41,39), new Color(64,61,57), new Color(152,151,149), new Color(195, 194, 194), new Color(149, 148, 147));
 
     public enum BoardLayout {
         CHESS960,
@@ -45,11 +51,18 @@ public class Chess extends JLayeredPane {
         add(board, DEFAULT_LAYER);
         add(board.getSidePanelGUI(), DEFAULT_LAYER);
         add(board.getCoordinateGUI(), DEFAULT_LAYER);
+        add(board.getIconDisplayGUI(), POPUP_LAYER);
     }
 
     public static void initUI(int initialPieceSize, int initialBoardSize) {
         LafManager.install(new DarculaTheme());
         LafManager.setDecorationsEnabled(true);
+
+        BufferedImage image = Move.getBufferedResource("/iconnav.png");
+
+        for (int i = 0; i < 75; i++) {
+            iconSprites[i] = image.getSubimage(0, i * (image.getHeight() / 75), (image.getHeight() / 75), (image.getHeight() / 75));
+        }
 
         Image imageIcon = Move.getResource("/icon.png");
 
@@ -57,11 +70,14 @@ public class Chess extends JLayeredPane {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         InputStream def = classLoader.getResourceAsStream("fonts/montserrat-700.2213e098.ttf");
         InputStream bold = classLoader.getResourceAsStream("fonts/montserrat-800.2d88ac8b.ttf");
+        InputStream icons = classLoader.getResourceAsStream("fonts/icons.ttf");
         try {
             Chess.def = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(def));
             Chess.bold = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(bold));
+            Chess.icons = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(icons));
             ge.registerFont(Chess.def);
             ge.registerFont(Chess.bold);
+            ge.registerFont(Chess.icons);
         } catch (FontFormatException | IOException e) {
             throw new RuntimeException(e);
         }
@@ -132,6 +148,7 @@ public class Chess extends JLayeredPane {
 
     public static void updateBoardBounds() {
         board.setBounds((boardToFrameOffset + Chess.offSet), boardToFrameOffset - heightOffSet, (board.getPieceSize() * board.getBoardSize()), (board.getPieceSize() * board.getBoardSize()));
+        board.getIconDisplayGUI().setBounds(board.getBounds());
     }
 
     public static void updateSidePanelBounds() {
@@ -146,7 +163,7 @@ public class Chess extends JLayeredPane {
 
     private static ActionListener refreshGUI() {
         return e -> {
-            if (lastSize != board.getPieceSize() && board.getGameOver() == null) {
+            if (lastSize != board.getPieceSize() ) {
                 OnlineAssets.updatePieceDesigns(board);
 
                 Move.loadCachedIcons(board.getPieceSize());
@@ -651,7 +668,7 @@ public class Chess extends JLayeredPane {
     }
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> Chess.initUI(100, 20));
+        EventQueue.invokeLater(() -> Chess.initUI(100, 8));
     }
 
     public enum OS {

@@ -139,6 +139,8 @@ public class OnlineAssets {
         savedPieces.put("bm", getPiece(boardGUI, "bm"));
         savedPieces.put("bmi", getPiece(boardGUI, "bmi"));
         savedPieces.put("bpr", getPiece(boardGUI, "bpr"));
+        savedPieces.put("bdh", getPiece(boardGUI, "bdh"));
+        savedPieces.put("bdk", getPiece(boardGUI, "bdk"));
         savedPieces.put("wa", getPiece(boardGUI, "wa"));
         savedPieces.put("wc", getPiece(boardGUI, "wc"));
         savedPieces.put("we", getPiece(boardGUI, "we"));
@@ -146,6 +148,8 @@ public class OnlineAssets {
         savedPieces.put("wm", getPiece(boardGUI, "wm"));
         savedPieces.put("wmi", getPiece(boardGUI, "wmi"));
         savedPieces.put("wpr", getPiece(boardGUI, "wpr"));
+        savedPieces.put("wdh", getPiece(boardGUI, "wdh"));
+        savedPieces.put("wdk", getPiece(boardGUI, "wdk"));
     }
 
     public static synchronized void updatePieceDesigns(BoardGUI boardGUI) {

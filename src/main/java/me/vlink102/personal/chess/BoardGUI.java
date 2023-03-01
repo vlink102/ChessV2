@@ -18,6 +18,7 @@ public class BoardGUI extends JPanel {
 
     private final SidePanelGUI sidePanelGUI;
     private final CoordinateGUI coordinateGUI;
+    private final IconDisplayGUI iconDisplayGUI;
     private CoordinateDisplayType coordinateDisplayType;
 
     private Chess.BoardLayout currentLayout;
@@ -142,7 +143,12 @@ public class BoardGUI extends JPanel {
     public void setupBoard(Chess.BoardLayout layout) {
         this.gameOver = null;
 
-        this.currentLayout = layout;
+        if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
+            this.currentLayout = Chess.BoardLayout.DEFAULT;
+        } else {
+            this.currentLayout = layout;
+        }
+
         this.dimension = pieceSize * boardSize;
         this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
         this.gamePieces = new Piece[boardSize][boardSize];
@@ -206,7 +212,7 @@ public class BoardGUI extends JPanel {
         this.moveStyle = moveStyle;
         this.onlineAssets = new OnlineAssets(this);
 
-        setFont(Chess.def);
+        setFont(Chess.def.deriveFont(Chess.defaultOffset - 4f));
 
         setupBoard(layout);
 
@@ -317,6 +323,7 @@ public class BoardGUI extends JPanel {
 
         this.sidePanelGUI = new SidePanelGUI(this);
         this.coordinateGUI = new CoordinateGUI(this);
+        this.iconDisplayGUI = new IconDisplayGUI(this);
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -396,8 +403,7 @@ public class BoardGUI extends JPanel {
                 }
                 String[] newRow = parseEmpty.toString().split("");
                 for (int i = 0; i < boardSize; i++) {
-
-                    boolean isUpper = Character.isUpperCase(newRow[i].toCharArray()[0]);
+                    boolean isUpper = newRow[i].matches("[A-Z]");
                     switch (newRow[i].toLowerCase()) {
                         case "r" -> {
                             if (isUpper) {
@@ -849,6 +855,8 @@ public class BoardGUI extends JPanel {
         FENBoard = FENBoard.replaceAll("/+", "/");
         String[] trimmedFenBoard = new String[boardSize];
         if (shouldRelocate) {
+            FENBoard = "###/" + FENBoard + "/###";
+            FENBoard = FENBoard.replaceAll("/+", "/");
             String[] withoutBackline = FENBoard.split("/");
             trimmedFenBoard[0] = blackBackLine;
             for (int i = 1; i < decBoardSize; i++) {
@@ -858,6 +866,7 @@ public class BoardGUI extends JPanel {
 
             FENBoard = fenBoard(trimmedFenBoard);
         } else {
+            FENBoard = FENBoard.replaceAll("/+", "/");
             FENBoard = fenBoard(FENBoard.split("/"));
         }
         return FENBoard;
@@ -1202,7 +1211,7 @@ public class BoardGUI extends JPanel {
             }
             case CHESS960 -> {
                 if (boardSize != 8) {
-                    // TODO
+
                 } else {
                     // TODO
                 }
@@ -1666,7 +1675,18 @@ public class BoardGUI extends JPanel {
                 int r1 = view == BoardView.WHITE ? decBoardSize - row : row;
                 int c1 = view == BoardView.WHITE ? col : decBoardSize - col;
 
-                // TODO coordinate inner
+                if (coordinateDisplayType == CoordinateDisplayType.INSIDE) {
+                    if (c1 == 0) {
+                        g.setColor((row + col) % 2 == 0 ? scheme.light() : scheme.dark());
+                        Rectangle rectangle = new Rectangle(0, (r1 * pieceSize), pieceSize / 4, pieceSize / 4);
+                        CoordinateGUI.drawCenteredString(g, BoardCoordinate.getRowString(row), rectangle, getFont());
+                    }
+                    if (r1 == 0) {
+                        g.setColor((row + col) % 2 == 0 ? scheme.dark() : scheme.light());
+                        Rectangle rectangle = new Rectangle( (c1 * pieceSize) + ((pieceSize / 4) * 3), (pieceSize * decBoardSize) + ((pieceSize / 4) * 3), pieceSize / 4, pieceSize / 4);
+                        CoordinateGUI.drawCenteredString(g, BoardCoordinate.getColString(col), rectangle, getFont());
+                    }
+                }
 
                 if (!useOnline) {
                     Graphics2D g2d = (Graphics2D) g.create();
@@ -1715,20 +1735,9 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                int r1 = view == BoardView.WHITE ? decBoardSize - i : i;
-                int c1 = view == BoardView.WHITE ? j : decBoardSize - j;
-                if (gameHighlights[i][j] != null && Move.cachedIcons.get(gameHighlights[i][j]) != null) {
-                    displayIcon(g, new BoardCoordinate(r1, c1), gameHighlights[i][j]);
-                } else if (highlightIconAccompaniment[i][j] != null && Move.cachedHighlights.get(highlightIconAccompaniment[i][j]) != null) {
-                    displayIcon(chess.getGraphics(), new BoardCoordinate(r1, c1), highlightIconAccompaniment[i][j]); // create iconpanel TODO
-                }
-            }
-        }
-
         sidePanelGUI.repaint();
         coordinateGUI.repaint();
+        iconDisplayGUI.repaint();
     }
 
     public void drawHint(Graphics g, ColorScheme scheme, int row, int col, boolean takes) {
@@ -2081,7 +2090,7 @@ public class BoardGUI extends JPanel {
                                 }
                             }
                         }
-                        moves.add(new Move(piece, coordinate, possibleTile, check, true, epSQt, taken, null, null));
+                        moves.add(new Move(piece, coordinate, possibleTile, check, true, epSQt, taken, null, null, Move.MoveType.MOVE));
                     }
                 } else if (piece instanceof King && getRook(board, piece.isWhite(), Move.CastleType.KINGSIDE) != null && defaultCastleSquares(piece.isWhite(), Move.CastleType.KINGSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleKingside : blackCanCastleKingside)) {
                     Piece[][] newBoard = castleResult(piece.isWhite(), Move.CastleType.KINGSIDE);
@@ -2098,7 +2107,7 @@ public class BoardGUI extends JPanel {
                                     check = Move.Check.MATE;
                                 }
                             }
-                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.KINGSIDE));
+                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.KINGSIDE, Move.MoveType.CASTLE));
                         }
                     }
                 } else if (piece instanceof King && getRook(board, piece.isWhite(), Move.CastleType.QUEENSIDE) != null && defaultCastleSquares(piece.isWhite(), Move.CastleType.QUEENSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleQueenside : blackCanCastleQueenside)) {
@@ -2115,7 +2124,7 @@ public class BoardGUI extends JPanel {
                                 }
                             }
 
-                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE));
+                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE, Move.MoveType.CASTLE));
                         }
                     }
                 } else {
@@ -2134,7 +2143,7 @@ public class BoardGUI extends JPanel {
                                     }
                                 }
                             }
-                            moves.add(new Move(piece, coordinate, possibleTile, check, false, possibleTile, taken, null, null));
+                            moves.add(new Move(piece, coordinate, possibleTile, check, false, possibleTile, taken, null, null, Move.MoveType.MOVE));
                         }
                     }
                 }
@@ -2224,7 +2233,7 @@ public class BoardGUI extends JPanel {
             System.out.println("FEN String: " + translateBoardToFEN(gamePieces));
             if (!(history == null || history.isEmpty())) {
                 Move lastMove = history.get(history.size() - 1);
-                System.out.println("Last move: " + (lastMove.isImport() ? "Unknown" : lastMove.toString()));
+                System.out.println("Last move: " + (lastMove.getType() == Move.MoveType.IMPORT ? "Unknown" : lastMove.toString()));
             }
             System.out.println("Turn: " + (whiteTurn ? "White" : "Black"));
             System.out.println();
@@ -2285,7 +2294,7 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        Move move = new Move(piece, from, to, check, !takes.equals(to), takes, taken,null, null); // TODO
+        Move move = new Move(piece, from, to, check, !takes.equals(to), takes, taken,null, null, Move.MoveType.MOVE); // TODO
 
         history.add(move);
         piece.incrementMoves();
@@ -2387,7 +2396,7 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        Move move = new Move(king, kingFrom, kingTo, check, false, null, null, null, type);
+        Move move = new Move(king, kingFrom, kingTo, check, false, null, null, null, type, Move.MoveType.CASTLE);
         history.add(move);
 
         if (white) {
@@ -2534,26 +2543,6 @@ public class BoardGUI extends JPanel {
         return false;
     }
 
-    public void displayIcon(Graphics g, BoardCoordinate coordinate, Move.MoveHighlights icon) {
-        if (Move.cachedHighlights.get(icon) != null) {
-            if ((coordinate.row() == 0 && view == BoardView.BLACK) || (coordinate.row() == decBoardSize && view == BoardView.WHITE)) {
-                g.drawImage(Move.cachedHighlights.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
-            } else {
-                g.drawImage(Move.cachedHighlights.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
-            }
-        }
-    }
-
-    public void displayIcon(Graphics g, BoardCoordinate coordinate, Move.InfoIcons icon) {
-        if (Move.cachedIcons.get(icon) != null) {
-            if ((coordinate.row() == 0 && view == BoardView.BLACK) || (coordinate.row() == decBoardSize && view == BoardView.WHITE)) {
-                g.drawImage(Move.cachedIcons.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize), this);
-            } else {
-                g.drawImage(Move.cachedIcons.get(icon), (coordinate.col() * pieceSize) + (pieceSize - (pieceSize / 3) + (pieceSize / 20)), (coordinate.row() * pieceSize) - (pieceSize / 20), this);
-            }
-        }
-    }
-
     public void createGameOverScreen(GameOverType type) {
         if (type != null) {
             gameHighlights = new Move.InfoIcons[boardSize][boardSize];
@@ -2578,14 +2567,17 @@ public class BoardGUI extends JPanel {
                 case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                    history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
                 }
                 case RESIGNATION_BLACK -> {
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+                    history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
                 }
                 case RESIGNATION_WHITE -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+                    history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
                 }
             }
             displayPieces();
@@ -2868,5 +2860,17 @@ public class BoardGUI extends JPanel {
 
     public CoordinateGUI getCoordinateGUI() {
         return coordinateGUI;
+    }
+
+    public Move.InfoIcons[][] getGameHighlights() {
+        return gameHighlights;
+    }
+
+    public Move.MoveHighlights[][] getHighlightIconAccompaniment() {
+        return highlightIconAccompaniment;
+    }
+
+    public IconDisplayGUI getIconDisplayGUI() {
+        return iconDisplayGUI;
     }
 }

@@ -22,8 +22,18 @@ public class Move {
     private final Piece promotes;
     private final CastleType castleType;
 
-    private final boolean isImport;
     private final String importContent;
+
+    private final MoveType type;
+
+    public enum MoveType {
+        MOVE,
+        CASTLE,
+        IMPORT,
+        WHITE,
+        BLACK,
+        DRAW
+    }
 
     private static final String GAME_ICONS_DIR = "game-icons/";
     private static final String MOVE_RATING_DIR = "game-icons/move-ratings/";
@@ -201,7 +211,8 @@ public class Move {
      * @param promotes
      * @param castleType
      */
-    public Move(Piece moved, BoardCoordinate from, BoardCoordinate to, Check check, boolean enPassant, BoardCoordinate takeSquare, Piece pieceTaken, Piece promotes, CastleType castleType) {
+    public Move(Piece moved, BoardCoordinate from, BoardCoordinate to, Check check, boolean enPassant, BoardCoordinate takeSquare, Piece pieceTaken, Piece promotes, CastleType castleType, MoveType type) {
+        this.type = type;
         this.piece = moved;
         this.from = from;
         this.to = to;
@@ -211,7 +222,6 @@ public class Move {
         this.taken = pieceTaken;
         this.promotes = promotes;
         this.castleType = castleType;
-        this.isImport = false;
         this.importContent = null;
     }
 
@@ -219,7 +229,6 @@ public class Move {
      * Import History move constructor
      */
     public Move(String content) {
-        this.isImport = true;
         this.importContent = content;
 
         this.piece = null;
@@ -231,11 +240,12 @@ public class Move {
         this.taken = null;
         this.promotes = null;
         this.castleType = null;
+        this.type = MoveType.IMPORT;
     }
 
     @Override
     public String toString() {
-        if (isImport) {
+        if (type == MoveType.IMPORT) {
             return importContent;
         } else {
             assert from != null;
@@ -249,47 +259,54 @@ public class Move {
             // - prepend the from-square
             StringBuilder move = new StringBuilder();
 
-            if (castleType != null) {
-                switch (castleType) {
-                    case KINGSIDE -> move.append("O-O");
-                    case QUEENSIDE -> move.append("O-O-O");
-                }
-                if (check != null) {
-                    switch (check) {
-                        case CHECK -> move.append("+");
-                        case MATE -> move.append("#");
+            if (type == MoveType.WHITE) {
+                move.append("1-0");
+            } else if (type == MoveType.BLACK) {
+                move.append("0-1");
+            } else if (type == MoveType.DRAW) {
+                move.append("1/2-1/2");
+            } else if (type == MoveType.MOVE) {
+                if (castleType != null) {
+                    switch (castleType) {
+                        case KINGSIDE -> move.append("O-O");
+                        case QUEENSIDE -> move.append("O-O-O");
                     }
-                }
-            } else {
-                if (piece instanceof Pawn) {
-                    if (taken != null) {
-                        move.append(from.getColString());
-                        move.append("x");
-                        move.append(to.toNotation());
-                    } else {
-                        move.append(to.toNotation());
-                    }
-                    if (promotes != null) {
-                        move.append(promotes.getAbbr());
+                    if (check != null) {
+                        switch (check) {
+                            case CHECK -> move.append("+");
+                            case MATE -> move.append("#");
+                        }
                     }
                 } else {
-                    move.append(piece.getAbbr());
-                    if (taken != null) {
-                        move.append("x");
+                    if (piece instanceof Pawn) {
+                        if (taken != null) {
+                            move.append(from.getColString());
+                            move.append("x");
+                            move.append(to.toNotation());
+                        } else {
+                            move.append(to.toNotation());
+                        }
+                        if (promotes != null) {
+                            move.append(promotes.getAbbr());
+                        }
+                    } else {
+                        move.append(piece.getAbbr());
+                        if (taken != null) {
+                            move.append("x");
+                        }
+                        move.append(to.toNotation());
                     }
-                    move.append(to.toNotation());
-                }
 
-                if (check != null) {
-                    switch (check) {
-                        case CHECK -> move.append("+");
-                        case MATE -> move.append("#");
+                    if (check != null) {
+                        switch (check) {
+                            case CHECK -> move.append("+");
+                            case MATE -> move.append("#");
+                        }
                     }
-                }
 
-                if (enPassant) move.append(" e.p.");
+                    if (enPassant) move.append(" e.p.");
+                }
             }
-
             return move.toString();
         }
     }
@@ -329,11 +346,6 @@ public class Move {
     public CastleType getCastleType() {
         return castleType;
     }
-
-    public boolean isImport() {
-        return isImport;
-    }
-
     public static class SimpleMove {
         private final BoardCoordinate from;
         private final BoardCoordinate to;
@@ -361,5 +373,9 @@ public class Move {
         public String toString() {
             return piece.toString() + ": " + from.toNotation() + " -> " + to.toNotation();
         }
+    }
+
+    public MoveType getType() {
+        return type;
     }
 }
