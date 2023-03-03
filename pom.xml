@@ -26,7 +26,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>me.vlink102.personal.chess.Chess</mainClass>
+                            <mainClass>me.vlink102.personal.GameSelector</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

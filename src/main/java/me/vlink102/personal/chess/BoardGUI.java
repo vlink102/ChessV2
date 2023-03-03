@@ -1,9 +1,16 @@
 package me.vlink102.personal.chess;
 
-import me.vlink102.personal.chess.pieces.*;
-import me.vlink102.personal.chess.pieces.special.asian.DragonHorse;
-import me.vlink102.personal.chess.pieces.special.asian.DragonKing;
-import me.vlink102.personal.chess.pieces.special.historical.*;
+import me.vlink102.personal.chess.internal.*;
+import me.vlink102.personal.chess.pieces.Piece;
+import me.vlink102.personal.chess.pieces.SpecialPiece;
+import me.vlink102.personal.chess.pieces.generic.*;
+import me.vlink102.personal.chess.pieces.generic.special.asian.DragonHorse;
+import me.vlink102.personal.chess.pieces.generic.special.asian.DragonKing;
+import me.vlink102.personal.chess.pieces.generic.special.historical.*;
+import me.vlink102.personal.chess.ui.CoordinateGUI;
+import me.vlink102.personal.chess.ui.IconDisplayGUI;
+import me.vlink102.personal.chess.ui.SidePanelGUI;
+import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -189,9 +196,7 @@ public class BoardGUI extends JPanel {
         resetBoard(currentLayout);
     }
 
-    public BoardGUI(Chess chess, PieceDesign pieceTheme, Colours boardTheme, int pSz, boolean useOnline, boolean playAsWhite, Chess.BoardLayout layout, OpponentType type, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, GameType gameType, CoordinateDisplayType coordinateDisplayType, int boardSize) {
-        BoardGUI.boardSize = Math.max(boardSize, 4);
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+    public BoardGUI(Chess chess, int pSz, int boardSize, boolean useOnline, boolean playAsWhite, OpponentType type, GameType gameType, Chess.BoardLayout layout, PieceDesign pieceTheme, Colours boardTheme, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, CoordinateDisplayType coordinateDisplayType) {
         BoardGUI.boardSize = boardSize;
         this.pieceSize = pSz;
         BoardGUI.decBoardSize = BoardGUI.boardSize - 1;
@@ -334,7 +339,16 @@ public class BoardGUI extends JPanel {
         am.put(name, action);
     }
 
-    public boolean validateFEN(String FEN) {
+    public static boolean validateBoard(String board, int boardSize) {
+        for (String s : board.split("/")) {
+            if (!isValidFENRow(s, boardSize)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean validateFEN(String FEN, int boardSize) {
         String[] sections = FEN.split(" ");
         if (sections.length != 6) {
             return false;
@@ -351,14 +365,14 @@ public class BoardGUI extends JPanel {
         if (!(sections[0].contains("k") && sections[0].contains("K"))) {
             return false;
         }
-        if (!BoardCoordinate.isValidTile(this, sections[3]) && !sections[3].equalsIgnoreCase("-")) {
+        if (!BoardCoordinate.isValidTile(boardSize, sections[3]) && !sections[3].equalsIgnoreCase("-")) {
             return false;
         }
-        return true;
+        return validateBoard(sections[0], boardSize);
     }
 
     public void loadFEN(String FEN) {
-        if (validateFEN(FEN)) {
+        if (validateFEN(FEN, boardSize)) {
             gamePieces = new Piece[boardSize][boardSize];
             history = new ArrayList<>();
             String[] sections = FEN.split(" ");
@@ -519,7 +533,7 @@ public class BoardGUI extends JPanel {
                 gameOver = GameOverType.ILLEGAL_POSITION;
                 gameOver();
             } else {
-                if (!validateFEN(result)) {
+                if (!validateFEN(result, boardSize)) {
                     chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Could not repair FEN String\n\n" + result, "Could not load game state", Move.MoveHighlights.BLUNDER);
                     gameOver = GameOverType.ILLEGAL_POSITION;
                     gameOver();
@@ -628,7 +642,7 @@ public class BoardGUI extends JPanel {
         }
     }
 
-    public boolean isValidFENRow(String FENRow) {
+    public static boolean isValidFENRow(String FENRow, int boardSize) {
         int count = 0;
         String[] chars = FENRow.split("");
         for (int i = 0; i < chars.length; i++) {
@@ -659,7 +673,7 @@ public class BoardGUI extends JPanel {
         return count == boardSize;
     }
 
-    public String fixFENRow(String FENRow) {
+    public static String fixFENRow(String FENRow, int boardSize) {
         StringBuilder result = new StringBuilder();
         int count = 0;
         String[] chars = FENRow.split("");
@@ -727,7 +741,7 @@ public class BoardGUI extends JPanel {
                     }
                 }
             } else {
-                if (Character.isDigit(s.toCharArray()[0])) {
+                if (Character.isDigit(s.charAt(0))) {
                     if (lastWasDigit) {
                         truncatedResult.set(truncatedResult.size() - 1, String.valueOf(Integer.parseInt(truncatedResult.get(truncatedResult.size() - 1)) + Integer.parseInt(s)));
                     } else {
@@ -753,7 +767,7 @@ public class BoardGUI extends JPanel {
         return builder.toString();
     }
 
-    public String squish(List<String> strings) {
+    public static String squish(List<String> strings) {
         StringBuilder builder = new StringBuilder();
         for (String string : strings) {
             builder.append(string);
@@ -761,7 +775,7 @@ public class BoardGUI extends JPanel {
         return builder.toString();
     }
 
-    public String fenBoard(String[] board) {
+    public static String fenBoard(String[] board) {
         StringJoiner joiner = new StringJoiner("/");
         for (String s : board) {
             joiner.add(s);
@@ -777,7 +791,7 @@ public class BoardGUI extends JPanel {
         return joiner.toString();
     }
 
-    public String fixFENBoard(String FENBoard) {
+    public static String fixFENBoard(String FENBoard, int boardSize) {
         if (!(FENBoard.contains("K") && FENBoard.contains("k"))) {
             return null;
         }
@@ -806,8 +820,8 @@ public class BoardGUI extends JPanel {
                     rows[i] = String.valueOf(boardSize);
                 }
             }
-            if (!isValidFENRow(rows[i])) {
-                rows[i] = fixFENRow(rows[i]);
+            if (!isValidFENRow(rows[i], boardSize)) {
+                rows[i] = fixFENRow(rows[i], boardSize);
             }
         }
 
@@ -823,17 +837,17 @@ public class BoardGUI extends JPanel {
                 }
             }
             if (Chess.shouldRelocateBackline) {
-                FENBoard = relocateFENBackLine(FENBoard, validRows);
+                FENBoard = relocateFENBackLine(FENBoard, validRows, boardSize);
             }
         }
         if (validRows.length > boardSize) {
-            FENBoard = relocateFENBackLine(FENBoard, validRows);
+            FENBoard = relocateFENBackLine(FENBoard, validRows, boardSize);
         }
 
         return FENBoard;
     }
 
-    private String relocateFENBackLine(String FENBoard, String[] validRows) {
+    private static String relocateFENBackLine(String FENBoard, String[] validRows, int boardSize) {
         String whiteBackLine = null;
         String blackBackLine = null;
         boolean shouldRelocate = true;
@@ -859,10 +873,10 @@ public class BoardGUI extends JPanel {
             FENBoard = FENBoard.replaceAll("/+", "/");
             String[] withoutBackline = FENBoard.split("/");
             trimmedFenBoard[0] = blackBackLine;
-            for (int i = 1; i < decBoardSize; i++) {
+            for (int i = 1; i < boardSize - 1; i++) {
                 trimmedFenBoard[i] = withoutBackline[i];
             }
-            trimmedFenBoard[decBoardSize] = whiteBackLine;
+            trimmedFenBoard[boardSize - 1] = whiteBackLine;
 
             FENBoard = fenBoard(trimmedFenBoard);
         } else {
@@ -872,14 +886,14 @@ public class BoardGUI extends JPanel {
         return FENBoard;
     }
 
-    public String fixFENString(String FEN) {
+    public static String fixFENString(String FEN) {
         String[] sections = FEN.split(" ");
         int sectionLength = sections.length;
 
         StringJoiner result = new StringJoiner(" ");
 
         String board = sectionLength > 0 ? sections[0] : "";
-        board = fixFENBoard(board);
+        board = fixFENBoard(board, boardSize);
         if (board == null) {
             return null;
         }
@@ -898,7 +912,7 @@ public class BoardGUI extends JPanel {
         result.add(castles);
 
         String enPassantSquare = sectionLength > 3 ? sections[3] : "";
-        if (!BoardCoordinate.isValidTile(this, enPassantSquare) && !enPassantSquare.equalsIgnoreCase("-")) {
+        if (!BoardCoordinate.isValidTile(boardSize, enPassantSquare) && !enPassantSquare.equalsIgnoreCase("-")) {
             enPassantSquare = "-";
         }
         result.add(enPassantSquare);
@@ -929,16 +943,16 @@ public class BoardGUI extends JPanel {
         history.add(new Move("FEN String ]"));
     }
 
-    public String translateBoardToFEN(Piece[][] board) {
+    public static StringBuilder translateBoard(Piece[][] board, int boardSize) {
         StringBuilder fen = new StringBuilder();
         for (int rank = 0; rank < boardSize; rank++) {
             int empty = 0;
             StringBuilder rankFen = new StringBuilder();
             for (int file = 0; file < boardSize; file++) {
-                if (board[decBoardSize - rank][file] == null) {
+                if (board[(boardSize - 1) - rank][file] == null) {
                     empty++;
                 } else {
-                    Piece piece = board[decBoardSize - rank][file];
+                    Piece piece = board[(boardSize - 1) - rank][file];
                     if (empty != 0) {
                         if (boardSize >= 10 && empty >= 10) {
                             rankFen.append("(").append(empty).append(")");
@@ -966,6 +980,11 @@ public class BoardGUI extends JPanel {
                 fen.append("/");
             }
         }
+        return fen;
+    }
+
+    public String translateBoardToFEN(Piece[][] board) {
+        StringBuilder fen = translateBoard(board, boardSize);
 
         fen.append(" ");
         fen.append(whiteTurn ? "w" : "b");
@@ -1133,60 +1152,60 @@ public class BoardGUI extends JPanel {
         }
     }
 
-    public void setupDefaultBoard(boolean white) {
+    public void setupDefaultBoard(Piece[][] board, boolean white) {
         int backLine = white ? 0 : decBoardSize;
 
         if (boardSize >= 8) {
             int startingPoint = (boardSize / 2) - 4;
             for (int i = startingPoint; i < startingPoint + 8; i++) {
-                gamePieces[white ? 1 : decBoardSize - 1][i] = new Pawn(this, white);
+                board[white ? 1 : decBoardSize - 1][i] = new Pawn(this, white);
             }
 
-            gamePieces[backLine][startingPoint] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint));
-            gamePieces[backLine][startingPoint + 7] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint + 7));
+            board[backLine][startingPoint] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint));
+            board[backLine][startingPoint + 7] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint + 7));
 
-            gamePieces[backLine][startingPoint + 1] = new Knight(this, white);
-            gamePieces[backLine][startingPoint + 6] = new Knight(this, white);
+            board[backLine][startingPoint + 1] = new Knight(this, white);
+            board[backLine][startingPoint + 6] = new Knight(this, white);
 
-            gamePieces[backLine][startingPoint + 2] = new Bishop(this, white);
-            gamePieces[backLine][startingPoint + 5] = new Bishop(this, white);
+            board[backLine][startingPoint + 2] = new Bishop(this, white);
+            board[backLine][startingPoint + 5] = new Bishop(this, white);
 
-            gamePieces[backLine][startingPoint + 3] = new Queen(this, white);
-            gamePieces[backLine][startingPoint + 4] = new King(this, white);
+            board[backLine][startingPoint + 3] = new Queen(this, white);
+            board[backLine][startingPoint + 4] = new King(this, white);
         } else {
             for (int i = 0; i < boardSize; i++) {
-                gamePieces[white ? 1 : decBoardSize - 1][i] = new Pawn(this, white);
+                board[white ? 1 : decBoardSize - 1][i] = new Pawn(this, white);
             }
             switch (boardSize) {
                 case 4 -> {
-                    gamePieces[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
-                    gamePieces[backLine][1] = new Queen(this, white);
-                    gamePieces[backLine][2] = new King(this, white);
-                    gamePieces[backLine][3] = new Knight(this, white);
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][1] = new Queen(this, white);
+                    board[backLine][2] = new King(this, white);
+                    board[backLine][3] = new Knight(this, white);
                 }
                 case 5 -> {
-                    gamePieces[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
-                    gamePieces[backLine][1] = new Queen(this, white);
-                    gamePieces[backLine][2] = new King(this, white);
-                    gamePieces[backLine][3] = new Knight(this, white);
-                    gamePieces[backLine][4] = new Rook(this, white, new BoardCoordinate(backLine, 4));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][1] = new Queen(this, white);
+                    board[backLine][2] = new King(this, white);
+                    board[backLine][3] = new Knight(this, white);
+                    board[backLine][4] = new Rook(this, white, new BoardCoordinate(backLine, 4));
                 }
                 case 6 -> {
-                    gamePieces[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
-                    gamePieces[backLine][1] = new Bishop(this, white);
-                    gamePieces[backLine][2] = new Queen(this, white);
-                    gamePieces[backLine][3] = new King(this, white);
-                    gamePieces[backLine][4] = new Knight(this, white);
-                    gamePieces[backLine][5] = new Rook(this, white, new BoardCoordinate(backLine, 5));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][1] = new Bishop(this, white);
+                    board[backLine][2] = new Queen(this, white);
+                    board[backLine][3] = new King(this, white);
+                    board[backLine][4] = new Knight(this, white);
+                    board[backLine][5] = new Rook(this, white, new BoardCoordinate(backLine, 5));
                 }
                 case 7 -> {
-                    gamePieces[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
-                    gamePieces[backLine][1] = new Knight(this, white);
-                    gamePieces[backLine][2] = new Bishop(this, white);
-                    gamePieces[backLine][3] = new Queen(this, white);
-                    gamePieces[backLine][4] = new King(this, white);
-                    gamePieces[backLine][5] = new Knight(this, white);
-                    gamePieces[backLine][6] = new Rook(this, white, new BoardCoordinate(backLine, 6));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][1] = new Knight(this, white);
+                    board[backLine][2] = new Bishop(this, white);
+                    board[backLine][3] = new Queen(this, white);
+                    board[backLine][4] = new King(this, white);
+                    board[backLine][5] = new Knight(this, white);
+                    board[backLine][6] = new Rook(this, white, new BoardCoordinate(backLine, 6));
                 }
             }
         }
@@ -1206,8 +1225,8 @@ public class BoardGUI extends JPanel {
     public void setupPieces(Chess.BoardLayout layout) {
         switch (layout) {
             case DEFAULT -> {
-                setupDefaultBoard(true);
-                setupDefaultBoard(false);
+                setupDefaultBoard(gamePieces, false);
+                setupDefaultBoard(gamePieces, true);
             }
             case CHESS960 -> {
                 if (boardSize != 8) {
@@ -2227,7 +2246,7 @@ public class BoardGUI extends JPanel {
     }
 
     public void printGame(boolean includeInfo) {
-        BoardMatrixRotation.printBoard(gamePieces, view);
+        BoardMatrixRotation.printBoard(gamePieces, view, boardSize);
         if (includeInfo) {
             System.out.println();
             System.out.println("FEN String: " + translateBoardToFEN(gamePieces));
@@ -2501,6 +2520,9 @@ public class BoardGUI extends JPanel {
         String k_vs_KB = anagramRegex("kKB");
         String kb_vs_K = anagramRegex("kbK");
 
+        if (truncated.equals("")) {
+            return true;
+        }
         if (truncated.matches(k_vs_K)) {
             return true;
         }

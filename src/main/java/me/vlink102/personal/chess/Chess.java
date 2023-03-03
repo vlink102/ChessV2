@@ -1,7 +1,9 @@
 package me.vlink102.personal.chess;
 
-import com.github.weisj.darklaf.LafManager;
-import com.github.weisj.darklaf.theme.DarculaTheme;
+import me.vlink102.personal.GameSelector;
+import me.vlink102.personal.chess.internal.MenuScheme;
+import me.vlink102.personal.chess.internal.Move;
+import me.vlink102.personal.chess.internal.OnlineAssets;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,8 +15,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class Chess extends JLayeredPane {
@@ -45,8 +45,8 @@ public class Chess extends JLayeredPane {
         DEFAULT
     }
 
-    public Chess(int initialPieceSize, int initialBoardSize) {
-        board = new BoardGUI(this, BoardGUI.PieceDesign.NEO, BoardGUI.Colours.GREEN, initialPieceSize, true, true, BoardLayout.DEFAULT, BoardGUI.OpponentType.AUTO_SWAP, BoardGUI.MoveStyle.BOTH, BoardGUI.HintStyle.Move.DOT, BoardGUI.HintStyle.Capture.RING, BoardGUI.GameType.DEFAULT, BoardGUI.CoordinateDisplayType.OUTSIDE, initialBoardSize);
+    public Chess(int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.OpponentType type, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
+        board = new BoardGUI(this, initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
 
         add(board, DEFAULT_LAYER);
         add(board.getSidePanelGUI(), DEFAULT_LAYER);
@@ -54,17 +54,12 @@ public class Chess extends JLayeredPane {
         add(board.getIconDisplayGUI(), POPUP_LAYER);
     }
 
-    public static void initUI(int initialPieceSize, int initialBoardSize) {
-        LafManager.install(new DarculaTheme());
-        LafManager.setDecorationsEnabled(true);
-
+    public static Chess initUI(int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.OpponentType type, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
         BufferedImage image = Move.getBufferedResource("/iconnav.png");
 
         for (int i = 0; i < 75; i++) {
             iconSprites[i] = image.getSubimage(0, i * (image.getHeight() / 75), (image.getHeight() / 75), (image.getHeight() / 75));
         }
-
-        Image imageIcon = Move.getResource("/icon.png");
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -84,15 +79,16 @@ public class Chess extends JLayeredPane {
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         if ((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet > screen.getWidth()) {
-            ImageIcon icon = new ImageIcon(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+            ImageIcon icon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
             JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 100\n - Board size: 8\n\nClick OK to continue...", "Board too large, reduced game size",  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
             initialPieceSize = 100;
             initialBoardSize = 8;
         }
         Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (Chess.boardToFrameOffset * 2) + heightOffSet);
         frame = new JFrame("Chess [vlink102] Github b13.8.8");
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.add(new Chess(initialPieceSize, initialBoardSize));
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        Chess chess = new Chess(initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
+        frame.add(chess);
         frame.setResizable(true);
         frame.getContentPane().setPreferredSize(initialSize);
 
@@ -100,7 +96,7 @@ public class Chess extends JLayeredPane {
         frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
         frame.getContentPane().setBackground(menuScheme.getBackground());
 
-        frame.setIconImage(imageIcon);
+        frame.setIconImage(GameSelector.getImageIcon());
 
         frame.getContentPane().addComponentListener(new ComponentAdapter() {
             @Override
@@ -130,6 +126,7 @@ public class Chess extends JLayeredPane {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         board.requestFocus();
+        return chess;
     }
 
     public static void refreshWindow() {
@@ -219,7 +216,7 @@ public class Chess extends JLayeredPane {
         inputLoad.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ImageIcon imageIcon = new ImageIcon(Move.getMoveHighlightIcon(Move.MoveHighlights.BOOK).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+                ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.BOOK)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
                 Object FEN = JOptionPane.showInputDialog(null, "Enter FEN String:", "Load game state", JOptionPane.PLAIN_MESSAGE, imageIcon, null, "");
                 if (FEN != null) {
                     board.loadFEN(FEN.toString());
@@ -656,41 +653,15 @@ public class Chess extends JLayeredPane {
     }
 
     public void createPopUp(String message, String title, Move.MoveHighlights highlights) {
-        ImageIcon imageIcon = new ImageIcon(Move.getMoveHighlightIcon(highlights).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
         JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
         requestFocus();
     }
 
     public void createPopUp(String message, String title, Move.InfoIcons highlights) {
-        ImageIcon imageIcon = new ImageIcon(Move.getInfoIcon(highlights).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
         JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
         requestFocus();
     }
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> Chess.initUI(100, 8));
-    }
-
-    public enum OS {
-        WINDOWS, LINUX, MAC, SOLARIS
-    }
-
-    private static OS os = null;
-
-    public static OS getOS() {
-        if (os == null) {
-            String operSys = System.getProperty("os.name").toLowerCase();
-            if (operSys.contains("win")) {
-                os = OS.WINDOWS;
-            } else if (operSys.contains("nix") || operSys.contains("nux")
-                    || operSys.contains("aix")) {
-                os = OS.LINUX;
-            } else if (operSys.contains("mac")) {
-                os = OS.MAC;
-            } else if (operSys.contains("sunos")) {
-                os = OS.SOLARIS;
-            }
-        }
-        return os;
-    }
 }
