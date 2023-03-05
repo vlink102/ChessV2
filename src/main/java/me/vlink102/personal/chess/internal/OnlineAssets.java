@@ -3,6 +3,7 @@ package me.vlink102.personal.chess.internal;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.SpecialPiece;
+import me.vlink102.personal.chess.ui.history.CaptureGUI;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -10,10 +11,16 @@ import java.util.HashMap;
 public class OnlineAssets {
     private static Image savedBoard;
     private static final HashMap<String, Image> savedPieces = new HashMap<>();
+    private static final HashMap<CaptureGUI.CaptureDisplay, Image> subImages = new HashMap<>();
 
     public OnlineAssets(BoardGUI boardGUI) {
         loadCachedPieces(boardGUI);
+        loadCapturedPieces(boardGUI);
         updateSavedImage(boardGUI);
+    }
+
+    public static Image getSavedCapturePiece(CaptureGUI.CaptureDisplay display) {
+        return subImages.get(display);
     }
 
     public static Image getSavedBoard() {
@@ -78,6 +85,12 @@ public class OnlineAssets {
 
     public static synchronized void updateSavedImage(BoardGUI boardGUI) {
         savedBoard = getBoard(boardGUI).getScaledInstance(boardGUI.getPieceSize() * boardGUI.getBoardSize(), boardGUI.getPieceSize() * 8, Image.SCALE_FAST);
+    }
+
+    public static void loadCapturedPieces(BoardGUI boardGUI) {
+        for (CaptureGUI.CaptureDisplay value : CaptureGUI.CaptureDisplay.values()) {
+            subImages.put(value, CaptureGUI.getSprite(value, boardGUI.getPieceSize() / 4));
+        }
     }
 
     public static void loadCachedPieces(BoardGUI boardGUI) {

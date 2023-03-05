@@ -4,6 +4,9 @@ import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.chess.internal.MenuScheme;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.OnlineAssets;
+import me.vlink102.personal.chess.ratings.Rating;
+import me.vlink102.personal.chess.ratings.RatingCalculator;
+import me.vlink102.personal.chess.ratings.RatingPeriodResults;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +19,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Chess extends JLayeredPane {
     private static BoardGUI board;
@@ -50,6 +54,7 @@ public class Chess extends JLayeredPane {
 
         add(board, DEFAULT_LAYER);
         add(board.getSidePanelGUI(), DEFAULT_LAYER);
+        add(board.getCaptureGUI(), DEFAULT_LAYER);
         add(board.getCoordinateGUI(), DEFAULT_LAYER);
         add(board.getIconDisplayGUI(), POPUP_LAYER);
     }
@@ -86,9 +91,10 @@ public class Chess extends JLayeredPane {
         }
         Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (Chess.boardToFrameOffset * 2) + heightOffSet);
         frame = new JFrame("Chess [vlink102] Github b13.8.8");
+        frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         Chess chess = new Chess(initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
-        frame.add(chess);
+        frame.getContentPane().add(chess);
         frame.setResizable(true);
         frame.getContentPane().setPreferredSize(initialSize);
 
@@ -137,6 +143,7 @@ public class Chess extends JLayeredPane {
         updateBoardBounds();
         updateSidePanelBounds();
         updateCoordinatePanelBounds();
+        updateCapturePanelBounds();
 
         OnlineAssets.updateSavedImage(board);
         board.displayPieces();
@@ -149,7 +156,11 @@ public class Chess extends JLayeredPane {
     }
 
     public static void updateSidePanelBounds() {
-        board.getSidePanelGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + Chess.offSet, boardToFrameOffset - heightOffSet, sidePanelWidth - Chess.offSet, board.getHeight() + Chess.offSet);
+        board.getSidePanelGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + Chess.offSet, (boardToFrameOffset - heightOffSet) + 200, sidePanelWidth - Chess.offSet, (board.getHeight() + Chess.offSet) - 200);
+    }
+
+    public static void updateCapturePanelBounds() {
+        board.getCaptureGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + Chess.offSet, (boardToFrameOffset - heightOffSet), sidePanelWidth - Chess.offSet, 180 - Chess.offSet);
     }
 
     public static void updateCoordinatePanelBounds() {
@@ -162,6 +173,7 @@ public class Chess extends JLayeredPane {
         return e -> {
             if (lastSize != board.getPieceSize() ) {
                 OnlineAssets.updatePieceDesigns(board);
+                OnlineAssets.loadCapturedPieces(board);
 
                 Move.loadCachedIcons(board.getPieceSize());
                 Move.loadCachedHighlights(board.getPieceSize());
@@ -662,6 +674,11 @@ public class Chess extends JLayeredPane {
         ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
         JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
         requestFocus();
+    }
+
+    public void createPopUp(String message, String title, Move.InfoIcons highlights, int previousELO, int newELO) {
+        JLabel label = new JLabel();
+
     }
 
 }

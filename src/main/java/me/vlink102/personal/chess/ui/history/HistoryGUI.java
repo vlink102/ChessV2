@@ -1,20 +1,22 @@
-package me.vlink102.personal.chess.ui;
+package me.vlink102.personal.chess.ui.history;
 
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.internal.Move;
+import me.vlink102.personal.chess.ui.CoordinateGUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class SidePanelGUI extends JPanel {
+public class HistoryGUI extends JPanel {
     private final BoardGUI boardGUI;
     private Font moveNumberFont;
     private Font moveFont;
 
-    public SidePanelGUI(BoardGUI boardGUI) {
+    public HistoryGUI(BoardGUI boardGUI) {
         this.boardGUI = boardGUI;
+        setOpaque(true);
         setBackground(Chess.menuScheme.getDarkerBackground());
         updateFonts();
     }
@@ -29,11 +31,7 @@ public class SidePanelGUI extends JPanel {
         super.paintComponent(g);
 
         List<Move> moveList = boardGUI.getHistory();
-        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        updateFonts();
-
-        // TODO JSCROLLPANE
         int i = 0;
         int j = 0;
         for (Move move : moveList) {
@@ -75,6 +73,7 @@ public class SidePanelGUI extends JPanel {
             }
         }
 
-
+        setPreferredSize(new Dimension(1000, 1000));
     }
+
 }

@@ -7,9 +7,11 @@ import me.vlink102.personal.chess.pieces.generic.*;
 import me.vlink102.personal.chess.pieces.generic.special.asian.DragonHorse;
 import me.vlink102.personal.chess.pieces.generic.special.asian.DragonKing;
 import me.vlink102.personal.chess.pieces.generic.special.historical.*;
+import me.vlink102.personal.chess.ratings.Rating;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
 import me.vlink102.personal.chess.ui.IconDisplayGUI;
-import me.vlink102.personal.chess.ui.SidePanelGUI;
+import me.vlink102.personal.chess.ui.history.CaptureGUI;
+import me.vlink102.personal.chess.ui.history.HistoryGUI;
 import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 
 import javax.swing.*;
@@ -23,7 +25,8 @@ public class BoardGUI extends JPanel {
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
 
-    private final SidePanelGUI sidePanelGUI;
+    private final HistoryGUI historyGUI;
+    private final CaptureGUI captureGUI;
     private final CoordinateGUI coordinateGUI;
     private final IconDisplayGUI iconDisplayGUI;
     private CoordinateDisplayType coordinateDisplayType;
@@ -75,6 +78,8 @@ public class BoardGUI extends JPanel {
     private GameOverType gameOver = null;
 
     private List<String> gameFENHistory;
+
+    private boolean shouldCalculateELO;
 
     public enum GameOverType {
         STALEMATE,
@@ -149,6 +154,7 @@ public class BoardGUI extends JPanel {
 
     public void setupBoard(Chess.BoardLayout layout) {
         this.gameOver = null;
+        this.shouldCalculateELO = true;
 
         if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
             this.currentLayout = Chess.BoardLayout.DEFAULT;
@@ -186,6 +192,7 @@ public class BoardGUI extends JPanel {
     }
 
     public void resetBoard(Chess.BoardLayout layout) {
+        shouldCalculateELO = true;
         setupBoard(layout);
         repaint();
         displayPieces();
@@ -215,6 +222,10 @@ public class BoardGUI extends JPanel {
         this.moveMethod = moveMethod;
         this.captureStyle = captureStyle;
         this.moveStyle = moveStyle;
+        this.historyGUI = new HistoryGUI(this);
+        this.captureGUI = new CaptureGUI(this);
+        this.coordinateGUI = new CoordinateGUI(this);
+        this.iconDisplayGUI = new IconDisplayGUI(this);
         this.onlineAssets = new OnlineAssets(this);
 
         setFont(Chess.def.deriveFont(Chess.defaultOffset - 4f));
@@ -325,10 +336,6 @@ public class BoardGUI extends JPanel {
 
         Move.loadCachedIcons(pieceSize);
         Move.loadCachedHighlights(pieceSize);
-
-        this.sidePanelGUI = new SidePanelGUI(this);
-        this.coordinateGUI = new CoordinateGUI(this);
-        this.iconDisplayGUI = new IconDisplayGUI(this);
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -372,6 +379,7 @@ public class BoardGUI extends JPanel {
     }
 
     public void loadFEN(String FEN) {
+        shouldCalculateELO = false;
         if (validateFEN(FEN, boardSize)) {
             gamePieces = new Piece[boardSize][boardSize];
             history = new ArrayList<>();
@@ -1754,7 +1762,8 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        sidePanelGUI.repaint();
+        historyGUI.repaint();
+        captureGUI.repaint();
         coordinateGUI.repaint();
         iconDisplayGUI.repaint();
     }
@@ -2580,26 +2589,60 @@ public class BoardGUI extends JPanel {
                     staticHighlights[whiteKing.row()][whiteKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+
+                    if (shouldCalculateELO) {
+                        if (playAsWhite) {
+                            updateELO(ChessMenu.computer, ChessMenu.player, false);
+                        } else {
+                            updateELO(ChessMenu.player, ChessMenu.computer, false);
+                        }
+                    }
                 }
                 case CHECKMATE_WHITE -> {
                     staticHighlights[blackKing.row()][blackKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+
+                    if (shouldCalculateELO) {
+                        if (!playAsWhite) {
+                            updateELO(ChessMenu.computer, ChessMenu.player, false);
+                        } else {
+                            updateELO(ChessMenu.player, ChessMenu.computer, false);
+                        }
+                    }
                 }
                 case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
                     history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+
+                    if (shouldCalculateELO) {
+                        updateELO(ChessMenu.computer, ChessMenu.player, true);
+                    }
                 }
                 case RESIGNATION_BLACK -> {
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
                     history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
+                    if (shouldCalculateELO) {
+                        if (!playAsWhite) {
+                            updateELO(ChessMenu.computer, ChessMenu.player, false);
+                        } else {
+                            updateELO(ChessMenu.player, ChessMenu.computer, false);
+                        }
+                    }
                 }
                 case RESIGNATION_WHITE -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
                     history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
+                    if (shouldCalculateELO) {
+                        if (playAsWhite) {
+                            updateELO(ChessMenu.computer, ChessMenu.player, false);
+                        } else {
+                            updateELO(ChessMenu.player, ChessMenu.computer, false);
+                        }
+                    }
                 }
             }
             displayPieces();
@@ -2623,6 +2666,15 @@ public class BoardGUI extends JPanel {
                 case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER));
             }
         }
+    }
+
+    public void updateELO(Rating winner, Rating loser, boolean draw) {
+        if (draw) {
+            ChessMenu.results.addDraw(winner, loser);
+        } else {
+            ChessMenu.results.addResult(winner, loser);
+        }
+        ChessMenu.calculator.updateRatings(ChessMenu.results);
     }
 
     public boolean gameOver() {
@@ -2865,8 +2917,8 @@ public class BoardGUI extends JPanel {
         return gameType;
     }
 
-    public SidePanelGUI getSidePanelGUI() {
-        return sidePanelGUI;
+    public HistoryGUI getSidePanelGUI() {
+        return historyGUI;
     }
 
     public CoordinateDisplayType getCoordinateDisplayType() {
@@ -2894,5 +2946,9 @@ public class BoardGUI extends JPanel {
 
     public IconDisplayGUI getIconDisplayGUI() {
         return iconDisplayGUI;
+    }
+
+    public CaptureGUI getCaptureGUI() {
+        return captureGUI;
     }
 }

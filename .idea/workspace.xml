@@ -5,52 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="stuff">
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/GameSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/Menu.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/classroom/Classroom.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/classroom/ClassroomGUI.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/ClassroomAssets.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/interactive/ClassroomInteraction.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/minesweeper/MSMenu.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/board.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/minesweeper.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/play.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/testing.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/MySQLConnection.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/Rating.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/RatingCalculator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/RatingPeriodResults.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/Result.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/history/CaptureGUI.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/captured-pieces.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardCoordinate.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/BoardCoordinate.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/GameSelector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/GameSelector.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardMatrixRotation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/BoardMatrixRotation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ColorScheme.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/ColorScheme.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/CoordinateGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/CoordinateGUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/IconDisplayGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/IconDisplayGUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/MenuScheme.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/MenuScheme.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Move.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/Move.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/OnlineAssets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/OnlineAssets.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Piece.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Piece.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/PieceInteraction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/interactive/PieceInteraction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Ring.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/Ring.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/SidePanelGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/SidePanelGUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/SpecialPiece.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/SpecialPiece.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Stockfish.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/Stockfish.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Bishop.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/Bishop.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/King.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/King.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Knight.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/Knight.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Pawn.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/Pawn.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Queen.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/Queen.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/RiceFarmer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/RiceFarmer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Rook.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/Rook.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/asian/DragonHorse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/asian/DragonHorse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/asian/DragonKing.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/asian/DragonKing.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Amazon.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Amazon.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Camel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Camel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Elephant.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Elephant.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Empress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Empress.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Man.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Man.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Minister.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Minister.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/special/historical/Princess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/generic/special/historical/Princess.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/OnlineAssets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/OnlineAssets.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/SidePanelGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/history/HistoryGUI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,7 +59,7 @@
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;extract.method.default.visibility&quot;: &quot;private&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/ethan/Library/Mobile Documents/com~apple~CloudDocs/Misc/Java/ChessV4/src/main/resources&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/ethan/Library/Mobile Documents/com~apple~CloudDocs/Misc/Java/ChessV4/src/main/java/me/vlink102/personal/chess/internal/networking&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
@@ -96,39 +67,35 @@
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
     &quot;service.view.auto.scroll.to.source&quot;: &quot;true&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
+    ]
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking" />
       <recent name="$PROJECT_DIR$/src/main/resources" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\fonts" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\fonts\resources" />
-      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\special-pieces" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/main/resources" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons\trade-icons" />
     </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="me.vlink102.personal.chess.internal" />
+    </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="me.vlink102.personal.chess.ui.history" />
       <recent name="me.vlink102.personal.chess" />
     </key>
   </component>
   <component name="RunManager" selected="Application.GameSelector">
-    <configuration name="Chess" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="me.vlink102.personal.chess.Chess" />
-      <module name="ChessV2" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="me.vlink102.personal.chess.ui.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="GameSelector" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="me.vlink102.personal.GameSelector" />
       <module name="ChessV2" />
@@ -142,10 +109,23 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="me.vlink102.personal.chess.Chess" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="me.vlink102.personal.chess.Chess" />
+      <module name="ChessV2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="me.vlink102.personal.chess.ui.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Application.GameSelector" />
-        <item itemvalue="Application.Chess" />
+        <item itemvalue="Application.me.vlink102.personal.chess.Chess" />
       </list>
     </recent_temporary>
   </component>
@@ -181,7 +161,8 @@
       <workItem from="1677693723417" duration="13316000" />
       <workItem from="1677711500856" duration="12035000" />
       <workItem from="1677796667043" duration="1616000" />
-      <workItem from="1677864629298" duration="6184000" />
+      <workItem from="1677864629298" duration="6615000" />
+      <workItem from="1677925112939" duration="47887000" />
     </task>
     <task id="LOCAL-00001" summary="stuff">
       <created>1674428968387</created>
@@ -253,7 +234,14 @@
       <option name="project" value="LOCAL" />
       <updated>1677542625077</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="stuff">
+      <created>1677884218103</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1677884218103</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -303,7 +291,7 @@
     <SUITE FILE_PATH="coverage/ChessV2$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1677086286117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/ChessV4$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1677798348950" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/ChessV4$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1677953900875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/ChessTesting$Chess.ic" NAME="Chess Coverage Results" MODIFIED="1674336826244" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">

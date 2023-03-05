@@ -4,6 +4,10 @@ import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.Menu;
 import me.vlink102.personal.chess.classroom.Classroom;
 import me.vlink102.personal.chess.internal.Move;
+import me.vlink102.personal.chess.internal.networking.MySQLConnection;
+import me.vlink102.personal.chess.ratings.Rating;
+import me.vlink102.personal.chess.ratings.RatingCalculator;
+import me.vlink102.personal.chess.ratings.RatingPeriodResults;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +16,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ChessMenu extends Menu {
     public static JFrame frame;
@@ -20,12 +25,22 @@ public class ChessMenu extends Menu {
     private final List<Chess> instances;
     private final List<Classroom> classroomInstances;
 
-    public enum GameType {
-        DEFAULT,
-        TESTING
-    }
+    public static RatingCalculator calculator;
+    public static Rating player;
+    public static Rating computer;
+    public static RatingPeriodResults results;
 
     public void initUI() {
+        calculator = new RatingCalculator();
+        results = new RatingPeriodResults();
+        GameSelector.connection.loadData();
+        if (MySQLConnection.containsPlayer(MySQLConnection.players, "39ac11a3-8f64-41f5-a39e-53d0ca9bec62")) { // TODO
+            player = MySQLConnection.getPlayer(MySQLConnection.players, "39ac11a3-8f64-41f5-a39e-53d0ca9bec62");
+        } else {
+            player = new Rating("", UUID.randomUUID().toString(), calculator);
+        }
+        computer = MySQLConnection.getPlayer(MySQLConnection.players, "5c93ac00-5aeb-45f6-8163-b2740cf27a68");
+
         frame = new JFrame("Chess ~ Menu");
         JPanel panel = new JPanel();
         panel.add(new GameSelector.MenuButton(new AbstractAction() {
@@ -84,6 +99,9 @@ public class ChessMenu extends Menu {
             testingInstance.dispatchEvent(new WindowEvent(Classroom.frame, WindowEvent.WINDOW_CLOSING));
         }
         frame.dispatchEvent(new WindowEvent(ChessMenu.frame, WindowEvent.WINDOW_CLOSING));
+        calculator.updateRatings(results);
+        GameSelector.connection.savePeriod(results);
+        GameSelector.connection.savePlayers();
     }
 
     @Override
