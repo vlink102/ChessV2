@@ -5,6 +5,7 @@ import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.internal.ClassroomAssets;
 import me.vlink102.personal.chess.internal.OnlineAssets;
+import org.json.JSONObject;
 
 import java.awt.*;
 
@@ -59,7 +60,10 @@ public abstract class Piece {
 
     @Override
     public String toString() {
-        return "Piece{abbr='" + abbr + "', white=" + white + "}";
+        JSONObject o = new JSONObject();
+        o.put("abbr", abbr);
+        o.put("white", white);
+        return o.toString();
     }
 
     public int getMoves() {

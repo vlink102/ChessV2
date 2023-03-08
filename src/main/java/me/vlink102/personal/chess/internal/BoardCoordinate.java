@@ -2,6 +2,7 @@ package me.vlink102.personal.chess.internal;
 
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.classroom.ClassroomGUI;
+import org.json.JSONObject;
 
 public class BoardCoordinate {
     private final int row;
@@ -69,5 +70,13 @@ public class BoardCoordinate {
         if (o == null || getClass() != o.getClass()) return false;
         BoardCoordinate that = (BoardCoordinate) o;
         return row == that.row && col == that.col;
+    }
+
+    @Override
+    public String toString() {
+        JSONObject o = new JSONObject();
+        o.put("row", row);
+        o.put("col", col);
+        return o.toString();
     }
 }

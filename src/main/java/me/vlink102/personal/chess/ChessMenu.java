@@ -1,9 +1,11 @@
 package me.vlink102.personal.chess;
 
+import com.github.weisj.darklaf.task.IdeaDefaultsInitTask;
 import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.Menu;
 import me.vlink102.personal.chess.classroom.Classroom;
 import me.vlink102.personal.chess.internal.Move;
+import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.MySQLConnection;
 import me.vlink102.personal.chess.ratings.Rating;
 import me.vlink102.personal.chess.ratings.RatingCalculator;
@@ -19,6 +21,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class ChessMenu extends Menu {
+    public static String IDENTIFIER = null;
+
     public static JFrame frame;
     public final Image testing;
     public final Image board;
@@ -30,14 +34,29 @@ public class ChessMenu extends Menu {
     public static Rating computer;
     public static RatingPeriodResults results;
 
-    public void initUI() {
-        calculator = new RatingCalculator();
-        results = new RatingPeriodResults();
-        GameSelector.connection.loadData();
-        if (MySQLConnection.containsPlayer(MySQLConnection.players, "39ac11a3-8f64-41f5-a39e-53d0ca9bec62")) { // TODO
-            player = MySQLConnection.getPlayer(MySQLConnection.players, "39ac11a3-8f64-41f5-a39e-53d0ca9bec62");
+    record LoginResult(String username, String password) {}
+
+    public LoginResult loginPanel() {
+        JPanel panel = new JPanel(new FlowLayout());
+        JTextField textField = new JTextField("username", 20);
+        JPasswordField passwordField = new JPasswordField("password", 20);
+        panel.add(textField);
+        panel.add(passwordField);
+
+        int result = JOptionPane.showConfirmDialog(null, panel, "Login/Register", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
+        if (result != JOptionPane.OK_OPTION) {
+            return null;
         } else {
-            player = new Rating("", UUID.randomUUID().toString(), calculator);
+            return new LoginResult(textField.getText(), new String(passwordField.getPassword()));
+        }
+    }
+
+    public void initUI() {
+
+        if (MySQLConnection.containsPlayer(MySQLConnection.players, IDENTIFIER)) {
+            player = MySQLConnection.getPlayer(MySQLConnection.players, IDENTIFIER);
+        } else {
+            throw new RuntimeException("Unregistered player initialising UI");
         }
         computer = MySQLConnection.getPlayer(MySQLConnection.players, "5c93ac00-5aeb-45f6-8163-b2740cf27a68");
 
@@ -86,7 +105,22 @@ public class ChessMenu extends Menu {
         this.board = Move.getResource("/board.png");
         this.classroomInstances = new ArrayList<>();
         this.instances = new ArrayList<>();
-        initUI();
+
+        LoginResult result = loginPanel();
+        if (result != null) {
+            calculator = new RatingCalculator();
+            results = new RatingPeriodResults();
+            GameSelector.connection.loadData();
+            String UUID = java.util.UUID.randomUUID().toString();
+            MySQLConnection.addPlayer(new Rating(result.username, UUID, calculator));
+            GameSelector.connection.savePlayers();
+            GameSelector.connection.setPassword(UUID, result.password);
+            IDENTIFIER = UUID;
+            CommunicationHandler.establishConnection(UUID);
+            initUI();
+        } else {
+            close();
+        }
     }
 
     @Override

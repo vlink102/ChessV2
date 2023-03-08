@@ -50,8 +50,19 @@
             <artifactId>json</artifactId>
             <version>20230227</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.github.andrewlalis</groupId>
+            <artifactId>record-net</artifactId>
+            <version>v1.3.4</version>
+        </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
