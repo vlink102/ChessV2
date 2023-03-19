@@ -1,15 +1,10 @@
 package me.vlink102.personal.chess;
 
-import com.github.weisj.darklaf.task.IdeaDefaultsInitTask;
 import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.Menu;
 import me.vlink102.personal.chess.classroom.Classroom;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
-import me.vlink102.personal.chess.internal.networking.MySQLConnection;
-import me.vlink102.personal.chess.ratings.Rating;
-import me.vlink102.personal.chess.ratings.RatingCalculator;
-import me.vlink102.personal.chess.ratings.RatingPeriodResults;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class ChessMenu extends Menu {
     public static String IDENTIFIER = null;
@@ -26,13 +20,8 @@ public class ChessMenu extends Menu {
     public static JFrame frame;
     public final Image testing;
     public final Image board;
-    private final List<Chess> instances;
-    private final List<Classroom> classroomInstances;
-
-    public static RatingCalculator calculator;
-    public static Rating player;
-    public static Rating computer;
-    public static RatingPeriodResults results;
+    private static List<Chess> instances;
+    private static List<Classroom> classroomInstances;
 
     record LoginResult(String username, String password) {}
 
@@ -51,15 +40,13 @@ public class ChessMenu extends Menu {
         }
     }
 
+    public boolean validLogin() {
+        LoginResult result = loginPanel();
+        if (result == null) return false;
+        return CommunicationHandler.validateLogin(result.username, result.password);
+    }
+
     public void initUI() {
-
-        if (MySQLConnection.containsPlayer(MySQLConnection.players, IDENTIFIER)) {
-            player = MySQLConnection.getPlayer(MySQLConnection.players, IDENTIFIER);
-        } else {
-            throw new RuntimeException("Unregistered player initialising UI");
-        }
-        computer = MySQLConnection.getPlayer(MySQLConnection.players, "5c93ac00-5aeb-45f6-8163-b2740cf27a68");
-
         frame = new JFrame("Chess ~ Menu");
         JPanel panel = new JPanel();
         panel.add(new GameSelector.MenuButton(new AbstractAction() {
@@ -103,24 +90,17 @@ public class ChessMenu extends Menu {
     public ChessMenu() {
         this.testing = Move.getResource("/testing.png");
         this.board = Move.getResource("/board.png");
-        this.classroomInstances = new ArrayList<>();
-        this.instances = new ArrayList<>();
+        classroomInstances = new ArrayList<>();
+        instances = new ArrayList<>();
+        new CommunicationHandler("ulucl02v8dm4l3qm", "bf5v9fiyfc6bqge4qrz1-mysql.services.clever-cloud.com", "bf5v9fiyfc6bqge4qrz1", 3306);
 
-        LoginResult result = loginPanel();
-        if (result != null) {
-            calculator = new RatingCalculator();
-            results = new RatingPeriodResults();
-            GameSelector.connection.loadData();
-            String UUID = java.util.UUID.randomUUID().toString();
-            MySQLConnection.addPlayer(new Rating(result.username, UUID, calculator));
-            GameSelector.connection.savePlayers();
-            GameSelector.connection.setPassword(UUID, result.password);
-            IDENTIFIER = UUID;
-            CommunicationHandler.establishConnection(UUID);
+        if (validLogin()) {
+            CommunicationHandler.establishConnection(IDENTIFIER);
             initUI();
         } else {
             close();
         }
+
     }
 
     @Override
@@ -133,9 +113,7 @@ public class ChessMenu extends Menu {
             testingInstance.dispatchEvent(new WindowEvent(Classroom.frame, WindowEvent.WINDOW_CLOSING));
         }
         frame.dispatchEvent(new WindowEvent(ChessMenu.frame, WindowEvent.WINDOW_CLOSING));
-        calculator.updateRatings(results);
-        GameSelector.connection.savePeriod(results);
-        GameSelector.connection.savePlayers();
+
     }
 
     @Override
@@ -311,5 +289,9 @@ public class ChessMenu extends Menu {
 
             return new TestingResult((int) spinner.getValue(), (int) spinner1.getValue(), radioButton.isSelected(), online.isSelected(), (BoardGUI.PieceDesign) pieceDesignJComboBox.getSelectedItem(), (BoardGUI.Colours) boardThemeJComboBox.getSelectedItem());
         }
+    }
+
+    public static List<Chess> getInstances() {
+        return instances;
     }
 }

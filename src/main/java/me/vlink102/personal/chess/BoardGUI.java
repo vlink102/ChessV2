@@ -7,7 +7,6 @@ import me.vlink102.personal.chess.pieces.generic.*;
 import me.vlink102.personal.chess.pieces.generic.special.asian.DragonHorse;
 import me.vlink102.personal.chess.pieces.generic.special.asian.DragonKing;
 import me.vlink102.personal.chess.pieces.generic.special.historical.*;
-import me.vlink102.personal.chess.ratings.Rating;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
 import me.vlink102.personal.chess.ui.IconDisplayGUI;
 import me.vlink102.personal.chess.ui.history.CaptureGUI;
@@ -152,9 +151,18 @@ public class BoardGUI extends JPanel {
         opponentType = type;
     }
 
+    /**
+     * TODO ~ when making challenge, send all data required to the opponent,
+     * TODO ~ (maybe) first check if its possible to modify all settings whilst game is running
+     * TODO ~ open a new window for challenge with a boolean (challenge) to prevent problems,
+     * TODO ~ moves will come through the datathread anyway
+     *
+     * TODO prevent options during challenges e.g. resetting
+     * TODO fire game over packets on quit app and on abort, resign, etc
+     */
     public void setupBoard(Chess.BoardLayout layout) {
         this.gameOver = null;
-        this.shouldCalculateELO = true;
+        this.shouldCalculateELO = true; // TODO only enable in challenge
 
         if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
             this.currentLayout = Chess.BoardLayout.DEFAULT;
@@ -192,7 +200,7 @@ public class BoardGUI extends JPanel {
     }
 
     public void resetBoard(Chess.BoardLayout layout) {
-        shouldCalculateELO = true;
+        shouldCalculateELO = true; // TODO only enable in challenge
         setupBoard(layout);
         repaint();
         displayPieces();
@@ -2590,59 +2598,27 @@ public class BoardGUI extends JPanel {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
 
-                    if (shouldCalculateELO) {
-                        if (playAsWhite) {
-                            updateELO(ChessMenu.computer, ChessMenu.player, false);
-                        } else {
-                            updateELO(ChessMenu.player, ChessMenu.computer, false);
-                        }
-                    }
+                    // TODO leave elo calc to server
                 }
                 case CHECKMATE_WHITE -> {
                     staticHighlights[blackKing.row()][blackKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
-
-                    if (shouldCalculateELO) {
-                        if (!playAsWhite) {
-                            updateELO(ChessMenu.computer, ChessMenu.player, false);
-                        } else {
-                            updateELO(ChessMenu.player, ChessMenu.computer, false);
-                        }
-                    }
                 }
                 case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
                     history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
-
-                    if (shouldCalculateELO) {
-                        updateELO(ChessMenu.computer, ChessMenu.player, true);
-                    }
                 }
                 case RESIGNATION_BLACK -> {
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
                     history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
-                    if (shouldCalculateELO) {
-                        if (!playAsWhite) {
-                            updateELO(ChessMenu.computer, ChessMenu.player, false);
-                        } else {
-                            updateELO(ChessMenu.player, ChessMenu.computer, false);
-                        }
-                    }
                 }
                 case RESIGNATION_WHITE -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
                     history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
-                    if (shouldCalculateELO) {
-                        if (playAsWhite) {
-                            updateELO(ChessMenu.computer, ChessMenu.player, false);
-                        } else {
-                            updateELO(ChessMenu.player, ChessMenu.computer, false);
-                        }
-                    }
                 }
             }
             displayPieces();
@@ -2666,15 +2642,6 @@ public class BoardGUI extends JPanel {
                 case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER));
             }
         }
-    }
-
-    public void updateELO(Rating winner, Rating loser, boolean draw) {
-        if (draw) {
-            ChessMenu.results.addDraw(winner, loser);
-        } else {
-            ChessMenu.results.addResult(winner, loser);
-        }
-        ChessMenu.calculator.updateRatings(ChessMenu.results);
     }
 
     public boolean gameOver() {

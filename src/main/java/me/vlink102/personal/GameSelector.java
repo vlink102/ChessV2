@@ -4,7 +4,6 @@ import com.github.weisj.darklaf.LafManager;
 import com.github.weisj.darklaf.theme.DarculaTheme;
 import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.Move;
-import me.vlink102.personal.chess.internal.networking.MySQLConnection;
 import me.vlink102.personal.minesweeper.MSMenu;
 
 import javax.swing.*;
@@ -17,7 +16,6 @@ public class GameSelector {
     private static Image chessIcon;
     private static Image msIcon;
     public static JFrame frame;
-    public static MySQLConnection connection;
     private static final HashMap<Game, Menu> menuInstances = new HashMap<>();
 
     public enum Game {
@@ -75,7 +73,6 @@ public class GameSelector {
 
     public static void main(String[] args) {
         EventQueue.invokeLater(GameSelector::initUI);
-        connection = new MySQLConnection("ulucl02v8dm4l3qm", "bf5v9fiyfc6bqge4qrz1-mysql.services.clever-cloud.com", "bf5v9fiyfc6bqge4qrz1", 3306);
     }
 
     public static void closeMenuInstance(Game game) {

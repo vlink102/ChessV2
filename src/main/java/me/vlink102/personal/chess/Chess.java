@@ -1,12 +1,14 @@
 package me.vlink102.personal.chess;
 
+import com.mysql.cj.protocol.a.MysqlBinaryValueDecoder;
 import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.chess.internal.MenuScheme;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.OnlineAssets;
-import me.vlink102.personal.chess.ratings.Rating;
-import me.vlink102.personal.chess.ratings.RatingCalculator;
-import me.vlink102.personal.chess.ratings.RatingPeriodResults;
+import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
+import me.vlink102.personal.chess.internal.networking.packets.Challenge;
+import me.vlink102.personal.chess.internal.networking.packets.RequestOnline;
+import org.json.JSONObject;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,8 +20,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.ResultSet;
 import java.util.Objects;
-import java.util.UUID;
 
 public class Chess extends JLayeredPane {
     private static BoardGUI board;
@@ -90,7 +92,7 @@ public class Chess extends JLayeredPane {
             initialBoardSize = 8;
         }
         Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (Chess.boardToFrameOffset * 2) + heightOffSet);
-        frame = new JFrame("Chess [vlink102] Github b13.8.8");
+        frame = new JFrame("Chess [vlink102] Github b16.0.0");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         Chess chess = new Chess(initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
@@ -654,14 +656,57 @@ public class Chess extends JLayeredPane {
         hintMenu.add(hintStyles);
         options.add(hintMenu);
 
+        JMenuItem social = new JMenu("Social");
+        JMenuItem online = new JMenuItem("Online");
+        online.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SocialMenuResult panel = createSocialMenu();
+                if (panel == null) {
+                    JOptionPane.showConfirmDialog(frame, "Nobody is online yet", "It's quiet in here...", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null);
+                } else {
+                    Object[] options = {"Challenge", "Cancel"};
+                    int r = JOptionPane.showOptionDialog(frame, panel.panel(), "Challenge a friend", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                    if (r == JOptionPane.OK_OPTION) {
+                        String s = panel.list().getSelectedValue();
+                        if (s == null) return;
+                        String uuid = CommunicationHandler.UUIDfromName(s);
+                        CommunicationHandler.thread.sendPacket(new Challenge(ChessMenu.IDENTIFIER, uuid));
+                    }
+                }
+            }
+        });
+        social.add(online);
+
         settings.add(generalMenu);
         settings.add(gameOptions);
         settings.add(FEN);
         settings.add(boardMenu);
         settings.add(pieceMenu);
         settings.add(options);
+        settings.add(social);
 
         return settings;
+    }
+
+    public record SocialMenuResult(JPanel panel, JList<String> list) {}
+
+    public static SocialMenuResult createSocialMenu() {
+        JPanel panel = new JPanel();
+        CommunicationHandler.thread.sendPacket(new RequestOnline(ChessMenu.IDENTIFIER));
+        JSONObject object = CommunicationHandler.thread.onlinePlayers;
+        if (object == null) return null;
+        DefaultListModel<String> model = new DefaultListModel<>();
+        JList<String> list = new JList<>(model);
+        list.setSelectionMode(DefaultListSelectionModel.SINGLE_SELECTION);
+        list.setFixedCellWidth(200);
+        list.setFixedCellHeight(40);
+        for (String uuid : object.keySet()) {
+            model.addElement(object.getString(uuid));
+        }
+        panel.add(list);
+
+        return new SocialMenuResult(panel, list);
     }
 
     public void createPopUp(String message, String title, Move.MoveHighlights highlights) {

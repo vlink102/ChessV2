@@ -9,7 +9,7 @@ public record Online(String uuid) implements Message {
     @Override
     public String toString() {
         JSONObject o = new JSONObject();
-        o.put("uuid", uuid);
+        o.put("online_uuid", uuid);
         return o.toString();
     }
 }

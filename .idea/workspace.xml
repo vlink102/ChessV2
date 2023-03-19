@@ -5,18 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="stuff">
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/CommunicationHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Abort.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Move.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/OfferDraw.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Online.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Resign.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/DataThread.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Challenge.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/GameOver.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/InitGame.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/RequestOnline.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/GameSelector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/GameSelector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/BoardCoordinate.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/BoardCoordinate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/MySQLConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/MySQLConnection.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Piece.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Piece.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/CommunicationHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/CommunicationHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/MySQLConnection.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Abort.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Abort.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/OfferDraw.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/OfferDraw.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Online.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Online.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Resign.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/Resign.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/Rating.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/RatingCalculator.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/RatingPeriodResults.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ratings/Result.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,6 +97,7 @@
       <recent name="me.vlink102.personal.chess.internal" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="me.vlink102.personal.chess.internal.networking" />
       <recent name="me.vlink102.personal.chess.ui.history" />
       <recent name="me.vlink102.personal.chess" />
     </key>
@@ -158,7 +170,9 @@
       <workItem from="1677796667043" duration="1616000" />
       <workItem from="1677864629298" duration="6615000" />
       <workItem from="1677925112939" duration="47887000" />
-      <workItem from="1678306492389" duration="10710000" />
+      <workItem from="1678306492389" duration="11116000" />
+      <workItem from="1679136588101" duration="24189000" />
+      <workItem from="1679242611810" duration="13373000" />
     </task>
     <task id="LOCAL-00001" summary="stuff">
       <created>1674428968387</created>
@@ -237,7 +251,14 @@
       <option name="project" value="LOCAL" />
       <updated>1677884218103</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="stuff">
+      <created>1678318312403</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1678318312403</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -288,6 +309,9 @@
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/ChessV4$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1677953900875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>me.vlink102.personal.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/ChessV2$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1679246879345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/ChessTesting$Chess.ic" NAME="Chess Coverage Results" MODIFIED="1674336826244" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">

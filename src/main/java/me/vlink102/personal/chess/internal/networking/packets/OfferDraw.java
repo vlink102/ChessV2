@@ -7,7 +7,7 @@ public record OfferDraw(String UUID) implements Message {
     @Override
     public String toString() {
         JSONObject o = new JSONObject();
-        o.put("uuid", UUID);
+        o.put("draw_uuid", UUID);
         return o.toString();
     }
 }
