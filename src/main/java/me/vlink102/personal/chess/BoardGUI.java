@@ -150,15 +150,20 @@ public class BoardGUI extends JPanel {
     public void setOpponent(OpponentType type) {
         opponentType = type;
     }
+    // TODO add player opponent to enum
+    // TODO disallow changing opponent during challenge
 
     /**
      * TODO ~ when making challenge, send all data required to the opponent,
-     * TODO ~ (maybe) first check if its possible to modify all settings whilst game is running
+     * ~ (maybe) first check if its possible to modify all settings whilst game is running
      * TODO ~ open a new window for challenge with a boolean (challenge) to prevent problems,
-     * TODO ~ moves will come through the datathread anyway
+     *  ~ moves will come through the datathread anyway
      *
      * TODO prevent options during challenges e.g. resetting
-     * TODO fire game over packets on quit app and on abort, resign, etc
+     *  fire game over packets on quit app and on abort, resign, etc
+     *
+     * TODO white sends all game event packets aoart from black's resign/move e.g. game over,
+     *  white
      */
     public void setupBoard(Chess.BoardLayout layout) {
         this.gameOver = null;
