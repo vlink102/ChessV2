@@ -63,7 +63,7 @@ public class ChessMenu extends Menu {
             public void actionPerformed(ActionEvent e) {
                 CreateChessGame.PanelResult panel = CreateChessGame.openChessPopup();
                 if (panel != null) {
-                    instances.add(Chess.initUI(panel.pSz(), panel.boardSize(), panel.online(), panel.playAsWhite(), panel.opponentType(), panel.gameType(), panel.layout(), panel.pieceDesign(), panel.boardTheme(), panel.moveMethod(), panel.moveStyle(), panel.captureStyle(), panel.coordinateDisplayType()));
+                    instances.add(Chess.initUI(false, panel.pSz(), panel.boardSize(), panel.online(), panel.playAsWhite(), panel.opponentType(), panel.gameType(), panel.layout(), panel.pieceDesign(), panel.boardTheme(), panel.moveMethod(), panel.moveStyle(), panel.captureStyle(), panel.coordinateDisplayType()));
                 }
             }
         }, board, 50, 100, 150, 150));

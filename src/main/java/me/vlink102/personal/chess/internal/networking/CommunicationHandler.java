@@ -35,6 +35,21 @@ public class CommunicationHandler {
     private ExtendedDataInputStream inputStream;
     private ExtendedDataOutputStream outputStream;
 
+    public static String nameFromUUID(String uuid) {
+        String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
+        try (Connection connection = DriverManager.getConnection(url);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM `PLAYERS` WHERE `uuid`='" + uuid + "';");
+             ResultSet set = statement.executeQuery()) {
+            if (set.next()) {
+                return set.getString("name");
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static String UUIDfromName(String name) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
         try (Connection connection = DriverManager.getConnection(url);

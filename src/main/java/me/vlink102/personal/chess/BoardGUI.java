@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Timer;
 
 public class BoardGUI extends JPanel {
+    private final boolean challenge;
+
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
 
@@ -108,7 +110,8 @@ public class BoardGUI extends JPanel {
         AI_1,
         AI_2,
         AUTO_SWAP,
-        MANUAL
+        MANUAL,
+        PLAYER
     }
 
     public enum GameType {
@@ -150,24 +153,18 @@ public class BoardGUI extends JPanel {
     public void setOpponent(OpponentType type) {
         opponentType = type;
     }
-    // TODO add player opponent to enum
-    // TODO disallow changing opponent during challenge
 
     /**
      * TODO ~ when making challenge, send all data required to the opponent,
-     * ~ (maybe) first check if its possible to modify all settings whilst game is running
      * TODO ~ open a new window for challenge with a boolean (challenge) to prevent problems,
      *  ~ moves will come through the datathread anyway
-     *
-     * TODO prevent options during challenges e.g. resetting
-     *  fire game over packets on quit app and on abort, resign, etc
      *
      * TODO white sends all game event packets aoart from black's resign/move e.g. game over,
      *  white
      */
     public void setupBoard(Chess.BoardLayout layout) {
         this.gameOver = null;
-        this.shouldCalculateELO = true; // TODO only enable in challenge
+        this.shouldCalculateELO = challenge;
 
         if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
             this.currentLayout = Chess.BoardLayout.DEFAULT;
@@ -216,7 +213,8 @@ public class BoardGUI extends JPanel {
         resetBoard(currentLayout);
     }
 
-    public BoardGUI(Chess chess, int pSz, int boardSize, boolean useOnline, boolean playAsWhite, OpponentType type, GameType gameType, Chess.BoardLayout layout, PieceDesign pieceTheme, Colours boardTheme, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, CoordinateDisplayType coordinateDisplayType) {
+    public BoardGUI(boolean challenge, Chess chess, int pSz, int boardSize, boolean useOnline, boolean playAsWhite, OpponentType type, GameType gameType, Chess.BoardLayout layout, PieceDesign pieceTheme, Colours boardTheme, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, CoordinateDisplayType coordinateDisplayType) {
+        this.challenge = challenge;
         BoardGUI.boardSize = boardSize;
         this.pieceSize = pSz;
         BoardGUI.decBoardSize = BoardGUI.boardSize - 1;
@@ -231,7 +229,7 @@ public class BoardGUI extends JPanel {
         this.boardTheme = boardTheme;
         this.pieceTheme = pieceTheme;
         this.playAsWhite = playAsWhite;
-        this.opponentType = type;
+        this.opponentType = challenge ? OpponentType.PLAYER : type;
         this.moveMethod = moveMethod;
         this.captureStyle = captureStyle;
         this.moveStyle = moveStyle;
@@ -275,66 +273,69 @@ public class BoardGUI extends JPanel {
                 repaint();
             }
         });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0, false), "show-hanging", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showHangingPieces();
-                displayPieces();
-                repaint();
-            }
-        });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0, true), "show-hanging-released", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeHighlights(Move.MoveHighlights.HANGING_BAD);
-                removeHighlights(Move.MoveHighlights.HANGING_GOOD);
-                displayPieces();
-                repaint();
-            }
-        });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0, false), "show-point-trades", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showTrades(true);
-                displayPieces();
-                repaint();
-            }
-        });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0, true), "show-point-trades-released", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeHighlights(Move.MoveHighlights.TRADE_POINT_EQUAL);
-                removeHighlights(Move.MoveHighlights.TRADE_POINT_BAD);
-                removeHighlights(Move.MoveHighlights.TRADE_POINT_GOOD);
-                displayPieces();
-                repaint();
-            }
-        });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0, false), "show-piece-trades", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showTrades(false);
-                displayPieces();
-                repaint();
-            }
-        });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0, true), "show-piece-trades-released", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeHighlights(Move.MoveHighlights.TRADE_PIECE_EQUAL);
-                removeHighlights(Move.MoveHighlights.TRADE_PIECE_BAD);
-                removeHighlights(Move.MoveHighlights.TRADE_PIECE_GOOD);
-                displayPieces();
-                repaint();
-            }
-        });
-        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_4, 0, false), "show-pressured-tiles", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                displayPieces();
-                repaint();
-            }
-        });
+
+        if (!challenge) {
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0, false), "show-hanging", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showHangingPieces();
+                    displayPieces();
+                    repaint();
+                }
+            });
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0, true), "show-hanging-released", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    removeHighlights(Move.MoveHighlights.HANGING_BAD);
+                    removeHighlights(Move.MoveHighlights.HANGING_GOOD);
+                    displayPieces();
+                    repaint();
+                }
+            });
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0, false), "show-point-trades", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showTrades(true);
+                    displayPieces();
+                    repaint();
+                }
+            });
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0, true), "show-point-trades-released", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    removeHighlights(Move.MoveHighlights.TRADE_POINT_EQUAL);
+                    removeHighlights(Move.MoveHighlights.TRADE_POINT_BAD);
+                    removeHighlights(Move.MoveHighlights.TRADE_POINT_GOOD);
+                    displayPieces();
+                    repaint();
+                }
+            });
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0, false), "show-piece-trades", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showTrades(false);
+                    displayPieces();
+                    repaint();
+                }
+            });
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0, true), "show-piece-trades-released", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    removeHighlights(Move.MoveHighlights.TRADE_PIECE_EQUAL);
+                    removeHighlights(Move.MoveHighlights.TRADE_PIECE_BAD);
+                    removeHighlights(Move.MoveHighlights.TRADE_PIECE_GOOD);
+                    displayPieces();
+                    repaint();
+                }
+            });
+            registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_4, 0, false), "show-pressured-tiles", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    displayPieces();
+                    repaint();
+                }
+            });
+        }
 
         setLayout(new GridLayout(boardSize, boardSize));
         for (int rank = 0; rank < boardSize; rank++) {
@@ -850,13 +851,15 @@ public class BoardGUI extends JPanel {
 
         String[] validRows = FENBoard.split("/");
         if (validRows.length < boardSize) {
+            StringBuilder FENBoardBuilder = new StringBuilder(FENBoard);
             for (int i = 0; i < boardSize - validRows.length; i++) {
                 if (boardSize >= 10) {
-                    FENBoard += "/(" + boardSize + ")";
+                    FENBoardBuilder.append("/(").append(boardSize).append(")");
                 } else {
-                    FENBoard += "/" + boardSize;
+                    FENBoardBuilder.append("/").append(boardSize);
                 }
             }
+            FENBoard = FENBoardBuilder.toString();
             if (Chess.shouldRelocateBackline) {
                 FENBoard = relocateFENBackLine(FENBoard, validRows, boardSize);
             }
@@ -962,6 +965,43 @@ public class BoardGUI extends JPanel {
     public void addImportHistory() {
         history.add(new Move("[ Imported"));
         history.add(new Move("FEN String ]"));
+    }
+
+    public static StringBuilder translateBoard(String[][] board, int boardSize) {
+        StringBuilder fen = new StringBuilder();
+        for (int rank = 0; rank < boardSize; rank++) {
+            int empty = 0;
+            StringBuilder rankFen = new StringBuilder();
+            for (int file = 0; file < boardSize; file++) {
+                String s = board[(boardSize - 1) - rank][file];
+                if (s == null || s.equals("")) {
+                    empty++;
+                } else {
+                    String piece = board[(boardSize - 1) - rank][file];
+                    if (empty != 0) {
+                        if (boardSize >= 10 && empty >= 10) {
+                            rankFen.append("(").append(empty).append(")");
+                        } else {
+                            rankFen.append(empty);
+                        }
+                    }
+                    rankFen.append(piece);
+                    empty = 0;
+                }
+            }
+            if (empty != 0) {
+                if (boardSize >= 10 && empty >= 10) {
+                    rankFen.append("(").append(empty).append(")");
+                } else {
+                    rankFen.append(empty);
+                }
+            }
+            fen.append(rankFen);
+            if (!(rank == board.length - 1)) {
+                fen.append("/");
+            }
+        }
+        return fen;
     }
 
     public static StringBuilder translateBoard(Piece[][] board, int boardSize) {
@@ -1173,6 +1213,65 @@ public class BoardGUI extends JPanel {
         }
     }
 
+    public static void setupDefaultBoard(String[][] board, boolean white, int boardSize) {
+        int backLine = white ? 0 : boardSize - 1;
+
+        if (boardSize >= 8) {
+            int startingPoint = (boardSize / 2) - 4;
+            for (int i = startingPoint; i < startingPoint + 8; i++) {
+                board[white ? 1 : boardSize - 1 - 1][i] = white ? "P" : "p";
+            }
+
+            board[backLine][startingPoint] = white ? "R" : "r";
+            board[backLine][startingPoint + 7] = white ? "R" : "r";
+
+            board[backLine][startingPoint + 1] = white ? "N" : "n";
+            board[backLine][startingPoint + 6] = white ? "N" : "n";
+
+            board[backLine][startingPoint + 2] = white ? "B" : "b";
+            board[backLine][startingPoint + 5] = white ? "B" : "b";
+
+            board[backLine][startingPoint + 3] = white ? "Q" : "q";
+            board[backLine][startingPoint + 4] = white ? "K" : "k";
+        } else {
+            for (int i = 0; i < boardSize; i++) {
+                board[white ? 1 : boardSize - 1 - 1][i] = white ? "P" : "p";
+            }
+            switch (boardSize) {
+                case 4 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "Q" : "q";
+                    board[backLine][2] = white ? "K" : "k";
+                    board[backLine][3] = white ? "N" : "n";
+                }
+                case 5 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "Q" : "q";
+                    board[backLine][2] = white ? "K" : "k";
+                    board[backLine][3] = white ? "N" : "n";
+                    board[backLine][4] = white ? "R" : "r";
+                }
+                case 6 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "B" : "b";
+                    board[backLine][2] = white ? "Q" : "q";
+                    board[backLine][3] = white ? "K" : "k";
+                    board[backLine][4] = white ? "N" : "n";
+                    board[backLine][5] = white ? "R" : "r";
+                }
+                case 7 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "N" : "n";
+                    board[backLine][2] = white ? "B" : "b";
+                    board[backLine][3] = white ? "Q" : "q";
+                    board[backLine][4] = white ? "K" : "k";
+                    board[backLine][5] = white ? "N" : "n";
+                    board[backLine][6] = white ? "R" : "r";
+                }
+            }
+        }
+    }
+
     public void setupDefaultBoard(Piece[][] board, boolean white) {
         int backLine = white ? 0 : decBoardSize;
 
@@ -1241,6 +1340,69 @@ public class BoardGUI extends JPanel {
             case 'K' -> new King(this, white);
             default -> throw new IllegalStateException("Unexpected value found when generating fischer-random: " + piece);
         };
+    }
+
+    public static String createFENString(String[][] boardString, int boardSize) {
+        return translateBoard(boardString, boardSize).append(" w KQkq - 0 1").toString();
+    }
+
+    public static String createFEN(Chess.BoardLayout layout, int boardSize) {
+        switch (layout) {
+            case DEFAULT -> {
+                String[][] boardString = new String[boardSize][boardSize];
+                setupDefaultBoard(boardString, true, boardSize);
+                setupDefaultBoard(boardString, false, boardSize);
+                return createFENString(boardString, boardSize);
+            }
+            case CHESS960 -> {
+                String[][] boardString = new String[boardSize][boardSize];
+                for (int i = 0; i < 8; i++) {
+                    boardString[1][i] = "P";
+                    boardString[6][i] = "p";
+                }
+
+                char[] board = new char[8];
+
+                for (int i = 0; i < 2; i++) {
+                    int r = (int) (Math.random() * 4) * 2;
+
+                    if (i == 1) {
+                        r++;
+                    }
+
+                    board[r] = 'B';
+                }
+
+                char[] queenKnights = {'Q', 'N', 'N'};
+                for (int i = 0; i < queenKnights.length; i++) {
+                    int index = (int) (Math.random() * (6 - i));
+
+                    while (board[index] != 0) {
+                        index++;
+                    }
+
+                    board[index] = queenKnights[i];
+                }
+
+                char[] kingRooks = {'R', 'K', 'X'};
+                int index = 0;
+                for (char kingRook : kingRooks) {
+                    while (board[index] != 0) {
+                        index++;
+                    }
+
+                    board[index] = kingRook;
+                    index++;
+                }
+
+                for (int i = 0; i < board.length; i++) {
+                    boardString[0][i] = String.valueOf(board[i]).toUpperCase();
+                    boardString[7][i] = String.valueOf(board[i]).toLowerCase();
+                }
+                return createFENString(boardString, boardSize);
+            }
+        }
+        return null;
     }
 
     public void setupPieces(Chess.BoardLayout layout) {
