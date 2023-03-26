@@ -770,6 +770,7 @@ public class Chess extends JLayeredPane {
         return new SocialMenuResult(panel, list);
     }
 
+    // TODO accept with UI options
     public static int createChallengeAcceptWindow(JSONObject object, JSONObject data) {
         if (object == null) return JOptionPane.CANCEL_OPTION;
         Object[] options = {"Accept", "Decline"};
