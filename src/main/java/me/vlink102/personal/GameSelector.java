@@ -13,8 +13,6 @@ import java.util.HashMap;
 
 public class GameSelector {
     private static Image imageIcon;
-    private static Image chessIcon;
-    private static Image msIcon;
     public static JFrame frame;
     private static final HashMap<Game, Menu> menuInstances = new HashMap<>();
 
@@ -25,8 +23,8 @@ public class GameSelector {
 
     public static void initUI() {
         imageIcon = Move.getResource("/icon.png");
-        chessIcon = Move.getResource("/play.png").getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-        msIcon = Move.getResource("/minesweeper.png").getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+        Image chessIcon = Move.getResource("/play.png").getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+        Image msIcon = Move.getResource("/minesweeper.png").getScaledInstance(100, 100, Image.SCALE_SMOOTH);
 
         LafManager.install(new DarculaTheme());
         LafManager.setDecorationsEnabled(true);

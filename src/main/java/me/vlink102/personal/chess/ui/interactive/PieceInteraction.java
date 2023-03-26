@@ -42,15 +42,15 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         if (SwingUtilities.isLeftMouseButton(e)) {
             int y = e.getY();
             int x = e.getX();
-            int f1 = x / boardGUI.getPieceSize();
-            int r1 = y / boardGUI.getPieceSize();
+            int f1 = (int) (x / boardGUI.getPieceSize());
+            int r1 = (int) (y / boardGUI.getPieceSize());
 
             switch (boardGUI.getView()) {
-                case BLACK -> f1 = BoardGUI.decBoardSize - f1;
-                case WHITE -> r1 = BoardGUI.decBoardSize - r1;
+                case BLACK -> f1 = boardGUI.decBoardSize - f1;
+                case WHITE -> r1 = boardGUI.decBoardSize - r1;
             }
 
-            BoardCoordinate clicked = new BoardCoordinate(r1, f1);
+            BoardCoordinate clicked = new BoardCoordinate(r1, f1, boardGUI);
             List<Move> moves = (boardGUI.getSelected() == null || boardGUI.getTileSelected() == null) ? new ArrayList<>() : boardGUI.availableMoves(boardGUI.getGamePieces(), boardGUI.getSelected(), boardGUI.getTileSelected(), false);
 
             switch (boardGUI.getMoveMethod()) {
@@ -83,7 +83,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
 
         if (!(componentClicked instanceof JPanel)) {
             movedPiece = (JLabel) componentClicked;
-            movedPiece.setLocation(e.getX() - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset + Chess.offSet, e.getY() - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset - Chess.heightOffSet);
+            movedPiece.setLocation(e.getX() - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset + chess.offSet, e.getY() - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset - chess.heightOffSet);
 
             chess.add(movedPiece, JLayeredPane.DRAG_LAYER);
             chess.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -125,7 +125,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         if (SwingUtilities.isLeftMouseButton(e)) {
             chess.setCursor(null);
 
-            int pieceSize = boardGUI.getPieceSize();
+            double pieceSize = boardGUI.getPieceSize();
 
             switch (boardGUI.getMoveMethod()) {
                 case BOTH, DRAG -> {
@@ -159,28 +159,25 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
                     int y1 = e.getY();
                     int x1 = e.getX();
 
-                    int f0 = x0 / pieceSize;
-                    int r0 = y0 / pieceSize;
-                    int f1 = x1 / pieceSize;
-                    int r1 = y1 / pieceSize;
+                    int f0 = (int) (x0 / pieceSize);
+                    int r0 = (int) (y0 / pieceSize);
+                    int f1 = (int) (x1 / pieceSize);
+                    int r1 = (int) (y1 / pieceSize);
 
                     switch (boardGUI.getView()) {
                         case BLACK -> {
-                            f0 = BoardGUI.decBoardSize - f0;
-                            f1 = BoardGUI.decBoardSize - f1;
+                            f0 = boardGUI.decBoardSize - f0;
+                            f1 = boardGUI.decBoardSize - f1;
                         }
                         case WHITE -> {
-                            r0 = BoardGUI.decBoardSize - r0;
-                            r1 = BoardGUI.decBoardSize - r1;
+                            r0 = boardGUI.decBoardSize - r0;
+                            r1 = boardGUI.decBoardSize - r1;
                         }
                     }
 
-                    BoardCoordinate from = new BoardCoordinate(r0, f0);
-                    BoardCoordinate to = new BoardCoordinate(r1, f1);
+                    BoardCoordinate from = new BoardCoordinate(r0, f0, boardGUI);
+                    BoardCoordinate to = new BoardCoordinate(r1, f1, boardGUI);
                     boardGUI.movePiece(boardGUI.getGamePieces()[from.row()][from.col()], from, to);
-                }
-                case CLICK -> {
-
                 }
             }
         }
@@ -218,7 +215,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         y = Math.min(y, yMax);
         y = Math.max(y, 0);
 
-        movedPiece.setLocation(x - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset + Chess.offSet, y - (boardGUI.getPieceSize() / 2) + Chess.boardToFrameOffset - Chess.heightOffSet);
+        movedPiece.setLocation(x - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset + chess.offSet, y - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset - chess.heightOffSet);
     }
 
     @Override

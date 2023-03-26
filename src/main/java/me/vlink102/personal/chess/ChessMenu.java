@@ -5,14 +5,21 @@ import me.vlink102.personal.Menu;
 import me.vlink102.personal.chess.classroom.Classroom;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
+import me.vlink102.personal.chess.internal.networking.DataThread;
+import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
+import me.vlink102.personal.chess.ui.PlaceholderPassField;
+import me.vlink102.personal.chess.ui.PlaceholderTextField;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static javax.swing.JLayeredPane.POPUP_LAYER;
+import static me.vlink102.personal.chess.Chess.createSocialMenu;
 
 public class ChessMenu extends Menu {
     public static String IDENTIFIER = null;
@@ -23,20 +30,23 @@ public class ChessMenu extends Menu {
     private static List<Chess> instances;
     private static List<Classroom> classroomInstances;
 
-    record LoginResult(String username, String password) {}
+    record LoginResult(String username, String password) {
+    }
 
     public LoginResult loginPanel() {
         JPanel panel = new JPanel(new FlowLayout());
-        JTextField textField = new JTextField("username", 20);
-        JPasswordField passwordField = new JPasswordField("password", 20);
-        panel.add(textField);
+        PlaceholderTextField ptf = new PlaceholderTextField("", 20);
+        ptf.setPlaceholder("Username");
+        PlaceholderPassField passwordField = new PlaceholderPassField("", 20);
+        passwordField.setPlaceholder("Password");
+        panel.add(ptf);
         panel.add(passwordField);
 
         int result = JOptionPane.showConfirmDialog(null, panel, "Login/Register", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
         if (result != JOptionPane.OK_OPTION) {
             return null;
         } else {
-            return new LoginResult(textField.getText(), new String(passwordField.getPassword()));
+            return new LoginResult(ptf.getText(), new String(passwordField.getPassword()));
         }
     }
 
@@ -54,16 +64,16 @@ public class ChessMenu extends Menu {
             public void actionPerformed(ActionEvent e) {
                 CreateChessGame.TestingResult panel = CreateChessGame.openTestingPopup();
                 if (panel != null) {
-                    classroomInstances.add(Classroom.initUI(panel.pSz(), panel.boardSize(), panel.online(), panel.playAsWhite(), panel.pieceDesign(), panel.boardTheme()));
+                    classroomInstances.add(new Classroom(panel.pSz(), panel.boardSize(), panel.online(), panel.playAsWhite(), panel.pieceDesign(), panel.boardTheme()));
                 }
             }
         }, testing, 50, 50, 150, 150));
         panel.add(new GameSelector.MenuButton(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CreateChessGame.PanelResult panel = CreateChessGame.openChessPopup();
+                CreateChessGame.PanelResult panel = CreateChessGame.openChessPopup(false);
                 if (panel != null) {
-                    instances.add(Chess.initUI(false, panel.pSz(), panel.boardSize(), panel.online(), panel.playAsWhite(), panel.opponentType(), panel.gameType(), panel.layout(), panel.pieceDesign(), panel.boardTheme(), panel.moveMethod(), panel.moveStyle(), panel.captureStyle(), panel.coordinateDisplayType()));
+                    instances.add(new Chess(false, 0, null, null, panel.pSz(), panel.boardSize(), panel.online(), panel.playAsWhite(), panel.opponentType(), panel.gameType(), panel.layout(), panel.pieceDesign(), panel.boardTheme(), panel.moveMethod(), panel.moveStyle(), panel.captureStyle(), panel.coordinateDisplayType()));
                 }
             }
         }, board, 50, 100, 150, 150));
@@ -80,6 +90,8 @@ public class ChessMenu extends Menu {
         frame.setResizable(true);
         frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
 
+        frame.setJMenuBar(getMenu());
+
         frame.setIconImage(GameSelector.getImageIcon());
         frame.pack();
         frame.setLocationRelativeTo(null);
@@ -87,33 +99,66 @@ public class ChessMenu extends Menu {
         frame.requestFocus();
     }
 
+    public JMenuBar getMenu() {
+        JMenuBar settings = new JMenuBar();
+        JMenuItem social = new JMenu("Social");
+        JMenuItem online = new JMenuItem("Online");
+        online.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.SocialMenuResult panel = createSocialMenu();
+                if (panel == null) {
+                    JOptionPane.showConfirmDialog(frame, "Nobody is online yet", "It's quiet in here...", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null);
+                } else {
+                    Object[] options = {"Challenge", "Cancel"};
+                    int r = JOptionPane.showOptionDialog(frame, panel.panel(), "Challenge a friend", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                    if (r == JOptionPane.OK_OPTION) {
+                        String s = panel.list().getSelectedValue();
+                        if (s == null) return;
+                        String uuid = CommunicationHandler.UUIDfromName(s);
+
+                        ChessMenu.CreateChessGame.PanelResult panelResult = ChessMenu.CreateChessGame.openChessPopup(true);
+                        if (panelResult != null) {
+                            Challenge c = new Challenge(ChessMenu.IDENTIFIER, uuid, panelResult.boardSize(), panelResult.playAsWhite(), panelResult.gameType(), panelResult.layout(), BoardGUI.createFEN(panelResult.layout(), panelResult.boardSize()));
+
+                            CommunicationHandler.thread.sendPacket(c);
+                            CommunicationHandler.thread.getPendingChallenges().put(c.getID(), new DataThread.PendingChallenge(c.toJSON(), panelResult.pieceDesign(), panelResult.boardTheme(), panelResult.moveMethod(), panelResult.moveStyle(), panelResult.captureStyle(), panelResult.coordinateDisplayType()));
+                        }
+                    }
+                }
+            }
+        });
+        social.add(online);
+        settings.add(social);
+        return settings;
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
     public ChessMenu() {
         this.testing = Move.getResource("/testing.png");
         this.board = Move.getResource("/board.png");
         classroomInstances = new ArrayList<>();
         instances = new ArrayList<>();
-        new CommunicationHandler("ulucl02v8dm4l3qm", "bf5v9fiyfc6bqge4qrz1-mysql.services.clever-cloud.com", "bf5v9fiyfc6bqge4qrz1", 3306);
+        CommunicationHandler handler = new CommunicationHandler("ulucl02v8dm4l3qm", "bf5v9fiyfc6bqge4qrz1-mysql.services.clever-cloud.com", "bf5v9fiyfc6bqge4qrz1", 3306);
 
         if (validLogin()) {
-            CommunicationHandler.establishConnection(IDENTIFIER);
+            handler.establishConnection(IDENTIFIER);
             initUI();
         } else {
             close();
         }
-
     }
 
     @Override
     public void close() {
         GameSelector.closeMenuInstance(GameSelector.Game.CHESS);
         for (Chess instance : instances) {
-            instance.dispatchEvent(new WindowEvent(Chess.frame, WindowEvent.WINDOW_CLOSING));
+            instance.dispatchEvent(new WindowEvent(instance.frame, WindowEvent.WINDOW_CLOSING));
         }
         for (Classroom testingInstance : classroomInstances) {
-            testingInstance.dispatchEvent(new WindowEvent(Classroom.frame, WindowEvent.WINDOW_CLOSING));
+            testingInstance.dispatchEvent(new WindowEvent(testingInstance.frame, WindowEvent.WINDOW_CLOSING));
         }
         frame.dispatchEvent(new WindowEvent(ChessMenu.frame, WindowEvent.WINDOW_CLOSING));
-
     }
 
     @Override
@@ -122,9 +167,16 @@ public class ChessMenu extends Menu {
     }
 
     public static class CreateChessGame {
-        public record PanelResult(int pSz, int boardSize, boolean playAsWhite, boolean online, BoardGUI.OpponentType opponentType, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
+        public record PanelResult(int pSz, int boardSize, boolean playAsWhite, boolean online,
+                                  BoardGUI.OpponentType opponentType, BoardGUI.GameType gameType,
+                                  Chess.BoardLayout layout, BoardGUI.PieceDesign pieceDesign,
+                                  BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod,
+                                  BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle,
+                                  BoardGUI.CoordinateDisplayType coordinateDisplayType) {
         }
-        public record TestingResult(int pSz, int boardSize, boolean playAsWhite, boolean online, BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardTheme) {
+
+        public record TestingResult(int pSz, int boardSize, boolean playAsWhite, boolean online,
+                                    BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardTheme) {
         }
 
         private static JPanel getCouplePanel(JComponent a, JComponent b) {
@@ -137,7 +189,7 @@ public class ChessMenu extends Menu {
             return inner;
         }
 
-        public static PanelResult openChessPopup() {
+        public static PanelResult openChessPopup(boolean challengeMenu) {
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -156,13 +208,24 @@ public class ChessMenu extends Menu {
             JLabel label = new JLabel("Piece Size (px): ");
             JPanel inner1 = getCouplePanel(label, spinner);
 
+            JComboBox<Chess.BoardLayout> boardLayoutJComboBox = new JComboBox<>(Chess.BoardLayout.values());
+            boardLayoutJComboBox.setSelectedItem(Chess.BoardLayout.DEFAULT);
             SpinnerModel model1 = new SpinnerNumberModel(8, 4, 26, 1);
             JSpinner spinner1 = new JSpinner(model1);
+
+            boardLayoutJComboBox.addItemListener(e -> spinner1.setEnabled(boardLayoutJComboBox.getSelectedItem() != Chess.BoardLayout.CHESS960));
+            spinner1.addChangeListener(e -> boardLayoutJComboBox.setEnabled(spinner1.getValue().equals(8)));
+
             JLabel label1 = new JLabel("Board Size: ");
             JPanel inner2 = getCouplePanel(label1, spinner1);
 
             JComboBox<BoardGUI.OpponentType> opponentTypeJComboBox = new JComboBox<>(BoardGUI.OpponentType.values());
-            opponentTypeJComboBox.setSelectedItem(BoardGUI.OpponentType.AUTO_SWAP);
+            opponentTypeJComboBox.setSelectedItem(challengeMenu ? BoardGUI.OpponentType.PLAYER : BoardGUI.OpponentType.AUTO_SWAP);
+            if (challengeMenu) {
+                opponentTypeJComboBox.setEnabled(false);
+            } else {
+                opponentTypeJComboBox.removeItem(BoardGUI.OpponentType.PLAYER);
+            }
             JLabel opponentLabel = new JLabel("Opponent Type: ");
             JPanel opponentPanel = getCouplePanel(opponentLabel, opponentTypeJComboBox);
 
@@ -171,8 +234,6 @@ public class ChessMenu extends Menu {
             JLabel gameTypeLabel = new JLabel("Game Type: ");
             JPanel gameTypePanel = getCouplePanel(gameTypeLabel, gameTypeJComboBox);
 
-            JComboBox<Chess.BoardLayout> boardLayoutJComboBox = new JComboBox<>(Chess.BoardLayout.values());
-            boardLayoutJComboBox.setSelectedItem(Chess.BoardLayout.DEFAULT);
             JLabel boardLayoutLabel = new JLabel("Board Layout: ");
             JPanel boardLayoutPanel = getCouplePanel(boardLayoutLabel, boardLayoutJComboBox);
 

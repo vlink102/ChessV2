@@ -1,16 +1,16 @@
-package me.vlink102.personal.chess.pieces.generic.special.asian;
+package me.vlink102.personal.chess.pieces.special.historical;
 
 import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.pieces.SpecialPiece;
 
-public class DragonKing extends SpecialPiece {
-    public DragonKing(BoardGUI board, boolean white) {
-        super(board, "DK", white);
+public class Man extends SpecialPiece {
+    public Man(BoardGUI board, boolean white) {
+        super(board, "M", white);
     }
-    public DragonKing(ClassroomGUI board, boolean white) {
-        super(board, "DK", white);
+    public Man(ClassroomGUI board, boolean white) {
+        super(board, "M", white);
     }
 
     @Override
@@ -20,11 +20,16 @@ public class DragonKing extends SpecialPiece {
         int x1 = to.col();
         int y1 = to.row();
 
-        return (Math.abs(x0 - x1) <= 1 && Math.abs(y0 - y1) <= 1) || isStraight(from, to);
+        return Math.abs(x0 - x1) <= 1 && Math.abs(y0 - y1) <= 1;
+    }
+
+    @Override
+    public int points() {
+        return 2;
     }
 
     @Override
     public char fenChar() {
-        return 'Y';
+        return 'M';
     }
 }

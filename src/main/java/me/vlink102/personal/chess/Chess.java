@@ -1,11 +1,10 @@
 package me.vlink102.personal.chess;
 
 import me.vlink102.personal.GameSelector;
+import me.vlink102.personal.chess.classroom.Classroom;
 import me.vlink102.personal.chess.internal.MenuScheme;
 import me.vlink102.personal.chess.internal.Move;
-import me.vlink102.personal.chess.internal.OnlineAssets;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
-import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
 import me.vlink102.personal.chess.internal.networking.packets.RequestOnline;
 import org.json.JSONObject;
 
@@ -13,7 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -22,44 +20,45 @@ import java.io.InputStream;
 import java.util.Objects;
 
 public class Chess extends JLayeredPane {
-    private static BoardGUI board;
-    public static JFrame frame;
+    private final BoardGUI board;
 
-    public static BufferedImage[] iconSprites = new BufferedImage[75];
+    public BoardGUI getBoard() {
+        return board;
+    }
 
-    public static Font def;
-    public static Font bold;
-    public static Font icons;
+    private JScrollPane scrollPane;
 
-    public static boolean shouldRelocateBackline = true;
-    public static boolean shouldShowAvailableSquares = true;
-    public static boolean shouldShowOppositionAvailableSquares = false;
+    public JScrollPane getScrollPane() {
+        return scrollPane;
+    }
 
-    public static int boardToFrameOffset = 50;
-    public static int sidePanelWidth = 400;
+    public JFrame frame;
 
-    public static final int defaultOffset = 20;
-    public static int offSet = 0;
-    public static int heightOffSet = 0;
+    public final BufferedImage[] iconSprites = new BufferedImage[75];
 
-    public static MenuScheme menuScheme = new MenuScheme(new Color(49,46,43), new Color(39,37,34), new Color(31,30,27), new Color(43,41,39), new Color(64,61,57), new Color(152,151,149), new Color(195, 194, 194), new Color(149, 148, 147));
+    private final Font def;
+    private final Font bold;
+    private final Font icons;
+
+    public boolean shouldRelocateBackline = true;
+    public boolean shouldShowAvailableSquares = true;
+    public boolean shouldShowOppositionAvailableSquares = false;
+
+    public int boardToFrameOffset = 50;
+    public int sidePanelWidth = 400;
+
+    public final int defaultOffset = 20;
+    public int offSet = 0;
+    public int heightOffSet = 0;
+
+    public static final MenuScheme menuScheme = new MenuScheme(new Color(49,46,43), new Color(39,37,34), new Color(31,30,27), new Color(43,41,39), new Color(64,61,57), new Color(152,151,149), new Color(195, 194, 194), new Color(149, 148, 147));
 
     public enum BoardLayout {
         CHESS960,
         DEFAULT
     }
 
-    public Chess(boolean challenge, int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.OpponentType type, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
-        board = new BoardGUI(challenge, this, initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
-
-        add(board, DEFAULT_LAYER);
-        add(board.getSidePanelGUI(), DEFAULT_LAYER);
-        add(board.getCaptureGUI(), DEFAULT_LAYER);
-        add(board.getCoordinateGUI(), DEFAULT_LAYER);
-        add(board.getIconDisplayGUI(), POPUP_LAYER);
-    }
-
-    public static Chess initUI(boolean challenge, int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.OpponentType type, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
+    public Chess(boolean challenge, long gameID, String opponentUUID, String precreatedFEN, int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.OpponentType type, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
         BufferedImage image = Move.getBufferedResource("/iconnav.png");
 
         for (int i = 0; i < 75; i++) {
@@ -72,35 +71,54 @@ public class Chess extends JLayeredPane {
         InputStream bold = classLoader.getResourceAsStream("fonts/montserrat-800.2d88ac8b.ttf");
         InputStream icons = classLoader.getResourceAsStream("fonts/icons.ttf");
         try {
-            Chess.def = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(def));
-            Chess.bold = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(bold));
-            Chess.icons = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(icons));
-            ge.registerFont(Chess.def);
-            ge.registerFont(Chess.bold);
-            ge.registerFont(Chess.icons);
+            this.def = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(def));
+            this.bold = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(bold));
+            this.icons = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(icons));
+            ge.registerFont(this.def);
+            ge.registerFont(this.bold);
+            ge.registerFont(this.icons);
         } catch (FontFormatException | IOException e) {
             throw new RuntimeException(e);
         }
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-        if ((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet > screen.getWidth()) {
+        if ((initialPieceSize * initialBoardSize) + sidePanelWidth + (boardToFrameOffset * 3) + offSet > screen.getWidth()) {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
             JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 100\n - Board size: 8\n\nClick OK to continue...", "Board too large, reduced game size",  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
             initialPieceSize = 100;
             initialBoardSize = 8;
         }
-        Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + Chess.sidePanelWidth + (Chess.boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (Chess.boardToFrameOffset * 2) + heightOffSet);
-        frame = new JFrame("Chess [vlink102] Github b16.0.0");
+        Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + sidePanelWidth + (boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (boardToFrameOffset * 2) + heightOffSet);
+        frame = new JFrame("Chess [vlink102] Github b16.6.3");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        Chess chess = new Chess(challenge, initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
-        frame.getContentPane().add(chess);
+
+        board = new BoardGUI(challenge, gameID, opponentUUID, precreatedFEN, this, initialPieceSize, initialBoardSize, useOnline, playAsWhite, type, gameType, layout, pieceTheme, boardTheme, moveMethod, moveStyle, captureStyle, coordinateDisplayType);
+
+        scrollPane = new JScrollPane();
+        scrollPane.setViewportView(board.getSidePanelGUI());
+        scrollPane.setPreferredSize(new Dimension(2000, 2000));
+        scrollPane.setSize(sidePanelWidth, 400);
+        scrollPane.setWheelScrollingEnabled(true);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setRequestFocusEnabled(true);
+
+        add(board, DEFAULT_LAYER);
+        add(scrollPane, DEFAULT_LAYER);
+        add(board.getCaptureGUI(), DEFAULT_LAYER);
+        add(board.getCoordinateGUI(), DEFAULT_LAYER);
+        add(board.getIconDisplayGUI(), POPUP_LAYER);
+
+        updateSidePanelBounds();
+
+        frame.getContentPane().add(this);
         frame.setResizable(true);
         frame.getContentPane().setPreferredSize(initialSize);
 
         frame.setMinimumSize(new Dimension(32 * initialBoardSize, 32 * initialBoardSize));
         frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
-        frame.getContentPane().setBackground(menuScheme.getBackground());
+        frame.getContentPane().setBackground(menuScheme.background());
 
         frame.setIconImage(GameSelector.getImageIcon());
 
@@ -114,14 +132,23 @@ public class Chess extends JLayeredPane {
         frame.addWindowStateListener(new WindowAdapter() {
             @Override
             public void windowStateChanged(WindowEvent e) {
-                if (e.getNewState() == Frame.ICONIFIED || e.getNewState() == Frame.MAXIMIZED_BOTH) {
+                if (e.getNewState() == Frame.ICONIFIED || e.getNewState() == Frame.MAXIMIZED_BOTH || e.getNewState() == Frame.MAXIMIZED_HORIZ || e.getNewState() == Frame.MAXIMIZED_VERT) {
                     frame.getContentPane().setSize(e.getWindow().getSize());
                     refreshWindow();
                 }
             }
         });
 
-        Timer timer = new Timer(250, refreshGUI());
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                board.resign();
+                ChessMenu.getInstances().remove(Chess.this);
+            }
+        });
+
+        refreshWindow();
+        Timer timer = new Timer(34, refreshGUIListener());
         timer.start();
         lastSize = board.getPieceSize();
 
@@ -132,178 +159,174 @@ public class Chess extends JLayeredPane {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         board.requestFocus();
-        return chess;
     }
 
-    public static void refreshWindow() {
+    public void refreshWindow() {
         board.setPieceSize((frame.getContentPane().getHeight() - ((boardToFrameOffset * 2))) / board.getBoardSize());
 
         Dimension dimension = new Dimension(board.getPieceSize() * board.getBoardSize(), board.getPieceSize() * board.getBoardSize());
         board.setPreferredSize(dimension);
+
         updateBoardBounds();
         updateSidePanelBounds();
         updateCoordinatePanelBounds();
         updateCapturePanelBounds();
 
-        OnlineAssets.updateSavedImage(board);
-        board.displayPieces();
+        board.getOnlineAssets().updateSavedImage(board);
+
         board.repaint();
+        board.displayPieces();
     }
 
-    public static void updateBoardBounds() {
-        board.setBounds((boardToFrameOffset + Chess.offSet), boardToFrameOffset - heightOffSet, (board.getPieceSize() * board.getBoardSize()), (board.getPieceSize() * board.getBoardSize()));
+    public void updateBoardBounds() {
+        board.setBounds((boardToFrameOffset + offSet), boardToFrameOffset - heightOffSet, (board.getPieceSize() * board.getBoardSize()), (board.getPieceSize() * board.getBoardSize()));
         board.getIconDisplayGUI().setBounds(board.getBounds());
     }
 
-    public static void updateSidePanelBounds() {
-        board.getSidePanelGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + Chess.offSet, (boardToFrameOffset - heightOffSet) + 200, sidePanelWidth - Chess.offSet, (board.getHeight() + Chess.offSet) - 200);
+    public void updateSidePanelBounds() {
+        scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 200, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (board.getHeight() + offSet) - 200);
     }
 
-    public static void updateCapturePanelBounds() {
-        board.getCaptureGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + Chess.offSet, (boardToFrameOffset - heightOffSet), sidePanelWidth - Chess.offSet, 180 - Chess.offSet);
+    public void updateCapturePanelBounds() {
+        board.getCaptureGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), 180 - offSet);
     }
 
-    public static void updateCoordinatePanelBounds() {
-        board.getCoordinateGUI().setBounds(boardToFrameOffset, boardToFrameOffset - heightOffSet, board.getWidth() + Chess.offSet, board.getHeight() + Chess.offSet);
+    public void updateCoordinatePanelBounds() {
+        board.getCoordinateGUI().setBounds(boardToFrameOffset, boardToFrameOffset - heightOffSet, board.getWidth() + offSet, board.getHeight() + offSet);
     }
 
-    static int lastSize;
+    private double lastSize;
 
-    private static ActionListener refreshGUI() {
+    public void refreshGUI() {
+        boardToFrameOffset = board.getPieceSize() / 2;
+        sidePanelWidth = Math.min(board.getWidth() / 2, frame.getContentPane().getWidth() - ((boardToFrameOffset * 3) + board.getWidth() + offSet));
+        board.setFont(def.deriveFont((float) board.getPieceSize() / 6));
+        board.getOnlineAssets().updatePieceDesigns(board);
+        board.getOnlineAssets().loadCapturedPieces(board);
+
+        Move.loadCachedIcons(board.getPieceSize());
+        Move.loadCachedHighlights(board.getPieceSize());
+
+        lastSize = board.getWidth() / (double) board.getBoardSize();
+
+        board.repaint();
+        board.getSidePanelGUI().repaint();
+        board.displayPieces();
+    }
+
+    private ActionListener refreshGUIListener() {
         return e -> {
-            if (lastSize != board.getPieceSize() ) {
-                OnlineAssets.updatePieceDesigns(board);
-                OnlineAssets.loadCapturedPieces(board);
-
-                Move.loadCachedIcons(board.getPieceSize());
-                Move.loadCachedHighlights(board.getPieceSize());
-
-                board.displayPieces();
-                board.repaint();
-                lastSize = board.getPieceSize();
+            if (lastSize != board.getWidth() / (float) board.getBoardSize()) {
+                refreshGUI();
             }
         };
     }
 
-    public static JMenuBar getMenu(boolean challenge) {
-        JMenuBar settings = new JMenuBar();
-        JMenu generalMenu = new JMenu("General");
+    public JMenuItem getCopyFENItem() {
+        return Classroom.getCopyFENItem(board.translateBoardToFEN(board.getGamePieces()));
+    }
 
-        JMenu FEN = new JMenu("FEN");
-        if (!challenge) {
-            JMenuItem getFEN = new JMenuItem("Copy FEN");
-            getFEN.getAccessibleContext().setAccessibleDescription("Copies a FEN (Forsyth-Edwards Notation) of the current board state to your clipboard");
-            getFEN.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    String FEN = board.translateBoardToFEN(board.getGamePieces());
-                    StringSelection selection = new StringSelection(FEN);
-                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    clipboard.setContents(selection, null);
-                }
-            });
-            FEN.add(getFEN);
+    public JMenuItem getLoadFENItem() {
+        JMenuItem loadFEN = new JMenu("Load FEN");
+        loadFEN.getAccessibleContext().setAccessibleDescription("Loads a FEN");
 
-            JMenuItem loadFEN = new JMenu("Load FEN");
-            loadFEN.getAccessibleContext().setAccessibleDescription("Loads a FEN");
-
-            JMenuItem clipboardLoad = new JMenuItem("Load from clipboard");
-            clipboardLoad.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    try {
-                        Object FEN = clipboard.getData(DataFlavor.stringFlavor);
-                        if (FEN != null) {
-                            board.loadFEN(FEN.toString());
-                        }
-                    } catch (UnsupportedFlavorException | IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }
-            });
-            loadFEN.add(clipboardLoad);
-
-            JMenuItem inputLoad = new JMenuItem("Manual input");
-            inputLoad.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.BOOK)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-                    Object FEN = JOptionPane.showInputDialog(null, "Enter FEN String:", "Load game state", JOptionPane.PLAIN_MESSAGE, imageIcon, null, "");
+        JMenuItem clipboardLoad = new JMenuItem("Load from clipboard");
+        clipboardLoad.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                try {
+                    Object FEN = clipboard.getData(DataFlavor.stringFlavor);
                     if (FEN != null) {
                         board.loadFEN(FEN.toString());
                     }
+                } catch (UnsupportedFlavorException | IOException ex) {
+                    throw new RuntimeException(ex);
                 }
-            });
-            loadFEN.add(inputLoad);
-            FEN.add(loadFEN);
+            }
+        });
+        loadFEN.add(clipboardLoad);
+
+        JMenuItem inputLoad = new JMenuItem("Manual input");
+        inputLoad.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.BOOK)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+                Object FEN = JOptionPane.showInputDialog(null, "Enter FEN String:", "Load game state", JOptionPane.PLAIN_MESSAGE, imageIcon, null, "");
+                if (FEN != null) {
+                    board.loadFEN(FEN.toString());
+                }
+            }
+        });
+        loadFEN.add(inputLoad);
+        return loadFEN;
+    }
+
+    public JMenuItem getOpponentMenuItem() {
+        JMenuItem opponentType = new JMenu("Opponent");
+
+        ButtonGroup opponentGroup = new ButtonGroup();
+        JMenuItem botMenu = new JMenu("Computer");
+        JMenuItem random = new JRadioButtonMenuItem("Random Moves");
+        random.getAccessibleContext().setAccessibleDescription("Play against random-moving bot");
+        random.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setOpponent(BoardGUI.OpponentType.AI_2);
+            }
+        });
+        if (board.getOpponentType() == BoardGUI.OpponentType.AI_2) {
+            random.setSelected(true);
         }
+        opponentGroup.add(random);
+        botMenu.add(random);
 
-        JMenu gameOptions = new JMenu("Game");
-        if (!challenge) {
-            JMenuItem opponentType = new JMenu("Opponent");
-
-            ButtonGroup opponentGroup = new ButtonGroup();
-            JMenuItem botMenu = new JMenu("Computer");
-            JMenuItem random = new JRadioButtonMenuItem("Random Moves");
-            random.getAccessibleContext().setAccessibleDescription("Play against random-moving bot");
-            random.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.setOpponent(BoardGUI.OpponentType.AI_2);
-                }
-            });
-            if (board.getOpponentType() == BoardGUI.OpponentType.AI_2) {
-                random.setSelected(true);
+        JMenuItem AI = new JRadioButtonMenuItem("AI");
+        AI.getAccessibleContext().setAccessibleDescription("Play against an AI");
+        AI.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setOpponent(BoardGUI.OpponentType.AI_1);
             }
-            opponentGroup.add(random);
-            botMenu.add(random);
-
-            JMenuItem AI = new JRadioButtonMenuItem("AI");
-            AI.getAccessibleContext().setAccessibleDescription("Play against an AI");
-            AI.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.setOpponent(BoardGUI.OpponentType.AI_1);
-                }
-            });
-            if (board.getOpponentType() == BoardGUI.OpponentType.AI_1) {
-                AI.setSelected(true);
-            }
-            opponentGroup.add(AI);
-            botMenu.add(AI);
-            opponentType.add(botMenu);
-
-            JMenuItem autoSwap = new JRadioButtonMenuItem("Auto Swap");
-            autoSwap.getAccessibleContext().setAccessibleDescription("Will switch sides every move");
-            autoSwap.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.setOpponent(BoardGUI.OpponentType.AUTO_SWAP);
-                }
-            });
-            if (board.getOpponentType() == BoardGUI.OpponentType.AUTO_SWAP) {
-                autoSwap.setSelected(true);
-            }
-            opponentGroup.add(autoSwap);
-            opponentType.add(autoSwap);
-
-            JMenuItem manual = new JRadioButtonMenuItem("Manual");
-            manual.getAccessibleContext().setAccessibleDescription("No opponent: switch sides manually");
-            manual.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.setOpponent(BoardGUI.OpponentType.MANUAL);
-                }
-            });
-            if (board.getOpponentType() == BoardGUI.OpponentType.MANUAL) {
-                manual.setSelected(true);
-            }
-            opponentType.add(manual);
-            opponentGroup.add(manual);
-            gameOptions.add(opponentType);
+        });
+        if (board.getOpponentType() == BoardGUI.OpponentType.AI_1) {
+            AI.setSelected(true);
         }
+        opponentGroup.add(AI);
+        botMenu.add(AI);
+        opponentType.add(botMenu);
 
+        JMenuItem autoSwap = new JRadioButtonMenuItem("Auto Swap");
+        autoSwap.getAccessibleContext().setAccessibleDescription("Will switch sides every move");
+        autoSwap.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setOpponent(BoardGUI.OpponentType.AUTO_SWAP);
+            }
+        });
+        if (board.getOpponentType() == BoardGUI.OpponentType.AUTO_SWAP) {
+            autoSwap.setSelected(true);
+        }
+        opponentGroup.add(autoSwap);
+        opponentType.add(autoSwap);
+
+        JMenuItem manual = new JRadioButtonMenuItem("Manual");
+        manual.getAccessibleContext().setAccessibleDescription("No opponent: switch sides manually");
+        manual.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setOpponent(BoardGUI.OpponentType.MANUAL);
+            }
+        });
+        if (board.getOpponentType() == BoardGUI.OpponentType.MANUAL) {
+            manual.setSelected(true);
+        }
+        opponentType.add(manual);
+        opponentGroup.add(manual);
+        return opponentType;
+    }
+
+    public JMenuItem getResignItem() {
         JMenuItem resign = new JMenuItem("Resign");
         resign.addActionListener(new AbstractAction() {
             @Override
@@ -311,8 +334,10 @@ public class Chess extends JLayeredPane {
                 board.resign();
             }
         });
-        gameOptions.add(resign);
+        return resign;
+    }
 
+    public JMenuItem getDrawItem() {
         JMenuItem draw = new JMenuItem("Offer Draw");
         draw.addActionListener(new AbstractAction() {
             @Override
@@ -320,8 +345,10 @@ public class Chess extends JLayeredPane {
                 board.offerDraw();
             }
         });
-        gameOptions.add(draw);
+        return draw;
+    }
 
+    public JMenuItem getAbortItem() {
         JMenuItem abort = new JMenuItem("Abort Game");
         abort.addActionListener(new AbstractAction() {
             @Override
@@ -331,78 +358,83 @@ public class Chess extends JLayeredPane {
                 }
             }
         });
-        gameOptions.add(abort);
+        return abort;
+    }
 
-        if (!challenge) {
-            JMenuItem switchSides = new JMenuItem("Switch Sides");
-            switchSides.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0));
-            switchSides.getAccessibleContext().setAccessibleDescription("Switches sides from black to white and vice versa");
-            switchSides.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.swapPlaySide();
-                }
-            });
-            gameOptions.add(switchSides);
+    public JMenuItem getSwapSidesItem() {
+        JMenuItem switchSides = new JMenuItem("Switch Sides");
+        switchSides.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0));
+        switchSides.getAccessibleContext().setAccessibleDescription("Switches sides from black to white and vice versa");
+        switchSides.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.swapPlaySide();
+            }
+        });
+        return switchSides;
+    }
 
-            JMenuItem resetBoard = new JMenu("Reset Board");
-            resetBoard.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.resetBoard();
-                }
-            });
+    public JMenuItem getResetBoardItem() {
+        JMenuItem resetBoard = new JMenu("Reset Board");
+        resetBoard.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.resetBoard();
+            }
+        });
 
-            JMenuItem defaultLayoutReset = new JMenuItem("Default");
-            defaultLayoutReset.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.resetBoard(BoardLayout.DEFAULT);
-                }
-            });
-            resetBoard.add(defaultLayoutReset);
+        JMenuItem defaultLayoutReset = new JMenuItem("Default");
+        defaultLayoutReset.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.resetBoard(BoardLayout.DEFAULT);
+            }
+        });
+        resetBoard.add(defaultLayoutReset);
 
-            JMenuItem chess960Reset = new JMenuItem("Chess960/Fischer");
-            chess960Reset.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.resetBoard(BoardLayout.CHESS960);
-                }
-            });
-            resetBoard.add(chess960Reset);
-            generalMenu.add(resetBoard);
+        JMenuItem chess960Reset = new JMenuItem("Chess960/Fischer");
+        chess960Reset.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.resetBoard(BoardLayout.CHESS960);
+            }
+        });
+        resetBoard.add(chess960Reset);
+        return resetBoard;
+    }
 
-            JMenuItem randomBoard = new JMenu("Random Board");
-            JMenuItem randomEarlyGame = new JMenuItem("Early Game");
-            randomEarlyGame.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.loadFEN(board.randomFENBoard(BoardGUI.GameStage.EARLY_GAME));
-                }
-            });
-            randomBoard.add(randomEarlyGame);
+    public JMenuItem getRandomBoardItem() {
+        JMenuItem randomBoard = new JMenu("Random Board");
+        JMenuItem randomEarlyGame = new JMenuItem("Early Game");
+        randomEarlyGame.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.loadFEN(board.randomFENBoard(BoardGUI.GameStage.EARLY_GAME));
+            }
+        });
+        randomBoard.add(randomEarlyGame);
 
-            JMenuItem randomMidGame = new JMenuItem("Mid Game");
-            randomMidGame.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.loadFEN(board.randomFENBoard(BoardGUI.GameStage.MID_GAME));
-                }
-            });
-            randomBoard.add(randomMidGame);
+        JMenuItem randomMidGame = new JMenuItem("Mid Game");
+        randomMidGame.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.loadFEN(board.randomFENBoard(BoardGUI.GameStage.MID_GAME));
+            }
+        });
+        randomBoard.add(randomMidGame);
 
-            JMenuItem randomEndGame = new JMenuItem("End Game");
-            randomEndGame.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    board.loadFEN(board.randomFENBoard(BoardGUI.GameStage.MID_GAME));
-                }
-            });
-            randomBoard.add(randomEndGame);
+        JMenuItem randomEndGame = new JMenuItem("End Game");
+        randomEndGame.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.loadFEN(board.randomFENBoard(BoardGUI.GameStage.MID_GAME));
+            }
+        });
+        randomBoard.add(randomEndGame);
+        return randomBoard;
+    }
 
-            generalMenu.add(randomBoard);
-        }
-
+    public JMenuItem getPrintBoardItem() {
         JMenuItem printBoard = new JMenu("Print board");
         printBoard.getAccessibleContext().setAccessibleDescription("Outputs the game to the console");
 
@@ -425,8 +457,10 @@ public class Chess extends JLayeredPane {
             }
         });
         printBoard.add(printWithInfo);
-        generalMenu.add(printBoard);
+        return printBoard;
+    }
 
+    public JMenuItem getMoveMethodItem() {
         JMenuItem moveMethod = new JMenu("Move Method");
         ButtonGroup moveMethodGroup = new ButtonGroup();
         JMenuItem dragMethod = new JRadioButtonMenuItem("Drag Piece");
@@ -470,8 +504,10 @@ public class Chess extends JLayeredPane {
         }
         moveMethodGroup.add(bothMethod);
         moveMethod.add(bothMethod);
-        generalMenu.add(moveMethod);
+        return moveMethod;
+    }
 
+    public JMenuItem getCoordinateDisplayItem() {
         JMenuItem coordinateDisplay = new JMenu("Coordinate Display");
         coordinateDisplay.getAccessibleContext().setAccessibleDescription("Changes the way coordinates are viewed on the board");
         ButtonGroup coordinateGroup = new ButtonGroup();
@@ -516,20 +552,10 @@ public class Chess extends JLayeredPane {
         coordinateDisplay.add(noneDisplay);
         coordinateGroup.add(noneDisplay);
 
-        generalMenu.add(coordinateDisplay);
+        return coordinateDisplay;
+    }
 
-        JMenuItem item = new JMenuItem("Quit Game", KeyEvent.VK_ESCAPE);
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
-        item.getAccessibleContext().setAccessibleDescription("Exits the application");
-        item.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
-        });
-        generalMenu.add(item);
-
-
+    public JMenuItem getBoardDesignMenuItem() {
         JMenu boardMenu = new JMenu("Boards");
         ButtonGroup boardGroup = new ButtonGroup();
         for (BoardGUI.Colours colours : BoardGUI.Colours.values()) {
@@ -546,7 +572,10 @@ public class Chess extends JLayeredPane {
             boardGroup.add(theme);
             boardMenu.add(theme);
         }
+        return boardMenu;
+    }
 
+    public JMenuItem getPieceDesignMenuItem() {
         JMenu pieceMenu = new JMenu("Pieces");
         ButtonGroup pieceGroup = new ButtonGroup();
         for (BoardGUI.PieceDesign pieceTheme : BoardGUI.PieceDesign.values()) {
@@ -563,23 +592,24 @@ public class Chess extends JLayeredPane {
             pieceGroup.add(design);
             pieceMenu.add(design);
         }
+        return pieceMenu;
+    }
 
-        JMenu options = new JMenu("Options");
-        if (!challenge) {
-            JMenuItem fenOptions = new JMenu("FEN Repair");
-            JMenuItem relocateBackline = new JRadioButtonMenuItem("Relocate Backline", shouldRelocateBackline);
-            relocateBackline.getAccessibleContext().setAccessibleDescription("Sets each sides backline (king position) to the default rank");
-            relocateBackline.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    shouldRelocateBackline = !shouldRelocateBackline;
-                }
-            });
-            fenOptions.add(relocateBackline);
-            options.add(fenOptions);
-        }
+    public JMenuItem getFenOptionsItem() {
+        JMenuItem fenOptions = new JMenu("FEN Repair");
+        JMenuItem relocateBackline = new JRadioButtonMenuItem("Relocate Backline", shouldRelocateBackline);
+        relocateBackline.getAccessibleContext().setAccessibleDescription("Sets each sides backline (king position) to the default rank");
+        relocateBackline.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shouldRelocateBackline = !shouldRelocateBackline;
+            }
+        });
+        fenOptions.add(relocateBackline);
+        return fenOptions;
+    }
 
-        JMenuItem hintMenu = new JMenu("Hints");
+    public JMenuItem getShowAllyHintItem() {
         JMenuItem showAvailableSquares = new JRadioButtonMenuItem("Show Moves", shouldShowAvailableSquares);
         showAvailableSquares.getAccessibleContext().setAccessibleDescription("Displays possible moves when selecting a piece");
         showAvailableSquares.addActionListener(new AbstractAction() {
@@ -588,20 +618,22 @@ public class Chess extends JLayeredPane {
                 shouldShowAvailableSquares = !shouldShowAvailableSquares;
             }
         });
-        hintMenu.add(showAvailableSquares);
+        return showAvailableSquares;
+    }
 
-        if (!challenge) {
-            JMenuItem showOppositionAvailableSquares = new JRadioButtonMenuItem("Show opposition moves", shouldShowOppositionAvailableSquares);
-            showOppositionAvailableSquares.getAccessibleContext().setAccessibleDescription("Displays possible moves for the opposition");
-            showOppositionAvailableSquares.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    shouldShowOppositionAvailableSquares = !shouldShowOppositionAvailableSquares;
-                }
-            });
-            hintMenu.add(showOppositionAvailableSquares);
-        }
+    public JMenuItem getShowEnemyHintItem() {
+        JMenuItem showOppositionAvailableSquares = new JRadioButtonMenuItem("Show opposition moves", shouldShowOppositionAvailableSquares);
+        showOppositionAvailableSquares.getAccessibleContext().setAccessibleDescription("Displays possible moves for the opposition");
+        showOppositionAvailableSquares.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shouldShowOppositionAvailableSquares = !shouldShowOppositionAvailableSquares;
+            }
+        });
+        return showOppositionAvailableSquares;
+    }
 
+    public JMenuItem getHintStylesItem() {
         JMenuItem hintStyles = new JMenu("Styles");
         JMenuItem captureStyles = new JMenu("Capture");
         ButtonGroup captureGroup = new ButtonGroup();
@@ -659,48 +691,61 @@ public class Chess extends JLayeredPane {
         moveGroup.add(moveDot);
         moveStyles.add(moveDot);
         hintStyles.add(moveStyles);
+        return hintStyles;
+    }
 
-        hintMenu.add(hintStyles);
-        options.add(hintMenu);
+    public JMenuBar getMenu(boolean challenge) {
+        JMenuBar settings = new JMenuBar();
+        JMenu generalMenu = new JMenu("General");
 
-        JMenuItem social = new JMenu("Social");
+        JMenu FEN = new JMenu("FEN");
         if (!challenge) {
-            JMenuItem online = new JMenuItem("Online");
-            online.addActionListener(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    SocialMenuResult panel = createSocialMenu();
-                    if (panel == null) {
-                        JOptionPane.showConfirmDialog(frame, "Nobody is online yet", "It's quiet in here...", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null);
-                    } else {
-                        Object[] options = {"Challenge", "Cancel"};
-                        int r = JOptionPane.showOptionDialog(frame, panel.panel(), "Challenge a friend", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-                        if (r == JOptionPane.OK_OPTION) {
-                            String s = panel.list().getSelectedValue();
-                            if (s == null) return;
-                            String uuid = CommunicationHandler.UUIDfromName(s);
-
-                            ChessMenu.CreateChessGame.PanelResult panelResult = ChessMenu.CreateChessGame.openChessPopup();
-                            if (panelResult != null) {
-                                Challenge c = new Challenge(ChessMenu.IDENTIFIER, uuid, panelResult.boardSize(), panelResult.playAsWhite(), panelResult.gameType(), panelResult.layout(), BoardGUI.createFEN(panelResult.layout(), panelResult.boardSize()));
-
-                                CommunicationHandler.thread.sendPacket(c);
-                                CommunicationHandler.thread.getPendingChallenges().put(c.getID(), c.toJSON());
-                            }
-                        }
-                    }
-                }
-            });
-            social.add(online);
+            FEN.add(getCopyFENItem());
+            FEN.add(getLoadFENItem());
         }
+
+        JMenu gameOptions = new JMenu("Game");
+        if (!challenge) {
+            gameOptions.add(getOpponentMenuItem());
+        }
+
+        gameOptions.add(getResignItem());
+        gameOptions.add(getDrawItem());
+        gameOptions.add(getAbortItem());
+
+        if (!challenge) {
+            gameOptions.add(getSwapSidesItem());
+            generalMenu.add(getResetBoardItem());
+            generalMenu.add(getRandomBoardItem());
+        }
+
+        generalMenu.add(getPrintBoardItem());
+        generalMenu.add(getMoveMethodItem());
+
+        generalMenu.add(getCoordinateDisplayItem());
+
+        generalMenu.add(Classroom.getQuitMenuItem());
+
+        JMenu options = new JMenu("Options");
+        if (!challenge) {
+            options.add(getFenOptionsItem());
+        }
+
+        JMenuItem hintMenu = new JMenu("Hints");
+        hintMenu.add(getShowAllyHintItem());
+        if (!challenge) {
+            hintMenu.add(getShowEnemyHintItem());
+        }
+
+        hintMenu.add(getHintStylesItem());
+        options.add(hintMenu);
 
         settings.add(generalMenu);
         settings.add(gameOptions);
         settings.add(FEN);
-        settings.add(boardMenu);
-        settings.add(pieceMenu);
+        settings.add(getBoardDesignMenuItem());
+        settings.add(getPieceDesignMenuItem());
         settings.add(options);
-        settings.add(social);
 
         return settings;
     }
@@ -711,7 +756,7 @@ public class Chess extends JLayeredPane {
         JPanel panel = new JPanel();
         CommunicationHandler.thread.sendPacket(new RequestOnline(ChessMenu.IDENTIFIER));
         JSONObject object = CommunicationHandler.thread.onlinePlayers;
-        if (object == null) return null;
+        if (object == null || object.isEmpty()) return null;
         DefaultListModel<String> model = new DefaultListModel<>();
         JList<String> list = new JList<>(model);
         list.setSelectionMode(DefaultListSelectionModel.SINGLE_SELECTION);
@@ -727,7 +772,7 @@ public class Chess extends JLayeredPane {
 
     public static int createChallengeAcceptWindow(JSONObject object, JSONObject data) {
         if (object == null) return JOptionPane.CANCEL_OPTION;
-        Object[] options = {"Accept", "Deny"};
+        Object[] options = {"Accept", "Decline"};
         return JOptionPane.showOptionDialog(null, CommunicationHandler.nameFromUUID(object.getString("challenger")) + " has sent a challenge: \n" +
                 " - Board size: " + data.getInt("board-size") + "\n" +
                 " - Game type: " + data.getString("game-type").replaceAll("_", " ") + "\n" +
@@ -735,21 +780,47 @@ public class Chess extends JLayeredPane {
                 "You are playing as " + (!data.getBoolean("white") ? "White" : "Black"), "Challenge received!", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
     }
 
+    public int createDrawGameWindow(BoardGUI board, JSONObject object) {
+        if (object == null) return JOptionPane.CANCEL_OPTION;
+        Object[] options = {"Accept", "Decline"};
+        return JOptionPane.showOptionDialog(board, CommunicationHandler.nameFromUUID(object.getString("draw_uuid")) + " offered a draw.", "Incoming draw request", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+    }
+
+    public static void createChallengeDeclinedWindow(JSONObject object) {
+        JOptionPane.showMessageDialog(null, CommunicationHandler.nameFromUUID(object.getString("challenged")) + " declined your challenge.", "Challenge aborted", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(Move.InfoIcons.ABORTED)).getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
+    }
+
     public void createPopUp(String message, String title, Move.MoveHighlights highlights) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+        popUp(this, message, title, highlights);
         requestFocus();
     }
 
     public void createPopUp(String message, String title, Move.InfoIcons highlights) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+        popUp(this, message, title, highlights);
         requestFocus();
     }
-
-    public void createPopUp(String message, String title, Move.InfoIcons highlights, int previousELO, int newELO) {
-        JLabel label = new JLabel();
-
+    
+    public static JLayeredPane popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+        return parentComponent;
     }
 
+    public static JLayeredPane popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+        return parentComponent;
+    }
+
+    public Font getDef() {
+        return def;
+    }
+
+    public Font getBold() {
+        return bold;
+    }
+
+    public Font getIcons() {
+        return icons;
+    }
 }

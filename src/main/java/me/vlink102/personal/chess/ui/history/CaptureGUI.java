@@ -3,14 +3,10 @@ package me.vlink102.personal.chess.ui.history;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.internal.Move;
-import me.vlink102.personal.chess.internal.OnlineAssets;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.net.URL;
-import java.util.HashMap;
 
 public class CaptureGUI extends JPanel {
     private final BoardGUI boardGUI;
@@ -78,7 +74,7 @@ public class CaptureGUI extends JPanel {
     public CaptureGUI(BoardGUI boardGUI) {
         this.boardGUI = boardGUI;
         capturedPieces = Move.getBufferedResource("/captured-pieces.png");
-        setBackground(Chess.menuScheme.getDarkerBackground());
+        setBackground(Chess.menuScheme.darkerBackground());
         setOpaque(true);
     }
 
@@ -86,6 +82,6 @@ public class CaptureGUI extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        g.drawImage(OnlineAssets.getSavedCapturePiece(CaptureDisplay.B_QUEEN_1), 0, 0, this);
+        g.drawImage(boardGUI.getOnlineAssets().getSavedCapturePiece(CaptureDisplay.B_QUEEN_1), 0, 0, this);
     }
 }

@@ -3,27 +3,8 @@ package me.vlink102.personal.chess.internal;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.pieces.Piece;
 
-import java.util.Arrays;
-
+@SuppressWarnings("unused")
 public class BoardMatrixRotation {
-    static Piece[][] rotatePieceMatrix(Piece[][] board, BoardGUI.BoardView view) {
-        Piece[][] ret = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
-
-        switch (view) {
-            case WHITE -> rotateMatrix180(ret);
-        }
-        return ret;
-    }
-
-    public static Move.MoveHighlights[][] rotateHighlightMatrix(Move.MoveHighlights[][] highlightTypes, BoardGUI.BoardView view) {
-        Move.MoveHighlights[][] ret = Arrays.stream(highlightTypes).map(Move.MoveHighlights[]::clone).toArray(Move.MoveHighlights[][]::new);
-
-        switch (view) {
-            case WHITE -> rotateMatrix180(ret);
-        }
-        return ret;
-    }
-
     public static <T> void transposeMatrix(T[][] board, int rows, int cols) {
         for (int i = 0; i < rows; i++) {
             for (int j = i; j < cols; j++) {

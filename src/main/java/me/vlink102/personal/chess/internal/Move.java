@@ -1,7 +1,6 @@
 package me.vlink102.personal.chess.internal;
 
 import me.vlink102.personal.chess.Chess;
-import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.generic.Pawn;
 
@@ -43,12 +42,16 @@ public class Move {
     private static final String SPECIAL_PIECES_DIR = "special-pieces/";
 
     public static Image getMoveHighlightIcon(MoveHighlights highlights) {
+        return getMoveHighlight(highlights.getURL(), highlights.isOnline());
+    }
+
+    private static Image getMoveHighlight(String url, boolean online) {
         try {
-            if (highlights.getURL() != null) {
-                if (highlights.isOnline()) {
-                    return ImageIO.read(new URL(highlights.getURL()));
+            if (url != null) {
+                if (online) {
+                    return ImageIO.read(new URL(url));
                 } else {
-                    return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + highlights.getURL() + ".png")));
+                    return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + url + ".png")));
                 }
             }
         } catch (IOException e) {
@@ -58,18 +61,7 @@ public class Move {
     }
 
     public static Image getInfoIcon(InfoIcons icon) {
-        try {
-            if (icon.getURL() != null) {
-                if (icon.isOnline()) {
-                    return ImageIO.read(new URL(icon.getURL()));
-                } else {
-                    return ImageIO.read(Objects.requireNonNull(Chess.class.getResource("/" + icon.getURL() + ".png")));
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return null;
+        return getMoveHighlight(icon.getURL(), icon.isOnline());
     }
 
     public static Image getResource(String string) {
@@ -86,28 +78,28 @@ public class Move {
         }
     }
 
-    public static HashMap<MoveHighlights, Image> cachedHighlights = new HashMap<>();
+    public static final HashMap<MoveHighlights, Image> cachedHighlights = new HashMap<>();
 
-    public static synchronized void loadCachedHighlights(int pieceSize) {
+    public static synchronized void loadCachedHighlights(double pieceSize) {
         for (MoveHighlights value : MoveHighlights.values()) {
             Image image = getMoveHighlightIcon(value);
             if (image == null) {
                 cachedHighlights.put(value, null);
             } else {
-                cachedHighlights.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH));
+                cachedHighlights.put(value, image.getScaledInstance((int) (pieceSize / 3), (int) (pieceSize / 3), Image.SCALE_SMOOTH));
             }
         }
     }
 
-    public static HashMap<InfoIcons, Image> cachedIcons = new HashMap<>();
+    public static final HashMap<InfoIcons, Image> cachedIcons = new HashMap<>();
 
-    public static synchronized void loadCachedIcons(int pieceSize) {
+    public static synchronized void loadCachedIcons(double pieceSize) {
         for (InfoIcons value : InfoIcons.values()) {
             Image image = getInfoIcon(value);
             if (image == null) {
                 cachedIcons.put(value, null);
             } else {
-                cachedIcons.put(value, image.getScaledInstance(pieceSize / 3, pieceSize / 3, Image.SCALE_SMOOTH));
+                cachedIcons.put(value, image.getScaledInstance((int) (pieceSize / 3), (int) (pieceSize / 3), Image.SCALE_SMOOTH));
             }
         }
     }
@@ -203,16 +195,6 @@ public class Move {
         MATE
     }
 
-    /**
-     * @param moved
-     * @param from
-     * @param to
-     * @param check
-     * @param enPassant
-     * @param takeSquare
-     * @param promotes
-     * @param castleType
-     */
     public Move(Piece moved, BoardCoordinate from, BoardCoordinate to, Check check, boolean enPassant, BoardCoordinate takeSquare, Piece pieceTaken, Piece promotes, CastleType castleType, MoveType type) {
         this.type = type;
         this.piece = moved;
@@ -268,45 +250,43 @@ public class Move {
             } else if (type == MoveType.DRAW) {
                 move.append("1/2-1/2");
             } else if (type == MoveType.MOVE) {
-                if (castleType != null) {
-                    switch (castleType) {
-                        case KINGSIDE -> move.append("O-O");
-                        case QUEENSIDE -> move.append("O-O-O");
-                    }
-                    if (check != null) {
-                        switch (check) {
-                            case CHECK -> move.append("+");
-                            case MATE -> move.append("#");
-                        }
-                    }
-                } else {
-                    if (piece instanceof Pawn) {
-                        if (taken != null) {
-                            move.append(from.getColString());
-                            move.append("x");
-                            move.append(to.toNotation());
-                        } else {
-                            move.append(to.toNotation());
-                        }
-                        if (promotes != null) {
-                            move.append(promotes.getAbbr());
-                        }
+                if (piece instanceof Pawn) {
+                    if (taken != null) {
+                        move.append(from.getColString());
+                        move.append("x");
+                        move.append(to.toNotation());
                     } else {
-                        move.append(piece.getAbbr());
-                        if (taken != null) {
-                            move.append("x");
-                        }
                         move.append(to.toNotation());
                     }
-
-                    if (check != null) {
-                        switch (check) {
-                            case CHECK -> move.append("+");
-                            case MATE -> move.append("#");
-                        }
+                    if (promotes != null) {
+                        move.append(promotes.getAbbr());
                     }
+                } else {
+                    move.append(piece.getAbbr());
+                    if (taken != null) {
+                        move.append("x");
+                    }
+                    move.append(to.toNotation());
+                }
 
-                    if (enPassant) move.append(" e.p.");
+                if (check != null) {
+                    switch (check) {
+                        case CHECK -> move.append("+");
+                        case MATE -> move.append("#");
+                    }
+                }
+
+                if (enPassant) move.append(" e.p.");
+            } else if (type == MoveType.CASTLE && castleType != null) {
+                switch (castleType) {
+                    case KINGSIDE -> move.append("O-O");
+                    case QUEENSIDE -> move.append("O-O-O");
+                }
+                if (check != null) {
+                    switch (check) {
+                        case CHECK -> move.append("+");
+                        case MATE -> move.append("#");
+                    }
                 }
             }
             return move.toString();
@@ -348,29 +328,8 @@ public class Move {
     public CastleType getCastleType() {
         return castleType;
     }
-    public static class SimpleMove {
-        private final BoardCoordinate from;
-        private final BoardCoordinate to;
-        private final Piece piece;
 
-        public SimpleMove(Piece piece, BoardCoordinate from, BoardCoordinate to) {
-            this.piece = piece;
-            this.from = from;
-            this.to = to;
-        }
-
-        public BoardCoordinate getFrom() {
-            return from;
-        }
-
-        public BoardCoordinate getTo() {
-            return to;
-        }
-
-        public Piece getPiece() {
-            return piece;
-        }
-
+    public record SimpleMove(Piece piece, BoardCoordinate from, BoardCoordinate to) {
         @Override
         public String toString() {
             return piece.toString() + ": " + from.toNotation() + " -> " + to.toNotation();

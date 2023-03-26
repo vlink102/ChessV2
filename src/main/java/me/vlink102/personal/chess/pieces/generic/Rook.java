@@ -9,19 +9,16 @@ import me.vlink102.personal.chess.pieces.Piece;
 public class Rook extends Piece {
     private Move.CastleType type = null;
     private final BoardGUI boardGUI;
-    private final ClassroomGUI classroomGUI;
     private final BoardCoordinate initialSquare;
 
     public Rook(BoardGUI board, boolean white, BoardCoordinate initialSquare) {
         super(board, "R", white);
         this.boardGUI = board;
-        this.classroomGUI = null;
         this.initialSquare = initialSquare;
     }
 
     public Rook(ClassroomGUI board, boolean white, BoardCoordinate initialSquare) {
         super(board, "R", white);
-        this.classroomGUI = board;
         this.boardGUI = null;
         this.initialSquare = initialSquare;
     }
@@ -50,7 +47,7 @@ public class Rook extends Piece {
         }
     }
 
-    public Move.CastleType getType() {
+    public void setType() {
         if (type == null && boardGUI != null) {
             BoardCoordinate king = boardGUI.getKing(boardGUI.getSide(isWhite(), boardGUI.getGamePieces()));
             if (king.col() > initialSquare.col()) {
@@ -59,6 +56,14 @@ public class Rook extends Piece {
                 this.type = Move.CastleType.KINGSIDE;
             }
         }
+    }
+
+    public Move.CastleType getType() {
+        setType();
+        return type;
+    }
+
+    public Move.CastleType getTypeWithoutSet() {
         return type;
     }
 

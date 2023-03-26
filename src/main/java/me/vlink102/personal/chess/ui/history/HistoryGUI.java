@@ -11,19 +11,21 @@ import java.util.List;
 
 public class HistoryGUI extends JPanel {
     private final BoardGUI boardGUI;
+    private final Chess chess;
     private Font moveNumberFont;
     private Font moveFont;
 
-    public HistoryGUI(BoardGUI boardGUI) {
+    public HistoryGUI(Chess chess, BoardGUI boardGUI) {
         this.boardGUI = boardGUI;
+        this.chess = chess;
         setOpaque(true);
-        setBackground(Chess.menuScheme.getDarkerBackground());
+        setBackground(Chess.menuScheme.darkerBackground());
         updateFonts();
     }
 
     public void updateFonts() {
-        this.moveNumberFont = Chess.def.deriveFont((float) 12);
-        this.moveFont = Chess.def.deriveFont((float) 14);
+        this.moveNumberFont = chess.getDef().deriveFont((float) 12);
+        this.moveFont = chess.getDef().deriveFont((float) 14);
     }
 
     @Override
@@ -31,6 +33,8 @@ public class HistoryGUI extends JPanel {
         super.paintComponent(g);
 
         List<Move> moveList = boardGUI.getHistory();
+
+        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), ((moveList.size() / 2) * 25) + 50));
 
         int i = 0;
         int j = 0;
@@ -53,10 +57,10 @@ public class HistoryGUI extends JPanel {
             Rectangle rectangle = new Rectangle(50, i * (25), getWidth() / 4, 25);
             Rectangle rectangle1 = new Rectangle((getWidth() / 4) + (50), i * (25), getWidth() / 4, 25);
             if (i % 2 == 0) {
-                g.setColor(Chess.menuScheme.getPieceHistoryAlternateColor());
+                g.setColor(Chess.menuScheme.pieceHistoryAlternateColor());
                 g.fillRect(0, i * (25), getWidth(), 25);
             }
-            g.setColor(Chess.menuScheme.getMoveNumberColor());
+            g.setColor(Chess.menuScheme.moveNumberColor());
             CoordinateGUI.drawLeftString(g, i + ".", moveRect, moveNumberFont);
 
             if (j == moveList.size()) {
@@ -73,7 +77,8 @@ public class HistoryGUI extends JPanel {
             }
         }
 
-        setPreferredSize(new Dimension(1000, 1000));
+        boardGUI.getSidePanelGUI().revalidate();
+        boardGUI.getSidePanelGUI().repaint();
     }
 
 }

@@ -9,9 +9,9 @@ import java.awt.*;
 import java.util.HashMap;
 
 public class OnlineAssets {
-    private static Image savedBoard;
-    private static final HashMap<String, Image> savedPieces = new HashMap<>();
-    private static final HashMap<CaptureGUI.CaptureDisplay, Image> subImages = new HashMap<>();
+    private Image savedBoard;
+    private final HashMap<String, Image> savedPieces = new HashMap<>();
+    private final HashMap<CaptureGUI.CaptureDisplay, Image> subImages = new HashMap<>();
 
     public OnlineAssets(BoardGUI boardGUI) {
         loadCachedPieces(boardGUI);
@@ -19,19 +19,19 @@ public class OnlineAssets {
         updateSavedImage(boardGUI);
     }
 
-    public static Image getSavedCapturePiece(CaptureGUI.CaptureDisplay display) {
+    public Image getSavedCapturePiece(CaptureGUI.CaptureDisplay display) {
         return subImages.get(display);
     }
 
-    public static Image getSavedBoard() {
+    public Image getSavedBoard() {
         return savedBoard;
     }
 
-    public static Image getSavedPiece(BoardGUI boardGUI, Piece piece) {
+    public Image getSavedPiece(BoardGUI boardGUI, Piece piece) {
         return savedPieces.get((piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase()).getScaledInstance(boardGUI.getPieceSize(), boardGUI.getPieceSize(), Image.SCALE_SMOOTH);
     }
 
-    public static Image getPiece(BoardGUI boardGUI, String abbr) {
+    public Image getPiece(BoardGUI boardGUI, String abbr) {
         if (abbr.matches("[wb][rnbqkp]")) {
             return Move.getResource("/themes/pieces/" + boardGUI.getPieceTheme().getLinkString() + "/" + abbr + ".png");
         } else {
@@ -39,7 +39,7 @@ public class OnlineAssets {
         }
     }
 
-    public static Image getPiece(BoardGUI boardGUI, Piece piece) {
+    public Image getPiece(BoardGUI boardGUI, Piece piece) {
         if (piece instanceof SpecialPiece) {
             return Move.getResource("/special-pieces/" + (piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase() + ".png");
         } else {
@@ -47,94 +47,34 @@ public class OnlineAssets {
         }
     }
 
-    /*
-    public static Image getPiece(BoardGUI board, Piece piece) {
-        if (piece instanceof RiceFarmer) {
-            try {
-                if (piece.isWhite()) {
-                    return ImageIO.read(new URL("https://images-ext-2.discordapp.net/external/Ec-Cw9gKcrFek24optDG_AJTOpLhTevKK5C-hL_liGw/https/i.imgur.com/ELBw34J.png")).getScaledInstance(64, 64, Image.SCALE_SMOOTH);
-                } else {
-                    return ImageIO.read(new URL("https://images-ext-1.discordapp.net/external/QnljI7DNbjE_B3fj53L-kXiXpqHDs-gfqDhOcUP9Xpo/https/i.imgur.com/KIR834t.png")).getScaledInstance(64, 64, Image.SCALE_SMOOTH);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            try {
-                return ImageIO.read(new URL("https://www.chess.com/chess-themes/pieces/" + board.getPieceTheme().getLinkString() + "/" + board.getPieceSize() + "/" + (piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase() + ".png"));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public static Image getBoard(BoardGUI board) {
-        try {
-            Image newBoard = ImageIO.read(new URL("https://www.chess.com/boards/" + board.getBoardTheme().getLinkString() + "/300.png"));
-            savedBoard = newBoard;
-            return newBoard;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-     */
-
-    public static Image getBoard(BoardGUI boardGUI) {
+    public Image getBoard(BoardGUI boardGUI) {
         return Move.getResource("/themes/boards/" + boardGUI.getBoardTheme().getLinkString() + ".png");
     }
 
-    public static synchronized void updateSavedImage(BoardGUI boardGUI) {
+    public synchronized void updateSavedImage(BoardGUI boardGUI) {
         savedBoard = getBoard(boardGUI).getScaledInstance(boardGUI.getPieceSize() * boardGUI.getBoardSize(), boardGUI.getPieceSize() * 8, Image.SCALE_FAST);
     }
 
-    public static void loadCapturedPieces(BoardGUI boardGUI) {
+    public void loadCapturedPieces(BoardGUI boardGUI) {
         for (CaptureGUI.CaptureDisplay value : CaptureGUI.CaptureDisplay.values()) {
             subImages.put(value, CaptureGUI.getSprite(value, boardGUI.getPieceSize() / 4));
         }
     }
 
-    public static void loadCachedPieces(BoardGUI boardGUI) {
+    public void loadCachedPieces(BoardGUI boardGUI) {
         loadPieces(boardGUI);
         loadSpecial(boardGUI);
     }
 
-    private static void loadPieces(BoardGUI boardGUI) {
-        OnlineAssets.savedPieces.put("wp", getPiece(boardGUI, "wp"));
-        OnlineAssets.savedPieces.put("wr", getPiece(boardGUI, "wr"));
-        OnlineAssets.savedPieces.put("wn", getPiece(boardGUI, "wn"));
-        OnlineAssets.savedPieces.put("wb", getPiece(boardGUI, "wb"));
-        OnlineAssets.savedPieces.put("wq", getPiece(boardGUI, "wq"));
-        OnlineAssets.savedPieces.put("wk", getPiece(boardGUI, "wk"));
-        OnlineAssets.savedPieces.put("bp", getPiece(boardGUI, "bp"));
-        OnlineAssets.savedPieces.put("br", getPiece(boardGUI, "br"));
-        OnlineAssets.savedPieces.put("bn", getPiece(boardGUI, "bn"));
-        OnlineAssets.savedPieces.put("bb", getPiece(boardGUI, "bb"));
-        OnlineAssets.savedPieces.put("bq", getPiece(boardGUI, "bq"));
-        OnlineAssets.savedPieces.put("bk", getPiece(boardGUI, "bk"));
+    private void loadPieces(BoardGUI boardGUI) {
+        ClassroomAssets.loadDefaultPiecesToMap(savedPieces, getPiece(boardGUI, "wp"), getPiece(boardGUI, "wr"), getPiece(boardGUI, "wn"), getPiece(boardGUI, "wb"), getPiece(boardGUI, "wq"), getPiece(boardGUI, "wk"), getPiece(boardGUI, "bp"), getPiece(boardGUI, "br"), getPiece(boardGUI, "bn"), getPiece(boardGUI, "bb"), getPiece(boardGUI, "bq"), getPiece(boardGUI, "bk"));
     }
 
-    private static void loadSpecial(BoardGUI boardGUI) {
-        OnlineAssets.savedPieces.put("ba", getPiece(boardGUI, "ba"));
-        OnlineAssets.savedPieces.put("bc", getPiece(boardGUI, "bc"));
-        OnlineAssets.savedPieces.put("be", getPiece(boardGUI, "be"));
-        OnlineAssets.savedPieces.put("bem", getPiece(boardGUI, "bem"));
-        OnlineAssets.savedPieces.put("bm", getPiece(boardGUI, "bm"));
-        OnlineAssets.savedPieces.put("bmi", getPiece(boardGUI, "bmi"));
-        OnlineAssets.savedPieces.put("bpr", getPiece(boardGUI, "bpr"));
-        OnlineAssets.savedPieces.put("bdh", getPiece(boardGUI, "bdh"));
-        OnlineAssets.savedPieces.put("bdk", getPiece(boardGUI, "bdk"));
-        OnlineAssets.savedPieces.put("wa", getPiece(boardGUI, "wa"));
-        OnlineAssets.savedPieces.put("wc", getPiece(boardGUI, "wc"));
-        OnlineAssets.savedPieces.put("we", getPiece(boardGUI, "we"));
-        OnlineAssets.savedPieces.put("wem", getPiece(boardGUI, "wem"));
-        OnlineAssets.savedPieces.put("wm", getPiece(boardGUI, "wm"));
-        OnlineAssets.savedPieces.put("wmi", getPiece(boardGUI, "wmi"));
-        OnlineAssets.savedPieces.put("wpr", getPiece(boardGUI, "wpr"));
-        OnlineAssets.savedPieces.put("wdh", getPiece(boardGUI, "wdh"));
-        OnlineAssets.savedPieces.put("wdk", getPiece(boardGUI, "wdk"));
+    private void loadSpecial(BoardGUI boardGUI) {
+        ClassroomAssets.loadSpecialPiecesToMap(savedPieces, getPiece(boardGUI, "ba"), getPiece(boardGUI, "bc"), getPiece(boardGUI, "be"), getPiece(boardGUI, "bem"), getPiece(boardGUI, "bm"), getPiece(boardGUI, "bmi"), getPiece(boardGUI, "bpr"), getPiece(boardGUI, "bdh"), getPiece(boardGUI, "bdk"), getPiece(boardGUI, "wa"), getPiece(boardGUI, "wc"), getPiece(boardGUI, "we"), getPiece(boardGUI, "wem"), getPiece(boardGUI, "wm"), getPiece(boardGUI, "wmi"), getPiece(boardGUI, "wpr"), getPiece(boardGUI, "wdh"), getPiece(boardGUI, "wdk"));
     }
 
-    public static synchronized void updatePieceDesigns(BoardGUI boardGUI) {
+    public synchronized void updatePieceDesigns(BoardGUI boardGUI) {
         loadCachedPieces(boardGUI);
         for (Piece[] pieces : boardGUI.getGamePieces()) {
             for (Piece piece : pieces) {

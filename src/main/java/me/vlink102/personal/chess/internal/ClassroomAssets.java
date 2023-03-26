@@ -7,19 +7,19 @@ import java.awt.*;
 import java.util.HashMap;
 
 public class ClassroomAssets {
-    private static Image savedBoard;
-    private static final HashMap<String, Image> savedPieces = new HashMap<>();
+    private Image savedBoard;
+    private final HashMap<String, Image> savedPieces = new HashMap<>();
 
     public ClassroomAssets(ClassroomGUI classroomGUI) {
         loadCachedPieces(classroomGUI);
         updateSavedImage(classroomGUI);
     }
 
-    public static Image getSavedBoard() {
+    public Image getSavedBoard() {
         return savedBoard;
     }
 
-    public static Image getSavedPiece(ClassroomGUI classroomGUI, Piece piece) {
+    public Image getSavedPiece(ClassroomGUI classroomGUI, Piece piece) {
         return savedPieces.get((piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase()).getScaledInstance(classroomGUI.getPieceSize(), classroomGUI.getPieceSize(), Image.SCALE_SMOOTH);
     }
 
@@ -35,52 +35,60 @@ public class ClassroomAssets {
         return Move.getResource("/themes/boards/" + classroomGUI.getBoardTheme().getLinkString() + ".png");
     }
 
-    public static synchronized void updateSavedImage(ClassroomGUI classroomGUI) {
+    public synchronized void updateSavedImage(ClassroomGUI classroomGUI) {
         savedBoard = getBoard(classroomGUI).getScaledInstance(classroomGUI.getPieceSize() * classroomGUI.getBoardSize(), classroomGUI.getPieceSize() * 8, Image.SCALE_FAST);
     }
 
-    public static void loadCachedPieces(ClassroomGUI classroomGUI) {
+    public void loadCachedPieces(ClassroomGUI classroomGUI) {
         loadPieces(classroomGUI);
         loadSpecial(classroomGUI);
     }
 
-    private static void loadPieces(ClassroomGUI classroomGUI) {
-        ClassroomAssets.savedPieces.put("wp", getPiece(classroomGUI, "wp"));
-        ClassroomAssets.savedPieces.put("wr", getPiece(classroomGUI, "wr"));
-        ClassroomAssets.savedPieces.put("wn", getPiece(classroomGUI, "wn"));
-        ClassroomAssets.savedPieces.put("wb", getPiece(classroomGUI, "wb"));
-        ClassroomAssets.savedPieces.put("wq", getPiece(classroomGUI, "wq"));
-        ClassroomAssets.savedPieces.put("wk", getPiece(classroomGUI, "wk"));
-        ClassroomAssets.savedPieces.put("bp", getPiece(classroomGUI, "bp"));
-        ClassroomAssets.savedPieces.put("br", getPiece(classroomGUI, "br"));
-        ClassroomAssets.savedPieces.put("bn", getPiece(classroomGUI, "bn"));
-        ClassroomAssets.savedPieces.put("bb", getPiece(classroomGUI, "bb"));
-        ClassroomAssets.savedPieces.put("bq", getPiece(classroomGUI, "bq"));
-        ClassroomAssets.savedPieces.put("bk", getPiece(classroomGUI, "bk"));
+    private void loadPieces(ClassroomGUI classroomGUI) {
+        loadDefaultPiecesToMap(savedPieces, getPiece(classroomGUI, "wp"), getPiece(classroomGUI, "wr"), getPiece(classroomGUI, "wn"), getPiece(classroomGUI, "wb"), getPiece(classroomGUI, "wq"), getPiece(classroomGUI, "wk"), getPiece(classroomGUI, "bp"), getPiece(classroomGUI, "br"), getPiece(classroomGUI, "bn"), getPiece(classroomGUI, "bb"), getPiece(classroomGUI, "bq"), getPiece(classroomGUI, "bk"));
     }
 
-    private static void loadSpecial(ClassroomGUI classroomGUI) {
-        ClassroomAssets.savedPieces.put("ba", getPiece(classroomGUI, "ba"));
-        ClassroomAssets.savedPieces.put("bc", getPiece(classroomGUI, "bc"));
-        ClassroomAssets.savedPieces.put("be", getPiece(classroomGUI, "be"));
-        ClassroomAssets.savedPieces.put("bem", getPiece(classroomGUI, "bem"));
-        ClassroomAssets.savedPieces.put("bm", getPiece(classroomGUI, "bm"));
-        ClassroomAssets.savedPieces.put("bmi", getPiece(classroomGUI, "bmi"));
-        ClassroomAssets.savedPieces.put("bpr", getPiece(classroomGUI, "bpr"));
-        ClassroomAssets.savedPieces.put("bdh", getPiece(classroomGUI, "bdh"));
-        ClassroomAssets.savedPieces.put("bdk", getPiece(classroomGUI, "bdk"));
-        ClassroomAssets.savedPieces.put("wa", getPiece(classroomGUI, "wa"));
-        ClassroomAssets.savedPieces.put("wc", getPiece(classroomGUI, "wc"));
-        ClassroomAssets.savedPieces.put("we", getPiece(classroomGUI, "we"));
-        ClassroomAssets.savedPieces.put("wem", getPiece(classroomGUI, "wem"));
-        ClassroomAssets.savedPieces.put("wm", getPiece(classroomGUI, "wm"));
-        ClassroomAssets.savedPieces.put("wmi", getPiece(classroomGUI, "wmi"));
-        ClassroomAssets.savedPieces.put("wpr", getPiece(classroomGUI, "wpr"));
-        ClassroomAssets.savedPieces.put("wdh", getPiece(classroomGUI, "wdh"));
-        ClassroomAssets.savedPieces.put("wdk", getPiece(classroomGUI, "wdk"));
+    static void loadDefaultPiecesToMap(HashMap<String, Image> savedPieces, Image wp, Image wr, Image wn, Image wb, Image wq, Image wk, Image bp, Image br, Image bn, Image bb, Image bq, Image bk) {
+        savedPieces.put("wp", wp);
+        savedPieces.put("wr", wr);
+        savedPieces.put("wn", wn);
+        savedPieces.put("wb", wb);
+        savedPieces.put("wq", wq);
+        savedPieces.put("wk", wk);
+        savedPieces.put("bp", bp);
+        savedPieces.put("br", br);
+        savedPieces.put("bn", bn);
+        savedPieces.put("bb", bb);
+        savedPieces.put("bq", bq);
+        savedPieces.put("bk", bk);
     }
 
-    public static synchronized void updatePieceDesigns(ClassroomGUI classroomGUI) {
+    private void loadSpecial(ClassroomGUI classroomGUI) {
+        loadSpecialPiecesToMap(savedPieces, getPiece(classroomGUI, "ba"), getPiece(classroomGUI, "bc"), getPiece(classroomGUI, "be"), getPiece(classroomGUI, "bem"), getPiece(classroomGUI, "bm"), getPiece(classroomGUI, "bmi"), getPiece(classroomGUI, "bpr"), getPiece(classroomGUI, "bdh"), getPiece(classroomGUI, "bdk"), getPiece(classroomGUI, "wa"), getPiece(classroomGUI, "wc"), getPiece(classroomGUI, "we"), getPiece(classroomGUI, "wem"), getPiece(classroomGUI, "wm"), getPiece(classroomGUI, "wmi"), getPiece(classroomGUI, "wpr"), getPiece(classroomGUI, "wdh"), getPiece(classroomGUI, "wdk"));
+    }
+
+    static void loadSpecialPiecesToMap(HashMap<String, Image> savedPieces, Image ba, Image bc, Image be, Image bem, Image bm, Image bmi, Image bpr, Image bdh, Image bdk, Image wa, Image wc, Image we, Image wem, Image wm, Image wmi, Image wpr, Image wdh, Image wdk) {
+        savedPieces.put("ba", ba);
+        savedPieces.put("bc", bc);
+        savedPieces.put("be", be);
+        savedPieces.put("bem", bem);
+        savedPieces.put("bm", bm);
+        savedPieces.put("bmi", bmi);
+        savedPieces.put("bpr", bpr);
+        savedPieces.put("bdh", bdh);
+        savedPieces.put("bdk", bdk);
+        savedPieces.put("wa", wa);
+        savedPieces.put("wc", wc);
+        savedPieces.put("we", we);
+        savedPieces.put("wem", wem);
+        savedPieces.put("wm", wm);
+        savedPieces.put("wmi", wmi);
+        savedPieces.put("wpr", wpr);
+        savedPieces.put("wdh", wdh);
+        savedPieces.put("wdk", wdk);
+    }
+
+    public synchronized void updatePieceDesigns(ClassroomGUI classroomGUI) {
         loadCachedPieces(classroomGUI);
         for (Piece[] pieces : classroomGUI.getGamePieces()) {
             for (Piece piece : pieces) {

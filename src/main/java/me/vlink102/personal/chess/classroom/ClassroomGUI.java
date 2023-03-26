@@ -1,30 +1,27 @@
 package me.vlink102.personal.chess.classroom;
 
 import me.vlink102.personal.chess.BoardGUI;
-import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.internal.ClassroomAssets;
 import me.vlink102.personal.chess.internal.Move;
-import me.vlink102.personal.chess.internal.OnlineAssets;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.generic.*;
-import me.vlink102.personal.chess.pieces.generic.special.asian.DragonHorse;
-import me.vlink102.personal.chess.pieces.generic.special.asian.DragonKing;
-import me.vlink102.personal.chess.pieces.generic.special.historical.*;
+import me.vlink102.personal.chess.pieces.special.asian.DragonHorse;
+import me.vlink102.personal.chess.pieces.special.asian.DragonKing;
+import me.vlink102.personal.chess.pieces.special.historical.*;
 import me.vlink102.personal.chess.ui.interactive.ClassroomInteraction;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class ClassroomGUI extends JPanel {
     private final Classroom classRoom;
-    private boolean useOnline;
+    private final boolean useOnline;
 
-    private int boardSize;
+    private final int boardSize;
     private int pieceSize;
 
     private Piece[][] gamePieces;
@@ -32,11 +29,10 @@ public class ClassroomGUI extends JPanel {
     private BoardGUI.PieceDesign pieceTheme;
     private BoardGUI.Colours boardTheme;
 
-    private boolean playAsWhite;
+    private final boolean playAsWhite;
     private BoardGUI.BoardView view;
 
-    private ClassroomAssets classroomAssets;
-    private ClassroomInteraction classroomInteraction;
+    private final ClassroomAssets classroomAssets;
 
     public ClassroomGUI(Classroom classRoom, int pieceSize, int boardSize, boolean useOnline, boolean playAsWhite, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme) {
         this.classRoom = classRoom;
@@ -54,7 +50,7 @@ public class ClassroomGUI extends JPanel {
 
         setupBoard();
 
-        this.classroomInteraction = new ClassroomInteraction(classRoom, this);
+        ClassroomInteraction classroomInteraction = new ClassroomInteraction(classRoom, this);
         addMouseListener(classroomInteraction);
         addMouseMotionListener(classroomInteraction);
 
@@ -92,7 +88,7 @@ public class ClassroomGUI extends JPanel {
             }
         }
 
-        ClassroomAssets.updatePieceDesigns(this);
+        classroomAssets.updatePieceDesigns(this);
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -139,8 +135,8 @@ public class ClassroomGUI extends JPanel {
                 board[white ? 1 : (boardSize - 1) - 1][i] = new Pawn(this, white);
             }
 
-            board[backLine][startingPoint] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint));
-            board[backLine][startingPoint + 7] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint + 7));
+            board[backLine][startingPoint] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint, this));
+            board[backLine][startingPoint + 7] = new Rook(this, white, new BoardCoordinate(backLine, startingPoint + 7, this));
 
             board[backLine][startingPoint + 1] = new Knight(this, white);
             board[backLine][startingPoint + 6] = new Knight(this, white);
@@ -156,34 +152,34 @@ public class ClassroomGUI extends JPanel {
             }
             switch (boardSize) {
                 case 4 -> {
-                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0, this));
                     board[backLine][1] = new Queen(this, white);
                     board[backLine][2] = new King(this, white);
                     board[backLine][3] = new Knight(this, white);
                 }
                 case 5 -> {
-                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0, this));
                     board[backLine][1] = new Queen(this, white);
                     board[backLine][2] = new King(this, white);
                     board[backLine][3] = new Knight(this, white);
-                    board[backLine][4] = new Rook(this, white, new BoardCoordinate(backLine, 4));
+                    board[backLine][4] = new Rook(this, white, new BoardCoordinate(backLine, 4, this));
                 }
                 case 6 -> {
-                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0, this));
                     board[backLine][1] = new Bishop(this, white);
                     board[backLine][2] = new Queen(this, white);
                     board[backLine][3] = new King(this, white);
                     board[backLine][4] = new Knight(this, white);
-                    board[backLine][5] = new Rook(this, white, new BoardCoordinate(backLine, 5));
+                    board[backLine][5] = new Rook(this, white, new BoardCoordinate(backLine, 5, this));
                 }
                 case 7 -> {
-                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0));
+                    board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0, this));
                     board[backLine][1] = new Knight(this, white);
                     board[backLine][2] = new Bishop(this, white);
                     board[backLine][3] = new Queen(this, white);
                     board[backLine][4] = new King(this, white);
                     board[backLine][5] = new Knight(this, white);
-                    board[backLine][6] = new Rook(this, white, new BoardCoordinate(backLine, 6));
+                    board[backLine][6] = new Rook(this, white, new BoardCoordinate(backLine, 6, this));
                 }
             }
         }
@@ -194,15 +190,12 @@ public class ClassroomGUI extends JPanel {
             Piece moved = gamePieces[from.row()][from.col()];
             gamePieces[from.row()][from.col()] = null;
             gamePieces[to.row()][to.col()] = moved;
+            displayPieces();
         }
     }
 
     public int getBoardSize() {
         return boardSize;
-    }
-
-    public boolean isUseOnline() {
-        return useOnline;
     }
 
     public int getPieceSize() {
@@ -221,10 +214,6 @@ public class ClassroomGUI extends JPanel {
         return boardTheme;
     }
 
-    public boolean isPlayAsWhite() {
-        return playAsWhite;
-    }
-
     public BoardGUI.BoardView getView() {
         return view;
     }
@@ -239,13 +228,13 @@ public class ClassroomGUI extends JPanel {
 
     public void setBoardTheme(BoardGUI.Colours boardTheme) {
         this.boardTheme = boardTheme;
-        ClassroomAssets.updateSavedImage(this);
+        classroomAssets.updateSavedImage(this);
         repaint();
     }
 
     public void setPieceTheme(BoardGUI.PieceDesign pieceTheme) {
         this.pieceTheme = pieceTheme;
-        ClassroomAssets.updatePieceDesigns(this);
+        classroomAssets.updatePieceDesigns(this);
         displayPieces();
         repaint();
     }
@@ -255,7 +244,7 @@ public class ClassroomGUI extends JPanel {
         super.paintComponent(g);
 
         if (useOnline) {
-            Image image = ClassroomAssets.getSavedBoard();
+            Image image = classroomAssets.getSavedBoard();
             g.drawImage(image, 0, 0, this);
         }
 
@@ -324,7 +313,7 @@ public class ClassroomGUI extends JPanel {
                 for (int i = 0; i < boardSize; i++) {
                     boolean isUpper = newRow[i].matches("[A-Z]");
                     switch (newRow[i].toLowerCase()) {
-                        case "r" -> gamePieces[rank][i] = new Rook(this, isUpper, new BoardCoordinate(rank, i));
+                        case "r" -> gamePieces[rank][i] = new Rook(this, isUpper, new BoardCoordinate(rank, i, this));
                         case "n" -> gamePieces[rank][i] = new Knight(this, isUpper);
                         case "b" -> gamePieces[rank][i] = new Bishop(this, isUpper);
                         case "q" -> gamePieces[rank][i] = new Queen(this, isUpper);
@@ -349,9 +338,9 @@ public class ClassroomGUI extends JPanel {
 
             createPopUp("Successfully loaded FEN string: " + FEN, "Loaded board", Move.MoveHighlights.EXCELLENT);
         } else {
-            String result = BoardGUI.fixFENBoard(FEN, boardSize);
+            String result = BoardGUI.fixFENBoard(FEN, boardSize, true);
             if (result == null) {
-                createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Wrong number of Kings\n\n" + result, "FEN import cancelled", Move.MoveHighlights.MISTAKE);
+                createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Wrong number of Kings\n\n", "FEN import cancelled", Move.MoveHighlights.MISTAKE);
             } else {
                 if (!BoardGUI.validateBoard(result, boardSize)) {
                     createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Could not repair FEN String\n\n" + result, "FEN import cancelled", Move.MoveHighlights.BLUNDER);
@@ -365,6 +354,9 @@ public class ClassroomGUI extends JPanel {
 
     public void resetBoard() {
         this.gamePieces = new Piece[boardSize][boardSize];
+        setupBoard();
+        repaint();
+        displayPieces();
     }
 
     public void createPopUp(String message, String title, Move.MoveHighlights highlights) {
@@ -377,5 +369,9 @@ public class ClassroomGUI extends JPanel {
         ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
         JOptionPane.showConfirmDialog(this, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
         requestFocus();
+    }
+
+    public ClassroomAssets getClassroomAssets() {
+        return classroomAssets;
     }
 }

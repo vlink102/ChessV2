@@ -16,9 +16,22 @@ public class BoardCoordinate {
         return row;
     }
 
+    public BoardCoordinate() {
+        this.row = -1;
+        this.col = -1;
+    }
+
+    /**
+     * Only for temp use in data transfer. Do not use in normal logic.
+     */
     public BoardCoordinate(int row, int col) {
-        this.row = Math.max(0, Math.min(BoardGUI.decBoardSize, row));
-        this.col = Math.max(0, Math.min(BoardGUI.decBoardSize, col));
+        this.row = row;
+        this.col = col;
+    }
+
+    public BoardCoordinate(int row, int col, BoardGUI boardGUI) {
+        this.row = Math.max(0, Math.min(boardGUI.decBoardSize, row));
+        this.col = Math.max(0, Math.min(boardGUI.decBoardSize, col));
     }
 
     public BoardCoordinate(int row, int col, ClassroomGUI gui) {
@@ -54,6 +67,7 @@ public class BoardCoordinate {
         return col.toCharArray()[0] - 'a';
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isValidTile(int boardSize, String tile) {
         if (tile.equals("")) {
             return false;
@@ -78,5 +92,9 @@ public class BoardCoordinate {
         o.put("row", row);
         o.put("col", col);
         return o.toString();
+    }
+
+    public static BoardCoordinate parse(JSONObject jsonObject) {
+        return new BoardCoordinate(jsonObject.getInt("row"), jsonObject.getInt("col"));
     }
 }

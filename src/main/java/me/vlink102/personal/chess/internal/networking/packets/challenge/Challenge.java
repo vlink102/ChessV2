@@ -2,12 +2,12 @@ package me.vlink102.personal.chess.internal.networking.packets.challenge;
 
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
-import nl.andrewl.record_net.Message;
+
 import org.json.JSONObject;
 
 import java.util.Random;
 
-public class Challenge implements Message {
+public class Challenge {
 
     private final String from;
     private final String to;

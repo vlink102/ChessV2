@@ -4,7 +4,6 @@ import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.internal.BoardMatrixRotation;
-import me.vlink102.personal.chess.internal.ClassroomAssets;
 import me.vlink102.personal.chess.internal.Move;
 
 import javax.swing.*;
@@ -18,16 +17,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class Classroom extends JLayeredPane {
-    private static ClassroomGUI board;
-    public static JFrame frame;
+    private final ClassroomGUI board;
+    public final JFrame frame;
 
     public Classroom(int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme) {
-        board = new ClassroomGUI(this, initialPieceSize, initialBoardSize, useOnline, playAsWhite, pieceTheme, boardTheme);
-
-        add(board, DEFAULT_LAYER);
-    }
-
-    public static Classroom initUI(int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme) {
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         if ((initialPieceSize * initialBoardSize)> screen.getWidth()) {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
@@ -39,14 +32,16 @@ public class Classroom extends JLayeredPane {
         Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize), (initialPieceSize * initialBoardSize));
         frame = new JFrame("Chess [vlink102] Github b13.8.8");
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        Classroom classroom = new Classroom(initialPieceSize, initialBoardSize, useOnline, playAsWhite, pieceTheme, boardTheme);
-        frame.add(classroom);
+        board = new ClassroomGUI(this, initialPieceSize, initialBoardSize, useOnline, playAsWhite, pieceTheme, boardTheme);
+
+        add(board, DEFAULT_LAYER);
+        frame.add(this);
         frame.setResizable(true);
         frame.getContentPane().setPreferredSize(initialSize);
 
         frame.setMinimumSize(new Dimension(32 * initialBoardSize, 32 * initialBoardSize));
         frame.setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
-        frame.getContentPane().setBackground(Chess.menuScheme.getBackground());
+        frame.getContentPane().setBackground(Chess.menuScheme.background());
 
         frame.setIconImage(GameSelector.getImageIcon());
 
@@ -78,15 +73,14 @@ public class Classroom extends JLayeredPane {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         board.requestFocus();
-        return classroom;
     }
 
     static int lastSize;
 
-    private static ActionListener refreshGUI() {
+    private ActionListener refreshGUI() {
         return e -> {
             if (lastSize != board.getPieceSize() ) {
-                ClassroomAssets.updatePieceDesigns(board);
+                board.getClassroomAssets().updatePieceDesigns(board);
 
                 Move.loadCachedIcons(board.getPieceSize());
                 Move.loadCachedHighlights(board.getPieceSize());
@@ -98,22 +92,19 @@ public class Classroom extends JLayeredPane {
         };
     }
 
-    public static void refreshWindow() {
+    public void refreshWindow() {
         board.setPieceSize(frame.getContentPane().getHeight() / board.getBoardSize());
 
         Dimension dimension = new Dimension(board.getPieceSize() * board.getBoardSize(), board.getPieceSize() * board.getBoardSize());
         board.setPreferredSize(dimension);
         board.setBounds(0, 0, (board.getPieceSize() * board.getBoardSize()), (board.getPieceSize() * board.getBoardSize()));
 
-        ClassroomAssets.updateSavedImage(board);
+        board.getClassroomAssets().updateSavedImage(board);
         board.displayPieces();
         board.repaint();
     }
 
-    public static JMenuBar getMenu() {
-        JMenuBar settings = new JMenuBar();
-        JMenu generalMenu = new JMenu("General");
-
+    public JMenuItem getBoardResetItem() {
         JMenuItem resetBoard = new JMenuItem("Reset board");
         resetBoard.getAccessibleContext().setAccessibleDescription("Resets the board to the starting position");
         resetBoard.addActionListener(new AbstractAction() {
@@ -122,23 +113,28 @@ public class Classroom extends JLayeredPane {
                 board.resetBoard();
             }
         });
-        settings.add(resetBoard);
+        return resetBoard;
+    }
 
-        JMenu FEN = new JMenu("FEN");
+    public JMenuItem getCopyFENItem() {
+        return getCopyFENItem(board.translateBoardToFEN(board.getGamePieces()));
+    }
 
+    public static JMenuItem getCopyFENItem(String s) {
         JMenuItem getFEN = new JMenuItem("Copy FEN");
         getFEN.getAccessibleContext().setAccessibleDescription("Copies a FEN (Forsyth-Edwards Notation) of the current board state to your clipboard");
         getFEN.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String FEN = board.translateBoardToFEN(board.getGamePieces());
-                StringSelection selection = new StringSelection(FEN);
+                StringSelection selection = new StringSelection(s);
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 clipboard.setContents(selection, null);
             }
         });
-        FEN.add(getFEN);
+        return getFEN;
+    }
 
+    public JMenuItem getLoadFENItem() {
         JMenuItem loadFEN = new JMenu("Load FEN");
         loadFEN.getAccessibleContext().setAccessibleDescription("Loads a FEN");
 
@@ -171,8 +167,10 @@ public class Classroom extends JLayeredPane {
             }
         });
         loadFEN.add(inputLoad);
-        FEN.add(loadFEN);
+        return loadFEN;
+    }
 
+    public JMenuItem getPrintBoardItem() {
         JMenuItem printBoardSolo = new JMenuItem("Print board");
         printBoardSolo.getAccessibleContext().setAccessibleDescription("Prints just the board");
         printBoardSolo.addActionListener(new AbstractAction() {
@@ -181,10 +179,14 @@ public class Classroom extends JLayeredPane {
                 BoardMatrixRotation.printBoard(board.getGamePieces(), board.getView(), board.getBoardSize());
             }
         });
+        return printBoardSolo;
+    }
 
-        generalMenu.add(printBoardSolo);
+    public JMenuItem getQuitGameItem() {
+        return getQuitMenuItem();
+    }
 
-
+    public static JMenuItem getQuitMenuItem() {
         JMenuItem item = new JMenuItem("Quit Game", KeyEvent.VK_ESCAPE);
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
         item.getAccessibleContext().setAccessibleDescription("Exits the application");
@@ -194,8 +196,10 @@ public class Classroom extends JLayeredPane {
                 System.exit(0);
             }
         });
-        generalMenu.add(item);
+        return item;
+    }
 
+    public JMenuItem getBoardDesignMenuItem() {
         JMenu boardMenu = new JMenu("Boards");
         ButtonGroup boardGroup = new ButtonGroup();
         for (BoardGUI.Colours colours : BoardGUI.Colours.values()) {
@@ -212,7 +216,10 @@ public class Classroom extends JLayeredPane {
             boardGroup.add(theme);
             boardMenu.add(theme);
         }
+        return boardMenu;
+    }
 
+    public JMenuItem getPieceDesignMenuItem() {
         JMenu pieceMenu = new JMenu("Pieces");
         ButtonGroup pieceGroup = new ButtonGroup();
         for (BoardGUI.PieceDesign pieceTheme : BoardGUI.PieceDesign.values()) {
@@ -229,11 +236,27 @@ public class Classroom extends JLayeredPane {
             pieceGroup.add(design);
             pieceMenu.add(design);
         }
+        return pieceMenu;
+    }
+
+    public JMenuBar getMenu() {
+        JMenuBar settings = new JMenuBar();
+        JMenu generalMenu = new JMenu("General");
+
+        generalMenu.add(getBoardResetItem());
+
+        JMenu FEN = new JMenu("FEN");
+        FEN.add(getCopyFENItem());
+        FEN.add(getLoadFENItem());
+
+        generalMenu.add(getPrintBoardItem());
+        generalMenu.add(getQuitGameItem());
 
         settings.add(generalMenu);
         settings.add(FEN);
-        settings.add(boardMenu);
-        settings.add(pieceMenu);
+
+        settings.add(getBoardDesignMenuItem());
+        settings.add(getPieceDesignMenuItem());
         return settings;
     }
 }

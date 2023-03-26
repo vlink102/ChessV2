@@ -9,12 +9,14 @@ import java.awt.*;
 
 public class CoordinateGUI extends JPanel {
     private final BoardGUI boardGUI;
+    private final Chess chess;
 
-    public CoordinateGUI(BoardGUI boardGUI) {
+    public CoordinateGUI(Chess chess, BoardGUI boardGUI) {
         this.boardGUI = boardGUI;
+        this.chess = chess;
 
         setOpaque(false);
-        setFont(Chess.bold.deriveFont( (float) Chess.defaultOffset - 4));
+        setFont(chess.getBold().deriveFont( (float) chess.defaultOffset - 4));
     }
 
     /**
@@ -46,21 +48,21 @@ public class CoordinateGUI extends JPanel {
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         if (boardGUI.getCoordinateDisplayType() == BoardGUI.CoordinateDisplayType.OUTSIDE) {
-            g.setColor(Chess.menuScheme.getCoordinateBarColor());
+            g.setColor(Chess.menuScheme.coordinateBarColor());
             g.fillRect(0, 0, getWidth(), getHeight());
             for (int i = 0; i < boardGUI.getBoardSize(); i++) {
-                int r1 = boardGUI.getView() == BoardGUI.BoardView.WHITE ? BoardGUI.decBoardSize - i : i;
-                Rectangle rectangle = new Rectangle(0, i * boardGUI.getPieceSize(), Chess.offSet, boardGUI.getPieceSize());
+                int r1 = boardGUI.getView() == BoardGUI.BoardView.WHITE ? boardGUI.decBoardSize - i : i;
+                Rectangle rectangle = new Rectangle(0, i * boardGUI.getPieceSize(), chess.offSet, boardGUI.getPieceSize());
 
-                g.setColor(Chess.menuScheme.getCoordinateBarTextColor());
+                g.setColor(Chess.menuScheme.coordinateBarTextColor());
                 String rowLetter = BoardCoordinate.getRowString(r1);
                 drawCenteredString(g, rowLetter, rectangle, getFont());
             }
             for (int i = 0; i < boardGUI.getBoardSize(); i++) {
-                int c1 = boardGUI.getView() == BoardGUI.BoardView.WHITE ? i : BoardGUI.decBoardSize - i;
-                Rectangle rectangle = new Rectangle((i * boardGUI.getPieceSize()) + Chess.offSet, boardGUI.getPieceSize() * boardGUI.getBoardSize(), boardGUI.getPieceSize(), Chess.offSet);
+                int c1 = boardGUI.getView() == BoardGUI.BoardView.WHITE ? i : boardGUI.decBoardSize - i;
+                Rectangle rectangle = new Rectangle((i * boardGUI.getPieceSize()) + chess.offSet, boardGUI.getPieceSize() * boardGUI.getBoardSize(), boardGUI.getPieceSize(), chess.offSet);
 
-                g.setColor(Chess.menuScheme.getCoordinateBarTextColor());
+                g.setColor(Chess.menuScheme.coordinateBarTextColor());
                 String colLetter = BoardCoordinate.getColString(c1);
                 drawCenteredString(g, colLetter, rectangle, getFont());
             }

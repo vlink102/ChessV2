@@ -1,13 +1,14 @@
-package me.vlink102.personal.chess.internal.networking.packets;
+package me.vlink102.personal.chess.internal.networking.packets.draw;
 
-import nl.andrewl.record_net.Message;
+
 import org.json.JSONObject;
 
-public record OfferDraw(String UUID) implements Message {
+public record OfferDraw(String UUID, long gameID) {
     @Override
     public String toString() {
         JSONObject o = new JSONObject();
         o.put("draw_uuid", UUID);
+        o.put("draw-game-id", gameID);
         return o.toString();
     }
 }

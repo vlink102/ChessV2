@@ -1,16 +1,16 @@
-package me.vlink102.personal.chess.pieces.generic.special.historical;
+package me.vlink102.personal.chess.pieces.special.historical;
 
 import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.pieces.SpecialPiece;
 
-public class Elephant extends SpecialPiece {
-    public Elephant(BoardGUI board, boolean white) {
-        super(board, "E", white);
+public class Amazon extends SpecialPiece {
+    public Amazon(BoardGUI board, boolean white) {
+        super(board, "A", white);
     }
-    public Elephant(ClassroomGUI board, boolean white) {
-        super(board, "E", white);
+    public Amazon(ClassroomGUI board, boolean white) {
+        super(board, "A", white);
     }
 
     @Override
@@ -20,16 +20,16 @@ public class Elephant extends SpecialPiece {
         int x1 = to.col();
         int y1 = to.row();
 
-        return Math.abs(x0 - x1) == 2 && Math.abs(y0 - y1) == 2;
+        return ((Math.abs(x1 - x0) == 2 && Math.abs(y1 - y0) == 1) || (Math.abs(x1 - x0) == 1 && Math.abs(y1 - y0) == 2)) || isDiagonal(from, to) || isStraight(from, to);
     }
 
     @Override
     public int points() {
-        return 3;
+        return 12;
     }
 
     @Override
     public char fenChar() {
-        return 'E';
+        return 'A';
     }
 }

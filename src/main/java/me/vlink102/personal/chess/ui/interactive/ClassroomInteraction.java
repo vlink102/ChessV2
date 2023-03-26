@@ -1,6 +1,5 @@
 package me.vlink102.personal.chess.ui.interactive;
 
-import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.classroom.Classroom;
 import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
@@ -96,12 +95,12 @@ public class ClassroomInteraction implements MouseListener, MouseMotionListener 
 
             switch (classroomGUI.getView()) {
                 case BLACK -> {
-                    f0 = classroomGUI.getBoardSize() - f0;
-                    f1 = classroomGUI.getBoardSize() - f1;
+                    f0 = (classroomGUI.getBoardSize() - 1) - f0;
+                    f1 = (classroomGUI.getBoardSize() - 1) - f1;
                 }
                 case WHITE -> {
-                    r0 = classroomGUI.getBoardSize() - r0;
-                    r1 = classroomGUI.getBoardSize() - r1;
+                    r0 = (classroomGUI.getBoardSize() - 1) - r0;
+                    r1 = (classroomGUI.getBoardSize() - 1) - r1;
                 }
             }
 

@@ -3,8 +3,6 @@ package me.vlink102.personal.chess.internal.networking;
 import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.networking.packets.Online;
 import me.vlink102.personal.chess.internal.networking.packets.RequestOnline;
-import nl.andrewl.record_net.util.ExtendedDataInputStream;
-import nl.andrewl.record_net.util.ExtendedDataOutputStream;
 
 import java.io.*;
 import java.net.*;
@@ -13,6 +11,7 @@ import java.util.Objects;
 
 
 public class CommunicationHandler {
+    @SuppressWarnings("SpellCheckingInspection")
     private static final String V = "ZF16eYBBOuatpyxqOIHg";
     private static String user;
     private static String host;
@@ -28,12 +27,7 @@ public class CommunicationHandler {
         CommunicationHandler.port = port;
     }
 
-    private static String pws = V;
-
-    private static Socket socket;
-    private DatagramSocket datagramSocket;
-    private ExtendedDataInputStream inputStream;
-    private ExtendedDataOutputStream outputStream;
+    private static final String pws = V;
 
     public static String nameFromUUID(String uuid) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
@@ -50,6 +44,7 @@ public class CommunicationHandler {
         }
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
     public static String UUIDfromName(String name) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
         try (Connection connection = DriverManager.getConnection(url);
@@ -83,10 +78,10 @@ public class CommunicationHandler {
 
     }
 
-    public static void establishConnection(String uuid) {
+    public void establishConnection(String uuid) {
         try {
             InetAddress address = InetAddress.getByName("82.69.40.208");
-            socket = new Socket(address.getHostName(), 55285);
+            Socket socket = new Socket(address.getHostName(), 55285);
 
             thread = new DataThread(socket);
             thread.start();

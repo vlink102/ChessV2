@@ -17,6 +17,4 @@ public abstract class SpecialPiece extends Piece {
     }
 
     public abstract char fenChar();
-
-
 }

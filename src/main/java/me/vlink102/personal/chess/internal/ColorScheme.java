@@ -2,6 +2,7 @@ package me.vlink102.personal.chess.internal;
 
 import java.awt.*;
 
+@SuppressWarnings("unused")
 public record ColorScheme(Color light, Color dark, Color movedHighlight, Color background) {
 
     public Color getHighlight(Move.MoveHighlights mc) {
@@ -65,8 +66,8 @@ public record ColorScheme(Color light, Color dark, Color movedHighlight, Color b
         int g = 0;
         int b = 0;
 
-        for (int i = 0; i < c.length; i++) {
-            int rgb = c[i].getRGB();
+        for (Color color : c) {
+            int rgb = color.getRGB();
             int a1 = (rgb >> 24 & 0xff);
             int r1 = ((rgb & 0xff0000) >> 16);
             int g1 = ((rgb & 0xff00) >> 8);
