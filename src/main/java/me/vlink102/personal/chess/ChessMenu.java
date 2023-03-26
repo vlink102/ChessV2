@@ -7,18 +7,15 @@ import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.DataThread;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
-import me.vlink102.personal.chess.ui.PlaceholderPassField;
-import me.vlink102.personal.chess.ui.PlaceholderTextField;
+import me.vlink102.personal.chess.internal.PlaceholderPassField;
+import me.vlink102.personal.chess.internal.PlaceholderTextField;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static javax.swing.JLayeredPane.POPUP_LAYER;
 import static me.vlink102.personal.chess.Chess.createSocialMenu;
 
 public class ChessMenu extends Menu {

@@ -1,4 +1,4 @@
-package me.vlink102.personal.chess.ui;
+package me.vlink102.personal.chess.internal;
 
 import javax.swing.*;
 import java.awt.*;

@@ -2,9 +2,9 @@ package me.vlink102.personal.chess;
 
 import me.vlink102.personal.chess.internal.*;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
-import me.vlink102.personal.chess.internal.networking.packets.Abort;
-import me.vlink102.personal.chess.internal.networking.packets.draw.OfferDraw;
-import me.vlink102.personal.chess.internal.networking.packets.Resign;
+import me.vlink102.personal.chess.internal.networking.packets.game.Abort;
+import me.vlink102.personal.chess.internal.networking.packets.game.draw.OfferDraw;
+import me.vlink102.personal.chess.internal.networking.packets.game.Resign;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.SpecialPiece;
 import me.vlink102.personal.chess.pieces.generic.*;
@@ -2919,7 +2919,7 @@ public class BoardGUI extends JPanel {
                             rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
                         }
                         if (challenge) {
-                            CommunicationHandler.thread.sendPacket(new me.vlink102.personal.chess.internal.networking.packets.Move(gameID, !playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, move));
+                            CommunicationHandler.thread.sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.Move(gameID, !playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, move));
                         }
                         endTurn();
                         break;

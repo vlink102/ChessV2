@@ -1,4 +1,4 @@
-package me.vlink102.personal.chess.internal.networking.packets;
+package me.vlink102.personal.chess.internal.networking.packets.game;
 
 import org.json.JSONObject;
 

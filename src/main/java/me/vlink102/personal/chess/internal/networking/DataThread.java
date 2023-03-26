@@ -11,7 +11,6 @@ import me.vlink102.personal.chess.pieces.Piece;
 import org.json.JSONObject;
 
 import javax.swing.*;
-import javax.swing.text.Highlighter;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -114,10 +113,10 @@ public class DataThread extends Thread {
                         for (Chess instance : ChessMenu.getInstances()) {
                             if (instance.getBoard().getGameID() == gameID) {
                                 if (instance.createDrawGameWindow(instance.getBoard(), object) == JOptionPane.OK_OPTION) {
-                                    sendPacket(new me.vlink102.personal.chess.internal.networking.packets.draw.Accept(object.getString("draw_uuid"), gameID));
+                                    sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.draw.Accept(object.getString("draw_uuid"), gameID));
                                     instance.getBoard().draw();
                                 } else {
-                                    sendPacket(new me.vlink102.personal.chess.internal.networking.packets.draw.Decline(object.getString("draw_uuid"), gameID));
+                                    sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.draw.Decline(object.getString("draw_uuid"), gameID));
                                 }
                             }
                         }
