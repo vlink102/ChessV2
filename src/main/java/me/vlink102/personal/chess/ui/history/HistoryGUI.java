@@ -7,6 +7,7 @@ import me.vlink102.personal.chess.ui.CoordinateGUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HistoryGUI extends JPanel {
@@ -32,7 +33,7 @@ public class HistoryGUI extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        List<Move> moveList = boardGUI.getHistory();
+        List<Move> moveList = new ArrayList<>(boardGUI.getHistory());
 
         setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), ((moveList.size() / 2) * 25) + 50));
 

@@ -13,13 +13,14 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class Move {
+
     private final BoardCoordinate from;
     private final BoardCoordinate to;
     private final Piece piece;
     private final Check check;
     private final boolean enPassant;
     private final BoardCoordinate takeSquare;
-    private final Piece taken;
+    private Piece taken;
     private final Piece promotes;
     private final CastleType castleType;
 
@@ -329,6 +330,12 @@ public class Move {
         return castleType;
     }
 
+    /**
+     *
+     * @param piece
+     * @param from
+     * @param to
+     */
     public record SimpleMove(Piece piece, BoardCoordinate from, BoardCoordinate to) {
         @Override
         public String toString() {

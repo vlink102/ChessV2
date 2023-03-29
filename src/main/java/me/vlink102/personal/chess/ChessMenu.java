@@ -119,7 +119,7 @@ public class ChessMenu extends Menu {
                             Challenge c = new Challenge(ChessMenu.IDENTIFIER, uuid, panelResult.boardSize(), panelResult.playAsWhite(), panelResult.gameType(), panelResult.layout(), BoardGUI.createFEN(panelResult.layout(), panelResult.boardSize()));
 
                             CommunicationHandler.thread.sendPacket(c);
-                            CommunicationHandler.thread.getPendingChallenges().put(c.getID(), new DataThread.PendingChallenge(c.toJSON(), panelResult.pieceDesign(), panelResult.boardTheme(), panelResult.moveMethod(), panelResult.moveStyle(), panelResult.captureStyle(), panelResult.coordinateDisplayType()));
+                            CommunicationHandler.thread.getPendingChallenges().put(c.getID(), new DataThread.PendingChallenge(c.toJSON(), panelResult.pSz(), panelResult.pieceDesign(), panelResult.boardTheme(), panelResult.moveMethod(), panelResult.moveStyle(), panelResult.captureStyle(), panelResult.coordinateDisplayType()));
                         }
                     }
                 }
@@ -176,12 +176,14 @@ public class ChessMenu extends Menu {
                                     BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardTheme) {
         }
 
-        private static JPanel getCouplePanel(JComponent a, JComponent b) {
+        public static JPanel getCouplePanel(JComponent left, JComponent right, boolean align) {
             JPanel inner = new JPanel(new BorderLayout());
-            a.setAlignmentX(Component.LEFT_ALIGNMENT);
-            b.setAlignmentX(Component.RIGHT_ALIGNMENT);
-            inner.add(a, BorderLayout.WEST);
-            inner.add(b, BorderLayout.EAST);
+            if (align) {
+                left.setAlignmentX(Component.LEFT_ALIGNMENT);
+                right.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            }
+            inner.add(left, BorderLayout.WEST);
+            inner.add(right, BorderLayout.EAST);
 
             return inner;
         }
@@ -193,17 +195,17 @@ public class ChessMenu extends Menu {
             JCheckBox radioButton = new JCheckBox();
             radioButton.setSelected(true);
             JLabel l = new JLabel("Play as white?: ");
-            JPanel inner = getCouplePanel(l, radioButton);
+            JPanel inner = getCouplePanel(l, radioButton, true);
 
             JCheckBox online = new JCheckBox();
             online.setSelected(true);
             JLabel onlineLabel = new JLabel("Online mode: ");
-            JPanel onlinePanel = getCouplePanel(onlineLabel, online);
+            JPanel onlinePanel = getCouplePanel(onlineLabel, online, true);
 
             SpinnerModel model = new SpinnerNumberModel(100, 32, 150, 1);
             JSpinner spinner = new JSpinner(model);
             JLabel label = new JLabel("Piece Size (px): ");
-            JPanel inner1 = getCouplePanel(label, spinner);
+            JPanel inner1 = getCouplePanel(label, spinner, true);
 
             JComboBox<Chess.BoardLayout> boardLayoutJComboBox = new JComboBox<>(Chess.BoardLayout.values());
             boardLayoutJComboBox.setSelectedItem(Chess.BoardLayout.DEFAULT);
@@ -214,7 +216,7 @@ public class ChessMenu extends Menu {
             spinner1.addChangeListener(e -> boardLayoutJComboBox.setEnabled(spinner1.getValue().equals(8)));
 
             JLabel label1 = new JLabel("Board Size: ");
-            JPanel inner2 = getCouplePanel(label1, spinner1);
+            JPanel inner2 = getCouplePanel(label1, spinner1, true);
 
             JComboBox<BoardGUI.OpponentType> opponentTypeJComboBox = new JComboBox<>(BoardGUI.OpponentType.values());
             opponentTypeJComboBox.setSelectedItem(challengeMenu ? BoardGUI.OpponentType.PLAYER : BoardGUI.OpponentType.AUTO_SWAP);
@@ -224,45 +226,45 @@ public class ChessMenu extends Menu {
                 opponentTypeJComboBox.removeItem(BoardGUI.OpponentType.PLAYER);
             }
             JLabel opponentLabel = new JLabel("Opponent Type: ");
-            JPanel opponentPanel = getCouplePanel(opponentLabel, opponentTypeJComboBox);
+            JPanel opponentPanel = getCouplePanel(opponentLabel, opponentTypeJComboBox, true);
 
             JComboBox<BoardGUI.GameType> gameTypeJComboBox = new JComboBox<>(BoardGUI.GameType.values());
             gameTypeJComboBox.setSelectedItem(BoardGUI.GameType.DEFAULT);
             JLabel gameTypeLabel = new JLabel("Game Type: ");
-            JPanel gameTypePanel = getCouplePanel(gameTypeLabel, gameTypeJComboBox);
+            JPanel gameTypePanel = getCouplePanel(gameTypeLabel, gameTypeJComboBox, true);
 
             JLabel boardLayoutLabel = new JLabel("Board Layout: ");
-            JPanel boardLayoutPanel = getCouplePanel(boardLayoutLabel, boardLayoutJComboBox);
+            JPanel boardLayoutPanel = getCouplePanel(boardLayoutLabel, boardLayoutJComboBox, true);
 
             JComboBox<BoardGUI.PieceDesign> pieceDesignJComboBox = new JComboBox<>(BoardGUI.PieceDesign.values());
             pieceDesignJComboBox.setSelectedItem(BoardGUI.PieceDesign.NEO);
             JLabel pieceDesignLabel = new JLabel("Piece Theme: ");
-            JPanel pieceDesignPanel = getCouplePanel(pieceDesignLabel, pieceDesignJComboBox);
+            JPanel pieceDesignPanel = getCouplePanel(pieceDesignLabel, pieceDesignJComboBox, true);
 
             JComboBox<BoardGUI.Colours> boardThemeJComboBox = new JComboBox<>(BoardGUI.Colours.values());
             boardThemeJComboBox.setSelectedItem(BoardGUI.Colours.GREEN);
             JLabel boardThemeLabel = new JLabel("Board Theme: ");
-            JPanel boardThemePanel = getCouplePanel(boardThemeLabel, boardThemeJComboBox);
+            JPanel boardThemePanel = getCouplePanel(boardThemeLabel, boardThemeJComboBox, true);
 
             JComboBox<BoardGUI.MoveStyle> moveMethodJComboBox = new JComboBox<>(BoardGUI.MoveStyle.values());
             moveMethodJComboBox.setSelectedItem(BoardGUI.MoveStyle.BOTH);
             JLabel moveMethodLabel = new JLabel("Move Method: ");
-            JPanel moveMethodPanel = getCouplePanel(moveMethodLabel, moveMethodJComboBox);
+            JPanel moveMethodPanel = getCouplePanel(moveMethodLabel, moveMethodJComboBox, true);
 
             JComboBox<BoardGUI.HintStyle.Move> moveJComboBox = new JComboBox<>(BoardGUI.HintStyle.Move.values());
             moveJComboBox.setSelectedItem(BoardGUI.HintStyle.Move.DOT);
             JLabel moveLabel = new JLabel("Move Style: ");
-            JPanel movePanel = getCouplePanel(moveLabel, moveJComboBox);
+            JPanel movePanel = getCouplePanel(moveLabel, moveJComboBox, true);
 
             JComboBox<BoardGUI.HintStyle.Capture> captureJComboBox = new JComboBox<>(BoardGUI.HintStyle.Capture.values());
             captureJComboBox.setSelectedItem(BoardGUI.HintStyle.Capture.RING);
             JLabel captureLabel = new JLabel("Capture Style: ");
-            JPanel capturePanel = getCouplePanel(captureLabel, captureJComboBox);
+            JPanel capturePanel = getCouplePanel(captureLabel, captureJComboBox, true);
 
             JComboBox<BoardGUI.CoordinateDisplayType> coordinateDisplayTypeJComboBox = new JComboBox<>(BoardGUI.CoordinateDisplayType.values());
             coordinateDisplayTypeJComboBox.setSelectedItem(BoardGUI.CoordinateDisplayType.INSIDE);
             JLabel cdtLabel = new JLabel("Coordinate Display: ");
-            JPanel cdtPanel = getCouplePanel(cdtLabel, coordinateDisplayTypeJComboBox);
+            JPanel cdtPanel = getCouplePanel(cdtLabel, coordinateDisplayTypeJComboBox, true);
 
             panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
             panel.add(inner1);
@@ -301,32 +303,32 @@ public class ChessMenu extends Menu {
             JCheckBox radioButton = new JCheckBox();
             radioButton.setSelected(true);
             JLabel l = new JLabel("Play as white?: ");
-            JPanel inner = getCouplePanel(l, radioButton);
+            JPanel inner = getCouplePanel(l, radioButton, true);
 
             JCheckBox online = new JCheckBox();
             online.setSelected(true);
             JLabel onlineLabel = new JLabel("Online mode: ");
-            JPanel onlinePanel = getCouplePanel(onlineLabel, online);
+            JPanel onlinePanel = getCouplePanel(onlineLabel, online, true);
 
             SpinnerModel model = new SpinnerNumberModel(100, 32, 150, 1);
             JSpinner spinner = new JSpinner(model);
             JLabel label = new JLabel("Piece Size (px): ");
-            JPanel inner1 = getCouplePanel(label, spinner);
+            JPanel inner1 = getCouplePanel(label, spinner, true);
 
             SpinnerModel model1 = new SpinnerNumberModel(8, 4, 26, 1);
             JSpinner spinner1 = new JSpinner(model1);
             JLabel label1 = new JLabel("Board Size: ");
-            JPanel inner2 = getCouplePanel(label1, spinner1);
+            JPanel inner2 = getCouplePanel(label1, spinner1, true);
 
             JComboBox<BoardGUI.PieceDesign> pieceDesignJComboBox = new JComboBox<>(BoardGUI.PieceDesign.values());
             pieceDesignJComboBox.setSelectedItem(BoardGUI.PieceDesign.NEO);
             JLabel pieceDesignLabel = new JLabel("Piece Theme: ");
-            JPanel pieceDesignPanel = getCouplePanel(pieceDesignLabel, pieceDesignJComboBox);
+            JPanel pieceDesignPanel = getCouplePanel(pieceDesignLabel, pieceDesignJComboBox, true);
 
             JComboBox<BoardGUI.Colours> boardThemeJComboBox = new JComboBox<>(BoardGUI.Colours.values());
             boardThemeJComboBox.setSelectedItem(BoardGUI.Colours.GREEN);
             JLabel boardThemeLabel = new JLabel("Board Theme: ");
-            JPanel boardThemePanel = getCouplePanel(boardThemeLabel, boardThemeJComboBox);
+            JPanel boardThemePanel = getCouplePanel(boardThemeLabel, boardThemeJComboBox, true);
 
             panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
             panel.add(inner);

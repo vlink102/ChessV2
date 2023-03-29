@@ -6,6 +6,7 @@ import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Accept;
+import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Decline;
 import me.vlink102.personal.chess.pieces.Piece;
 import org.json.JSONObject;
@@ -50,8 +51,17 @@ public class DataThread extends Thread {
                             System.out.println("Error: Server sent challenge with unequal UUID");
                             break;
                         }
-                        if (Chess.createChallengeAcceptWindow(object, object.getJSONObject("data")) == JOptionPane.OK_OPTION) {
-                            sendPacket(new Accept(object.getLong("challenge-id"), object.getString("challenger")));
+                        Chess.ChallengeAcceptResult challengeAcceptResult = Chess.createChallengeAcceptWindow(object, object.getJSONObject("data"));
+                        if (challengeAcceptResult != null) {
+                            JSONObject o = new JSONObject();
+                            o.put("piece-size", challengeAcceptResult.pSz());
+                            o.put("board-theme", challengeAcceptResult.boardTheme());
+                            o.put("piece-theme", challengeAcceptResult.pieceTheme());
+                            o.put("move-method", challengeAcceptResult.moveMethod());
+                            o.put("move-style", challengeAcceptResult.moveStyle());
+                            o.put("capture-style", challengeAcceptResult.captureStyle());
+                            o.put("coordinate-display", challengeAcceptResult.coordinateDisplayType());
+                            sendPacket(new Accept(object.getLong("challenge-id"), object.getString("challenger"), o));
                         } else {
                             sendPacket(new Decline(object.getLong("challenge-id"), object.getString("challenger")));
                         }
@@ -64,7 +74,7 @@ public class DataThread extends Thread {
                     }
                     if (keys.contains("accepted-challenge-challenged")) {
                         JSONObject challengeObject = object.getJSONObject("accepted-challenge-challenged");
-                        loadInstanceFromJSON(challengeObject);
+                        loadInstanceFromJSON(challengeObject, object.getJSONObject("challenged-data"));
                     }
                     if (keys.contains("declined-challenge")) {
                         long challengeID = object.getLong("declined-challenge");
@@ -189,25 +199,26 @@ public class DataThread extends Thread {
     /**
      * Always the receiver (hence JSON)
      */
-    private void loadInstanceFromJSON(JSONObject challengeObject) {
+    private void loadInstanceFromJSON(JSONObject challengeObject, JSONObject challengedData) {
         JSONObject challengeData = challengeObject.getJSONObject("data");
+
         ChessMenu.getInstances().add(new Chess(true,
                 challengeObject.getLong("challenge-id"),
                 challengeObject.getString("challenger"),
                 challengeData.getString("board"),
-                100,
+                challengedData.getInt("piece-size"),
                 challengeData.getInt("board-size"),
                 true,
                 !challengeData.getBoolean("white"),
                 BoardGUI.OpponentType.PLAYER,
                 BoardGUI.GameType.valueOf(challengeData.getString("game-type")),
                 Chess.BoardLayout.valueOf(challengeData.getString("layout")),
-                BoardGUI.PieceDesign.NEO,
-                BoardGUI.Colours.GREEN,
-                BoardGUI.MoveStyle.BOTH,
-                BoardGUI.HintStyle.Move.DOT,
-                BoardGUI.HintStyle.Capture.RING,
-                BoardGUI.CoordinateDisplayType.INSIDE)
+                BoardGUI.PieceDesign.valueOf(challengedData.getString("piece-theme")),
+                BoardGUI.Colours.valueOf(challengedData.getString("board-theme")),
+                BoardGUI.MoveStyle.valueOf(challengedData.getString("move-method")),
+                BoardGUI.HintStyle.Move.valueOf(challengedData.getString("move-style")),
+                BoardGUI.HintStyle.Capture.valueOf(challengedData.getString("capture-style")),
+                BoardGUI.CoordinateDisplayType.valueOf(challengedData.getString("coordinate-display")))
         );
     }
 
@@ -221,7 +232,7 @@ public class DataThread extends Thread {
                 challengeObject.getLong("challenge-id"),
                 challengeObject.getString("challenged"),
                 challengeData.getString("board"),
-                100,
+                challenge.pSz(),
                 challengeData.getInt("board-size"),
                 true,
                 challengeData.getBoolean("white"),
@@ -246,6 +257,6 @@ public class DataThread extends Thread {
         return pendingChallenges;
     }
 
-    public record PendingChallenge(JSONObject challenge, BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardDesign, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
+    public record PendingChallenge(JSONObject challenge, int pSz, BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardDesign, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
     }
 }

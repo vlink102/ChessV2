@@ -148,7 +148,7 @@ public class Chess extends JLayeredPane {
         });
 
         refreshWindow();
-        Timer timer = new Timer(34, refreshGUIListener());
+        Timer timer = new Timer(250, refreshGUIListener());
         timer.start();
         lastSize = board.getPieceSize();
 
@@ -770,15 +770,88 @@ public class Chess extends JLayeredPane {
         return new SocialMenuResult(panel, list);
     }
 
-    // TODO accept with UI options
-    public static int createChallengeAcceptWindow(JSONObject object, JSONObject data) {
-        if (object == null) return JOptionPane.CANCEL_OPTION;
+    public record ChallengeAcceptResult(int pSz, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {}
+
+    public static ChallengeAcceptResult createChallengeAcceptWindow(JSONObject object, JSONObject data) {
+        if (object == null) return null;
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        String[][] tableData = {
+                {"Opponent:", CommunicationHandler.nameFromUUID(object.getString("challenger"))},
+                {"Board Size:", String.valueOf(data.getInt("board-size"))},
+                {"Game type:", data.getString("game-type").replaceAll("_", " ")},
+                {"Layout:", data.getString("layout")},
+                {"Playing as:", (!data.getBoolean("white") ? "White" : "Black")}
+        };
+
+        String[] columnNames = {"Label", "Value"};
+
+        JTable table = new JTable(tableData, columnNames);
+        table.setTableHeader(null);
+        table.setShowGrid(false);
+
+        SpinnerModel model = new SpinnerNumberModel(100, 32, 150, 1);
+        JSpinner spinner = new JSpinner(model);
+        JLabel label = new JLabel("Piece Size (px): ");
+        JPanel pieceSizePanel = ChessMenu.CreateChessGame.getCouplePanel(label, spinner, true);
+
+        JComboBox<BoardGUI.PieceDesign> pieceDesignJComboBox = new JComboBox<>(BoardGUI.PieceDesign.values());
+        pieceDesignJComboBox.setSelectedItem(BoardGUI.PieceDesign.NEO);
+        JLabel pieceDesignLabel = new JLabel("Piece Theme: ");
+        JPanel pieceDesignPanel = ChessMenu.CreateChessGame.getCouplePanel(pieceDesignLabel, pieceDesignJComboBox, true);
+
+        JComboBox<BoardGUI.Colours> boardThemeJComboBox = new JComboBox<>(BoardGUI.Colours.values());
+        boardThemeJComboBox.setSelectedItem(BoardGUI.Colours.GREEN);
+        JLabel boardThemeLabel = new JLabel("Board Theme: ");
+        JPanel boardThemePanel = ChessMenu.CreateChessGame.getCouplePanel(boardThemeLabel, boardThemeJComboBox, true);
+
+        JComboBox<BoardGUI.MoveStyle> moveMethodJComboBox = new JComboBox<>(BoardGUI.MoveStyle.values());
+        moveMethodJComboBox.setSelectedItem(BoardGUI.MoveStyle.BOTH);
+        JLabel moveMethodLabel = new JLabel("Move Method: ");
+        JPanel moveMethodPanel = ChessMenu.CreateChessGame.getCouplePanel(moveMethodLabel, moveMethodJComboBox, true);
+
+        JComboBox<BoardGUI.HintStyle.Move> moveJComboBox = new JComboBox<>(BoardGUI.HintStyle.Move.values());
+        moveJComboBox.setSelectedItem(BoardGUI.HintStyle.Move.DOT);
+        JLabel moveLabel = new JLabel("Move Style: ");
+        JPanel movePanel = ChessMenu.CreateChessGame.getCouplePanel(moveLabel, moveJComboBox, true);
+
+        JComboBox<BoardGUI.HintStyle.Capture> captureJComboBox = new JComboBox<>(BoardGUI.HintStyle.Capture.values());
+        captureJComboBox.setSelectedItem(BoardGUI.HintStyle.Capture.RING);
+        JLabel captureLabel = new JLabel("Capture Style: ");
+        JPanel capturePanel = ChessMenu.CreateChessGame.getCouplePanel(captureLabel, captureJComboBox, true);
+
+        JComboBox<BoardGUI.CoordinateDisplayType> coordinateDisplayTypeJComboBox = new JComboBox<>(BoardGUI.CoordinateDisplayType.values());
+        coordinateDisplayTypeJComboBox.setSelectedItem(BoardGUI.CoordinateDisplayType.INSIDE);
+        JLabel cdtLabel = new JLabel("Coordinate Display: ");
+        JPanel cdtPanel = ChessMenu.CreateChessGame.getCouplePanel(cdtLabel, coordinateDisplayTypeJComboBox, true);
+
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
+        panel.add(table);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 15)));
+        panel.add(pieceSizePanel);
+        panel.add(new JSeparator());
+        panel.add(pieceDesignPanel);
+        panel.add(boardThemePanel);
+        panel.add(new JSeparator());
+        panel.add(moveMethodPanel);
+        panel.add(new JSeparator());
+        panel.add(movePanel);
+        panel.add(capturePanel);
+        panel.add(new JSeparator());
+        panel.add(cdtPanel);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
+
         Object[] options = {"Accept", "Decline"};
-        return JOptionPane.showOptionDialog(null, CommunicationHandler.nameFromUUID(object.getString("challenger")) + " has sent a challenge: \n" +
-                " - Board size: " + data.getInt("board-size") + "\n" +
-                " - Game type: " + data.getString("game-type").replaceAll("_", " ") + "\n" +
-                " - Layout: " + data.getString("layout") + "\n\n" +
-                "You are playing as " + (!data.getBoolean("white") ? "White" : "Black"), "Challenge received!", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+        int result = JOptionPane.showOptionDialog(null, panel, CommunicationHandler.nameFromUUID(object.getString("challenger")) + " sent a challenge!", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+        if (result != JOptionPane.OK_OPTION) {
+            return null;
+        }
+
+        return new ChallengeAcceptResult((Integer) spinner.getValue(), (BoardGUI.PieceDesign) pieceDesignJComboBox.getSelectedItem(), (BoardGUI.Colours) boardThemeJComboBox.getSelectedItem(), (BoardGUI.MoveStyle) moveMethodJComboBox.getSelectedItem(), (BoardGUI.HintStyle.Move) moveJComboBox.getSelectedItem(), (BoardGUI.HintStyle.Capture) captureJComboBox.getSelectedItem(), (BoardGUI.CoordinateDisplayType) coordinateDisplayTypeJComboBox.getSelectedItem());
     }
 
     public int createDrawGameWindow(BoardGUI board, JSONObject object) {

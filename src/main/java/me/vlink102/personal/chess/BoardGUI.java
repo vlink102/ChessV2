@@ -353,6 +353,10 @@ public class BoardGUI extends JPanel {
 
         Move.loadCachedIcons(pieceSize);
         Move.loadCachedHighlights(pieceSize);
+
+        if (opponentType.equals(OpponentType.AI_1) && !playAsWhite && whiteTurn) {
+            computerRandomMove();
+        }
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -1869,23 +1873,24 @@ public class BoardGUI extends JPanel {
                 int r1 = view == BoardView.WHITE ? decBoardSize - row : row;
                 int c1 = view == BoardView.WHITE ? col : decBoardSize - col;
 
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setColor((row + col) % 2 == 0 ? scheme.dark() : scheme.light());
+                g2d.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
+                g2d.dispose();
+
                 if (coordinateDisplayType == CoordinateDisplayType.INSIDE) {
                     if (c1 == 0) {
                         g.setColor((row + col) % 2 == 0 ? scheme.light() : scheme.dark());
                         Rectangle rectangle = new Rectangle(0, (r1 * pieceSize), pieceSize / 4, pieceSize / 4);
                         CoordinateGUI.drawCenteredString(g, BoardCoordinate.getRowString(row), rectangle, getFont());
                     }
-                    if (r1 == 0) {
-                        g.setColor((row + col) % 2 == 0 ? scheme.dark() : scheme.light());
+                    if (r1 == 7) {
+                        g.setColor((row + col) % 2 == 0 ? scheme.light() : scheme.dark());
                         Rectangle rectangle = new Rectangle( (c1 * pieceSize) + ((pieceSize / 4) * 3), (pieceSize * decBoardSize) + ((pieceSize / 4) * 3), pieceSize / 4, pieceSize / 4);
                         CoordinateGUI.drawCenteredString(g, BoardCoordinate.getColString(col), rectangle, getFont());
                     }
                 }
 
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setColor((row + col) % 2 == 0 ? scheme.dark() : scheme.light());
-                g2d.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
-                g2d.dispose();
 
                 if (staticHighlights[row][col] != null) {
                     g.setColor(staticHighlights[row][col].getColor());
@@ -2205,6 +2210,22 @@ public class BoardGUI extends JPanel {
         List<Move> moves = getAllValidMoves(board, !playAsWhite, false);
         Random random = new Random();
         return moves.get(random.nextInt(moves.size()));
+    }
+
+    public List<Move.SimpleMove> availablePremoves(Piece piece, BoardCoordinate coordinate) {
+        List<Move.SimpleMove> moves = new ArrayList<>();
+        if (piece == null || coordinate == null || gameOver != null) {
+            return moves;
+        }
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                BoardCoordinate possibleTile = new BoardCoordinate(i, j, this);
+                if (piece.validMove(coordinate, possibleTile, true) || piece.validMove(coordinate, possibleTile, false)) {
+                    moves.add(new Move.SimpleMove(piece, coordinate, possibleTile));
+                }
+            }
+        }
+        return moves;
     }
 
     public List<Move> availableMoves(Piece[][] board, Piece piece, BoardCoordinate coordinate, boolean isCheckingForMate) {
@@ -2864,6 +2885,17 @@ public class BoardGUI extends JPanel {
         historyGUI.repaint();
     }
 
+    public void computerRandomMove() {
+        Move move = getRandomMove(gamePieces);
+        moveHighlight(move.getFrom(), move.getTo());
+        if (move.getCastleType() != null) {
+            rawCastle(!playAsWhite, move.getCastleType());
+        } else {
+            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+        }
+        endComputerTurn();
+    }
+
     public void endTurn() {
         deselect();
         JScrollBar vert = chess.getScrollPane().getVerticalScrollBar();
@@ -2876,14 +2908,7 @@ public class BoardGUI extends JPanel {
                 case AI_2 -> new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        Move move = getRandomMove(gamePieces);
-                        moveHighlight(move.getFrom(), move.getTo());
-                        if (move.getCastleType() != null) {
-                            rawCastle(!playAsWhite, move.getCastleType());
-                        } else {
-                            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
-                        }
-                        endComputerTurn();
+                        computerRandomMove();
                     }
                 }, 250);
                 case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
