@@ -180,6 +180,7 @@ public class DataThread extends Thread {
                 String promoteString = move.getString("promotes");
                 String castleType = move.getString("castle-type");
                 return new Move(
+                        boardGUI,
                         piece,
                         from,
                         to,

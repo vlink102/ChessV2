@@ -44,7 +44,7 @@ public class Chess extends JLayeredPane {
     public boolean shouldShowAvailableSquares = true;
     public boolean shouldShowOppositionAvailableSquares = false;
 
-    public int boardToFrameOffset = 50;
+    public int boardToFrameOffset = 100;
     public int sidePanelWidth = 400;
 
     public final int defaultOffset = 20;
@@ -198,7 +198,7 @@ public class Chess extends JLayeredPane {
     private double lastSize;
 
     public void refreshGUI() {
-        boardToFrameOffset = board.getPieceSize() / 2;
+        boardToFrameOffset = board.getPieceSize();
         sidePanelWidth = Math.min(board.getWidth() / 2, frame.getContentPane().getWidth() - ((boardToFrameOffset * 3) + board.getWidth() + offSet));
         board.setFont(def.deriveFont((float) board.getPieceSize() / 6));
         board.getOnlineAssets().updatePieceDesigns(board);
@@ -211,6 +211,7 @@ public class Chess extends JLayeredPane {
 
         board.repaint();
         board.getSidePanelGUI().repaint();
+        board.getCaptureGUI().repaint();
         board.displayPieces();
     }
 

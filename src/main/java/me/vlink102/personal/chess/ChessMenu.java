@@ -1,24 +1,38 @@
 package me.vlink102.personal.chess;
 
+import com.github.weisj.darklaf.ui.tooltip.DarkDefaultToolTipBorder;
+import com.mysql.cj.util.Base64Decoder;
+import com.neovisionaries.i18n.CountryCode;
 import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.Menu;
 import me.vlink102.personal.chess.classroom.Classroom;
-import me.vlink102.personal.chess.internal.Move;
+import me.vlink102.personal.chess.internal.*;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.DataThread;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
-import me.vlink102.personal.chess.internal.PlaceholderPassField;
-import me.vlink102.personal.chess.internal.PlaceholderTextField;
+import org.apache.commons.io.FileUtils;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 import java.util.List;
 
+import static java.awt.Component.LEFT_ALIGNMENT;
+import static java.awt.Component.TOP_ALIGNMENT;
 import static me.vlink102.personal.chess.Chess.createSocialMenu;
 
 public class ChessMenu extends Menu {
+    private static final Map<CountryCode, Image> FLAGS = new HashMap<>();
     public static String IDENTIFIER = null;
 
     public static JFrame frame;
@@ -26,6 +40,8 @@ public class ChessMenu extends Menu {
     public final Image board;
     private static List<Chess> instances;
     private static List<Classroom> classroomInstances;
+
+    private final Font emojis;
 
     record LoginResult(String username, String password) {
     }
@@ -96,9 +112,177 @@ public class ChessMenu extends Menu {
         frame.requestFocus();
     }
 
+    public void openProfileMenu() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JLabel usernameLabel = new JLabel("Username");
+        PlaceholderTextField usernameTextField = new PlaceholderTextField(CommunicationHandler.nameFromUUID(ChessMenu.IDENTIFIER), 20);
+        usernameTextField.setEnabled(false);
+        JPanel usernamePanel = ChessMenu.CreateChessGame.getCouplePanel(usernameLabel, usernameTextField, true);
+
+        JLabel passwordLabel = new JLabel("Password");
+        String password = CommunicationHandler.getPass(ChessMenu.IDENTIFIER);
+        PlaceholderTextField passwordField = new PlaceholderTextField(20);
+        passwordField.setPlaceholder("•".repeat(Objects.requireNonNull(password).length()));
+        passwordField.setEnabled(false);
+        passwordField.addPropertyChangeListener(evt -> {
+            if (evt.getNewValue() != null) {
+                switch (evt.getNewValue().toString()) {
+                    case "false" -> passwordField.setText(null);
+                    case "true" -> passwordField.setText(password);
+                }
+            }
+        });
+        JPanel passwordPanel = ChessMenu.CreateChessGame.getCouplePanel(passwordLabel, passwordField, true);
+
+        JLabel age = new JLabel("Age");
+        SpinnerModel spinnerModel = new SpinnerNumberModel(CommunicationHandler.getAge(ChessMenu.IDENTIFIER), 0, 100, 1);
+        JSpinner spinner = new JSpinner(spinnerModel);
+        spinner.setEnabled(false);
+        JPanel agePanel = CreateChessGame.getCouplePanel(age, spinner, true);
+
+        JLabel location = new JLabel("Country");
+        JComboBox<CountryCode> locationComboBox = new JComboBox<>();
+        locationComboBox.setRenderer(new IconListRenderer(FLAGS));
+        for (CountryCode value : CountryCode.values()) {
+            locationComboBox.addItem(value);
+        }
+        String iso = CommunicationHandler.getLocation(ChessMenu.IDENTIFIER);
+        if (!Objects.equals(iso, "")) {
+            locationComboBox.setSelectedItem(CountryCode.valueOf(iso));
+        }
+        locationComboBox.setEnabled(false);
+        JPanel locationPanel = CreateChessGame.getCouplePanel(location, locationComboBox, true);
+
+        JLabel aboutMe = new JLabel("About me");
+        PlaceholderAreaField aboutMeArea = new PlaceholderAreaField(CommunicationHandler.getAboutMe(ChessMenu.IDENTIFIER), 7, 20);
+        aboutMeArea.setPlaceholder("Something interesting...");
+        aboutMeArea.setEnabled(false);
+
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setViewportView(aboutMeArea);
+        scrollPane.setBorder(new DarkDefaultToolTipBorder());
+
+        JPanel aboutMePanel = CreateChessGame.getCouplePanel(aboutMe, scrollPane, true);
+
+        final String[] pfp = {CommunicationHandler.getProfilePicture(ChessMenu.IDENTIFIER)};
+        JButton profilePic = new JButton("Change profile picture");
+        profilePic.setEnabled(false);
+
+        profilePic.addActionListener(new AbstractAction() {
+            final JFileChooser chooser = new JFileChooser();
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                chooser.showOpenDialog(panel);
+                File file = chooser.getSelectedFile();
+                if (file == null) {
+                    return;
+                }
+                try {
+                    byte[] imageContent = FileUtils.readFileToByteArray(file);
+                    pfp[0] = Base64.getEncoder().encodeToString(imageContent);
+                } catch (IOException e1) {
+                    throw new RuntimeException(e1);
+                }
+            }
+        });
+
+        JButton editButton = new JButton("Edit Profile");
+        JButton saveChanges = new JButton("Save Changes");
+        saveChanges.setEnabled(false);
+        editButton.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                usernameTextField.setEnabled(!usernameTextField.isEnabled());
+                passwordField.setEnabled(!passwordField.isEnabled());
+                spinner.setEnabled(!spinner.isEnabled());
+                locationComboBox.setEnabled(!locationComboBox.isEnabled());
+                aboutMeArea.setEnabled(!aboutMeArea.isEnabled());
+                scrollPane.setEnabled(!scrollPane.isEnabled());
+                saveChanges.setEnabled(!saveChanges.isEnabled());
+                profilePic.setEnabled(!profilePic.isEnabled());
+                editButton.setText(editButton.isEnabled() ? "Revert Changes" : "Edit Profile"); // revert in real time TODO
+            }
+        });
+
+
+        saveChanges.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (usernameTextField.getText().length() <= 3) {
+                    JOptionPane.showMessageDialog(panel, "Username is too short", "Could not save changes", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                if (passwordField.getText().length() <= 3) {
+                    JOptionPane.showMessageDialog(panel, "Password is too short", "Could not save changes", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                CommunicationHandler.setString("name", usernameTextField.getText());
+                CommunicationHandler.setString("password", passwordField.getText());
+                CommunicationHandler.setNumber("age", (int) spinner.getValue());
+                CommunicationHandler.setString("location", locationComboBox.getSelectedItem() == null ? "UNDEFINED" : locationComboBox.getSelectedItem().toString());
+                CommunicationHandler.setString("about", aboutMeArea.getText());
+                CommunicationHandler.setString("pfp", pfp[0]);
+
+                JOptionPane.showMessageDialog(panel, "Changes Saved!", "Saved changes successfully", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+
+
+        JPanel options = CreateChessGame.getCouplePanel(editButton, saveChanges, true);
+
+        panel.add(usernamePanel);
+        panel.add(passwordPanel);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(new JSeparator());
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(agePanel);
+        panel.add(locationPanel);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(new JSeparator());
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(aboutMePanel);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(new JSeparator());
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(profilePic);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 10)));
+        panel.add(new JSeparator());
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 30)));
+        panel.add(options);
+
+        BufferedImage image;
+        byte[] imageBytes;
+
+        imageBytes = Base64.getDecoder().decode(pfp[0]);
+        ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
+        try {
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        JOptionPane.showMessageDialog(frame, panel, "Your Profile", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(image.getScaledInstance(100, 100, Image.SCALE_SMOOTH)));
+
+
+    }
+
     public JMenuBar getMenu() {
         JMenuBar settings = new JMenuBar();
         JMenuItem social = new JMenu("Social");
+        JMenuItem profile = new JMenuItem("Profile (" + CommunicationHandler.nameFromUUID(ChessMenu.IDENTIFIER) + ")");
+        profile.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openProfileMenu();
+            }
+        });
+        social.add(profile);
+
         JMenuItem online = new JMenuItem("Online");
         online.addActionListener(new AbstractAction() {
             @Override
@@ -132,8 +316,20 @@ public class ChessMenu extends Menu {
 
     @SuppressWarnings("SpellCheckingInspection")
     public ChessMenu() {
+        loadFlags();
         this.testing = Move.getResource("/testing.png");
         this.board = Move.getResource("/board.png");
+
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream emojiStream = classLoader.getResourceAsStream("fonts/emojis.ttf");
+        try {
+            this.emojis = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(emojiStream));
+            ge.registerFont(this.emojis);
+        } catch (FontFormatException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
         classroomInstances = new ArrayList<>();
         instances = new ArrayList<>();
         CommunicationHandler handler = new CommunicationHandler("ulucl02v8dm4l3qm", "bf5v9fiyfc6bqge4qrz1-mysql.services.clever-cloud.com", "bf5v9fiyfc6bqge4qrz1", 3306);
@@ -174,6 +370,14 @@ public class ChessMenu extends Menu {
 
         public record TestingResult(int pSz, int boardSize, boolean playAsWhite, boolean online,
                                     BoardGUI.PieceDesign pieceDesign, BoardGUI.Colours boardTheme) {
+        }
+
+        public static JPanel getTriplePanel(JComponent a, JComponent b, JComponent c) {
+            JPanel row = new JPanel(new GridLayout(1, 3, 20, 5));
+            row.add(a);
+            row.add(b);
+            row.add(c);
+            return row;
         }
 
         public static JPanel getCouplePanel(JComponent left, JComponent right, boolean align) {
@@ -353,5 +557,13 @@ public class ChessMenu extends Menu {
 
     public static List<Chess> getInstances() {
         return instances;
+    }
+
+
+    public void loadFlags() {
+        for (CountryCode countryCode : CountryCode.values()) {
+            Image image = Move.getResource("/flags/" + countryCode.toString().toLowerCase() + ".png");
+            FLAGS.put(countryCode, image);
+        }
     }
 }

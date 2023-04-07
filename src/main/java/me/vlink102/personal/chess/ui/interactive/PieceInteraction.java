@@ -42,8 +42,8 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         if (SwingUtilities.isLeftMouseButton(e)) {
             int y = e.getY();
             int x = e.getX();
-            int f1 = (int) (x / boardGUI.getPieceSize());
-            int r1 = (int) (y / boardGUI.getPieceSize());
+            int f1 = x / boardGUI.getPieceSize();
+            int r1 = y / boardGUI.getPieceSize();
 
             switch (boardGUI.getView()) {
                 case BLACK -> f1 = boardGUI.decBoardSize - f1;
@@ -51,7 +51,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
             }
 
             BoardCoordinate clicked = new BoardCoordinate(r1, f1, boardGUI);
-            List<Move> moves = (boardGUI.getSelected() == null || boardGUI.getTileSelected() == null) ? new ArrayList<>() : boardGUI.availableMoves(boardGUI.getGamePieces(), boardGUI.getSelected(), boardGUI.getTileSelected(), false);
+            List<Move> moves = (boardGUI.getSelected() == null || boardGUI.getTileSelected() == null) ? new ArrayList<>() : boardGUI.availableMoves(boardGUI.getVisibleGamePieces(), boardGUI.getSelected(), boardGUI.getTileSelected(), false);
 
             switch (boardGUI.getMoveMethod()) {
                 case BOTH -> {
@@ -107,7 +107,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
                         return true;
                     }
                 }
-                if (boardGUI.getGamePieces()[clicked.row()][clicked.col()] == null) {
+                if (boardGUI.getVisibleGamePieces()[clicked.row()][clicked.col()] == null) {
                     tileSelected = null;
                     boardGUI.deselect();
                 } else {
@@ -177,7 +177,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
 
                     BoardCoordinate from = new BoardCoordinate(r0, f0, boardGUI);
                     BoardCoordinate to = new BoardCoordinate(r1, f1, boardGUI);
-                    boardGUI.movePiece(boardGUI.getGamePieces()[from.row()][from.col()], from, to);
+                    boardGUI.movePiece(boardGUI.getVisibleGamePieces()[from.row()][from.col()], from, to);
                 }
             }
         }

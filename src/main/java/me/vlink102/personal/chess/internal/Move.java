@@ -1,18 +1,25 @@
 package me.vlink102.personal.chess.internal;
 
+import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.pieces.Piece;
+import me.vlink102.personal.chess.pieces.generic.King;
 import me.vlink102.personal.chess.pieces.generic.Pawn;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class Move {
+    private final BoardGUI boardGUI;
+    private final Piece[][] snapshot;
 
     private final BoardCoordinate from;
     private final BoardCoordinate to;
@@ -67,7 +74,18 @@ public class Move {
 
     public static Image getResource(String string) {
         URL res = Chess.class.getResource(string);
+        if (res == null) {
+            return null;
+        }
         return Toolkit.getDefaultToolkit().getImage(res);
+    }
+
+    public static File getFile(String string) {
+        URL res = Chess.class.getResource(string);
+        if (res == null) {
+            return null;
+        }
+        return new File(res.getFile());
     }
 
     public static BufferedImage getBufferedResource(String string) {
@@ -119,6 +137,7 @@ public class Move {
         FORCED(false, MOVE_RATING_DIR + "forced"),
 
         HIGHLIGHT(false,null),
+        PREMOVE(false, null),
         ORANGE_HIGHLIGHT(false, null),
         BLUE_HIGHLIGHT(false, null),
         GREEN_HIGHLIGHT(false, null),
@@ -196,7 +215,7 @@ public class Move {
         MATE
     }
 
-    public Move(Piece moved, BoardCoordinate from, BoardCoordinate to, Check check, boolean enPassant, BoardCoordinate takeSquare, Piece pieceTaken, Piece promotes, CastleType castleType, MoveType type) {
+    public Move(BoardGUI boardGUI, Piece moved, BoardCoordinate from, BoardCoordinate to, Check check, boolean enPassant, BoardCoordinate takeSquare, Piece pieceTaken, Piece promotes, CastleType castleType, MoveType type) {
         this.type = type;
         this.piece = moved;
         this.from = from;
@@ -208,12 +227,16 @@ public class Move {
         this.promotes = promotes;
         this.castleType = castleType;
         this.importContent = null;
+        this.boardGUI = boardGUI;
+        this.snapshot = Arrays.stream(boardGUI.getGamePieces()).map(Piece[]::clone).toArray(Piece[][]::new);
+        undoRecent();
+        moveNotation = toNotation();
     }
 
     /**
      * Import History move constructor
      */
-    public Move(String content) {
+    public Move(String content, BoardGUI boardGUI) {
         this.importContent = content;
 
         this.piece = null;
@@ -226,10 +249,26 @@ public class Move {
         this.promotes = null;
         this.castleType = null;
         this.type = MoveType.IMPORT;
+        this.boardGUI = boardGUI;
+        this.snapshot = Arrays.stream(boardGUI.getGamePieces()).map(Piece[]::clone).toArray(Piece[][]::new);
+        moveNotation = toNotation();
     }
 
-    @Override
-    public String toString() {
+    public void undoRecent() {
+        if (from != null) {
+            snapshot[from.row()][from.col()] = piece;
+        }
+        if (to != null) {
+            snapshot[to.row()][to.col()] = null;
+        }
+        if (takeSquare != null) {
+            snapshot[takeSquare.row()][takeSquare.col()] = taken;
+        }
+    }
+
+    private final String moveNotation;
+
+    public String toNotation() {
         if (type == MoveType.IMPORT) {
             return importContent;
         } else {
@@ -237,11 +276,6 @@ public class Move {
             assert to != null;
             assert piece != null;
 
-            // TODO
-            // - check valid moves for all pieces
-            // - check if piece can move to square
-            // - check if type is same
-            // - prepend the from-square
             StringBuilder move = new StringBuilder();
 
             if (type == MoveType.WHITE) {
@@ -251,6 +285,7 @@ public class Move {
             } else if (type == MoveType.DRAW) {
                 move.append("1/2-1/2");
             } else if (type == MoveType.MOVE) {
+
                 if (piece instanceof Pawn) {
                     if (taken != null) {
                         move.append(from.getColString());
@@ -264,6 +299,24 @@ public class Move {
                     }
                 } else {
                     move.append(piece.getAbbr());
+                    HashMap<Piece, BoardCoordinate> coordinateList = boardGUI.getTypeSimilars(snapshot, piece);
+                    for (Piece piece1 : coordinateList.keySet()) {
+                        BoardCoordinate coordinate = coordinateList.get(piece1);
+                        if (piece1.validMove(coordinate, to, true) && piece.validMove(coordinate, to, true) && boardGUI.notBlocked(snapshot, coordinate, to) && boardGUI.kingAvoidsCheck(snapshot, piece1, takeSquare, coordinate, to)) {
+                            // Ambiguous
+                            if (coordinate.col() == from.col() && coordinate.row() == from.row()) {
+                                continue;
+                            }
+                            if (coordinate.col() != from.col()) {
+                                move.append(from.getColString());
+                            }
+
+                            if (coordinate.col() == from.col() && coordinate.row() != from.row()) {
+                                move.append(from.toNotation());
+                            }
+                            break;
+                        }
+                    }
                     if (taken != null) {
                         move.append("x");
                     }
@@ -292,6 +345,11 @@ public class Move {
             }
             return move.toString();
         }
+    }
+
+    @Override
+    public String toString() {
+        return moveNotation;
     }
 
     public Piece getPiece() {
@@ -336,10 +394,14 @@ public class Move {
      * @param from
      * @param to
      */
-    public record SimpleMove(Piece piece, BoardCoordinate from, BoardCoordinate to) {
+    public record SimpleMove(BoardGUI boardGUI, Piece piece, BoardCoordinate from, BoardCoordinate to) {
         @Override
         public String toString() {
             return piece.toString() + ": " + from.toNotation() + " -> " + to.toNotation();
+        }
+
+        public Move toMove() {
+            return new Move(boardGUI, piece, from, to, null, false, to, null, null, null, MoveType.MOVE);
         }
     }
 

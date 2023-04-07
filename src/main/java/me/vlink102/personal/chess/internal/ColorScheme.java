@@ -19,7 +19,7 @@ public record ColorScheme(Color light, Color dark, Color movedHighlight, Color b
             case MISSED_WIN -> new Color(219, 172, 22, 127);
             case FORCED -> new Color(164, 194, 91, 127);
 
-            case HIGHLIGHT, HANGING_BAD, TRADE_PIECE_BAD, TRADE_POINT_BAD -> new Color(235, 97, 80, 204);
+            case PREMOVE, HIGHLIGHT, HANGING_BAD, TRADE_PIECE_BAD, TRADE_POINT_BAD -> new Color(235, 97, 80, 204);
 
             case ORANGE_HIGHLIGHT, TRADE_POINT_EQUAL, TRADE_PIECE_EQUAL -> new Color(255, 170, 0, 204);
             case BLUE_HIGHLIGHT -> new Color(82, 176, 220, 204);

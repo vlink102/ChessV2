@@ -5,16 +5,299 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="stuff">
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/IconListRenderer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/PlaceholderAreaField.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/default-pfp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ac.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ad.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ae.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/af.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ag.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ai.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/al.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/am.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/an.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ao.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/aq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ar.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/as.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/at.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/au.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/aw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ax.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/az.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ba.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bd.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/be.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bj.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/br.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bs.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/by.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/bz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ca.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cd.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ch.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ci.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ck.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/co.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cs.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cx.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/cz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/de.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/dg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/dj.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/dk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/dm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/do.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/dz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ea.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ec.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ee.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/eg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/eh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/er.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/es.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/et.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/eu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ez.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fj.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/fx.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ga.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gb-eng.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gb-nir.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gb-sct.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gb-wls.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gd.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ge.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gs.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/gy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/hk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/hm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/hn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/hr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ht.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/hu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ic.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/id.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ie.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/il.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/im.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/in.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/io.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/iq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ir.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/is.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/it.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/je.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/jm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/jo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/jp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ke.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ki.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/km.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ky.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/kz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/la.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/li.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ls.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/lv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ly.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ma.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/md.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/me.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ml.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mq.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ms.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mx.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/my.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/mz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/na.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ne.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ng.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ni.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/no.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/np.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/nz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/om.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pa.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pe.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ph.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ps.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/pw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/py.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/qa.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/re.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ro.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/rs.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ru.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/rw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sa.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sb.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sd.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/se.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sh.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/si.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sj.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/so.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/st.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/su.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sx.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/sz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ta.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/td.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/th.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tj.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/to.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/tz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ua.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ug.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/uk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/um.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/us.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/uy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/uz.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/va.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/vc.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ve.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/vg.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/vi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/vn.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/vu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/wf.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ws.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/xi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/xk.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/xu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/ye.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/yt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/yu.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/za.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/zm.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/zr.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/flags/zw.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/fonts/emojis.ttf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dependency-reduced-pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/dependency-reduced-pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ChessMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/ColorScheme.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/ColorScheme.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/Move.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/Move.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/OnlineAssets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/OnlineAssets.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/CommunicationHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/CommunicationHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/DataThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/DataThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/challenge/Accept.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking/packets/challenge/Accept.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/history/HistoryGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/history/HistoryGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Piece.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/pieces/Piece.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/history/CaptureGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/history/CaptureGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/interactive/PieceInteraction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/interactive/PieceInteraction.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,37 +332,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;extract.method.default.visibility&quot;: &quot;private&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/ethan/Library/Mobile Documents/com~apple~CloudDocs/Misc/Java/ChessV4/src/main/java/me/vlink102/personal/chess/internal/networking&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;service.view.auto.scroll.to.source&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "extract.method.default.visibility": "private",
+    "last_opened_file_path": "C:/Users/Ethan/IdeaProjects/VChess/src/main/resources",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "service.view.auto.scroll.to.source": "true",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Ethan\IdeaProjects\VChess\src\main\resources" />
+      <recent name="C:\Users\Ethan\IdeaProjects\VChess\src\main\resources\flags" />
       <recent name="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/networking" />
       <recent name="$PROJECT_DIR$/src/main/resources" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources" />
-      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\fonts" />
-      <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\fonts\resources" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Ethan\IdeaProjects\VChess\src\main\resources\fonts" />
       <recent name="$PROJECT_DIR$/src/main/resources" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons" />
       <recent name="C:\Users\Ethan\IdeaProjects\ChessV2\src\main\resources\game-icons\trade-icons" />
@@ -166,6 +450,11 @@
       <workItem from="1679593361667" duration="15091000" />
       <workItem from="1679736961885" duration="55967000" />
       <workItem from="1680115520209" duration="10614000" />
+      <workItem from="1680280828228" duration="765000" />
+      <workItem from="1680704115869" duration="70000" />
+      <workItem from="1680704194682" duration="4678000" />
+      <workItem from="1680712525328" duration="5000" />
+      <workItem from="1680785129013" duration="52419000" />
     </task>
     <task id="LOCAL-00001" summary="stuff">
       <created>1674428968387</created>
@@ -361,19 +650,19 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/ChessV2$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1677086286117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/Chess$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1676929617502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
-    </SUITE>
-    <SUITE FILE_PATH="coverage/ChessV4$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1677953900875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
-      <FILTER>me.vlink102.personal.*</FILTER>
-    </SUITE>
-    <SUITE FILE_PATH="coverage/ChessV2$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1679246879345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
-      <FILTER>me.vlink102.personal.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/ChessTesting$Chess.ic" NAME="Chess Coverage Results" MODIFIED="1674336826244" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/Chess$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1676929617502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/ChessV2$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1679246879345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>me.vlink102.personal.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/ChessV4$GameSelector.ic" NAME="GameSelector Coverage Results" MODIFIED="1677953900875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>me.vlink102.personal.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/ChessV2$me_vlink102_personal_chess_Chess.ic" NAME="me.vlink102.personal.chess.Chess Coverage Results" MODIFIED="1677086286117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>me.vlink102.personal.chess.*</FILTER>
     </SUITE>
   </component>

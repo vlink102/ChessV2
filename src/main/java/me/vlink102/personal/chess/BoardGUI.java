@@ -29,6 +29,10 @@ public class BoardGUI extends JPanel {
     private final String opponentUUID;
     private final long gameID;
 
+    private volatile boolean isPremoving;
+
+    private List<Move.SimpleMove> premoves;
+
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
 
@@ -163,6 +167,8 @@ public class BoardGUI extends JPanel {
      */
     public void setupBoard(Chess.BoardLayout layout, String precreatedFEN) {
         this.gameOver = null;
+        this.premoves = new ArrayList<>();
+
 
         if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
             this.currentLayout = Chess.BoardLayout.DEFAULT;
@@ -241,6 +247,7 @@ public class BoardGUI extends JPanel {
         this.coordinateGUI = new CoordinateGUI(chess, this);
         this.iconDisplayGUI = new IconDisplayGUI(this);
         this.onlineAssets = new OnlineAssets(this);
+        this.isPremoving = false;
 
         setFont(chess.getDef().deriveFont(chess.defaultOffset - 4f));
 
@@ -538,7 +545,7 @@ public class BoardGUI extends JPanel {
             halfMoveClock = Integer.parseInt(sections[4]);
             fullMoveCount = Integer.parseInt(sections[5]);
 
-            addImportHistory();
+            addImportHistory(whiteTurn);
 
             displayPieces();
             repaint();
@@ -955,9 +962,12 @@ public class BoardGUI extends JPanel {
         return result.toString();
     }
 
-    public void addImportHistory() {
-        history.add(new Move("[ Imported"));
-        history.add(new Move("FEN String ]"));
+    public void addImportHistory(boolean whiteTurn) {
+        history.add(new Move("Imported FEN String", this));
+        history.add(new Move("", this));
+        if (!whiteTurn) {
+            history.add(new Move("???", this));
+        }
     }
 
     public static StringBuilder translateBoard(String[][] board, int boardSize) {
@@ -1182,6 +1192,8 @@ public class BoardGUI extends JPanel {
     }
 
     public void displayPieces() {
+        Piece[][] newBoard = getVisibleGamePieces();
+
         for (int row = 0; row < boardSize; row++) {
             for (int col = 0; col < boardSize; col++) {
                 JPanel panel = (JPanel) getComponent((row * boardSize) + col);
@@ -1191,8 +1203,8 @@ public class BoardGUI extends JPanel {
                 if (panel.getComponents().length > 0) {
                     panel.removeAll();
                 }
-                if (gamePieces[r1][c1] != null) {
-                    panel.add(new JLabel(new ImageIcon(gamePieces[r1][c1].getIcon())));
+                if (newBoard[r1][c1] != null) {
+                    panel.add(new JLabel(new ImageIcon(newBoard[r1][c1].getIcon())));
                 }
                 panel.validate();
             }
@@ -1531,6 +1543,16 @@ public class BoardGUI extends JPanel {
         }
     }
 
+    public void removePremoveHighlights() {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                if (moveHighlights[i][j] == Move.MoveHighlights.PREMOVE) {
+                    moveHighlights[i][j] = null;
+                }
+            }
+        }
+    }
+
     public MouseListener highlightListener() {
         return new MouseListener() {
             int x0h;
@@ -1578,6 +1600,7 @@ public class BoardGUI extends JPanel {
             }
 
             private void updateSelectedPiece(int row, int col, BoardCoordinate clicked) {
+                Piece[][] gamePieces = getVisibleGamePieces();
                 List<Move> moves = availableMoves(gamePieces, selected, tileSelected, false);
                 if (tileSelected == null) {
                     tileSelected = clicked;
@@ -1588,7 +1611,7 @@ public class BoardGUI extends JPanel {
                     if (!tileSelected.equals(clicked)) {
                         Piece selectedPiece = gamePieces[tileSelected.row()][tileSelected.col()];
                         Piece clickedPiece = gamePieces[clicked.row()][clicked.col()];
-                        if (selectedPiece.isWhite() == playAsWhite) {
+                        if (selectedPiece != null && selectedPiece.isWhite() == playAsWhite) {
                             if (clickedPiece.isWhite() != playAsWhite) {
                                 if (whiteTurn == playAsWhite && pieceInteraction.tileSelected != null) {
                                     if (pieceInteraction.tileSelected.equals(tileSelected)) {
@@ -1642,8 +1665,8 @@ public class BoardGUI extends JPanel {
                 }
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     if (shouldDeselect) {
-                        int f1 = (int) (e.getX() / pieceSize);
-                        int r1 = (int) (e.getY() / pieceSize);
+                        int f1 = e.getX() / pieceSize;
+                        int r1 = e.getY() / pieceSize;
 
                         BoardCoordinate coordinate = new BoardCoordinate(r1, f1, BoardGUI.this);
                         int row = coordinate.row();
@@ -1683,6 +1706,23 @@ public class BoardGUI extends JPanel {
         };
     }
 
+    public void highlightPremoves() {
+        moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
+        for (Move.SimpleMove premove : premoves) {
+            BoardCoordinate from = premove.from();
+            BoardCoordinate to = premove.to();
+
+            int r2 = view == BoardView.WHITE ? decBoardSize - from.row() : from.row();
+            int c2 = view == BoardView.WHITE ? from.col() : decBoardSize - from.col();
+
+            int r3 = view == BoardView.WHITE ? decBoardSize - to.row() : to.row();
+            int c3 = view == BoardView.WHITE ? to.col() : decBoardSize - to.col();
+
+            highlight(r2, c2, Move.MoveHighlights.PREMOVE, true, false);
+            highlight(r3, c3, Move.MoveHighlights.PREMOVE, false, false);
+        }
+    }
+
     public void moveHighlight(BoardCoordinate from, BoardCoordinate to) {
         moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
         highlightIconAccompaniment = new Move.MoveHighlights[boardSize][boardSize];
@@ -1693,13 +1733,8 @@ public class BoardGUI extends JPanel {
         int r3 = view == BoardView.WHITE ? decBoardSize - to.row() : to.row();
         int c3 = view == BoardView.WHITE ? to.col() : decBoardSize - to.col();
 
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                if (highlightedSquares[i][j] == Move.MoveHighlights.MOVE || highlightedSquares[i][j] == Move.MoveHighlights.SELECTED) {
-                    highlightedSquares[i][j] = null;
-                }
-            }
-        }
+        removeHighlights(Move.MoveHighlights.MOVE);
+        removeHighlights(Move.MoveHighlights.SELECTED);
 
         highlight(r2, c2, Move.MoveHighlights.MOVE, true, true);
         highlight(r3, c3, Move.MoveHighlights.MOVE, false, true);
@@ -1711,7 +1746,9 @@ public class BoardGUI extends JPanel {
             case WHITE -> row = decBoardSize - row;
         }
 
-        if (type == Move.MoveHighlights.SELECTED) {
+        if (type == Move.MoveHighlights.PREMOVE) {
+            moveHighlights[row][col] = Move.MoveHighlights.PREMOVE;
+        } else if (type == Move.MoveHighlights.SELECTED) {
             BoardCoordinate clicked = new BoardCoordinate(row, col, this);
             if (tileSelected == null) {
                 tileSelected = clicked;
@@ -1726,7 +1763,7 @@ public class BoardGUI extends JPanel {
                     highlightedSquares[row][col] = Move.MoveHighlights.SELECTED;
                 }
             }
-            selected = tileSelected != null ? gamePieces[tileSelected.row()][tileSelected.col()] : null;
+            selected = tileSelected != null ? getVisibleGamePieces()[tileSelected.row()][tileSelected.col()] : null;
         } else if (isMoveHighlight) {
             moveHighlights[row][col] = type;
             if (!from) {
@@ -1854,11 +1891,12 @@ public class BoardGUI extends JPanel {
         super.paintComponent(g);
 
         ColorScheme scheme = boardTheme.getScheme();
-        if (useOnline) {
-            Image image = onlineAssets.getSavedBoard();
-            g.drawImage(image, 0, 0, this);
-        }
-        List<Move> moves = (tileSelected == null || selected == null) ? new ArrayList<>() : availableMoves(gamePieces, selected, tileSelected, false);
+
+        removePremoveHighlights();
+        highlightPremoves();
+
+        List<Move.SimpleMove> premoves = (tileSelected == null || selected == null) ? new ArrayList<>() : availablePremoves(selected, tileSelected);
+        List<Move> moves = isPremoving ? new ArrayList<>() : (tileSelected == null || selected == null) ? new ArrayList<>() : availableMoves(gamePieces, selected, tileSelected, false);
 
         List<BoardCoordinate> castleRookSquares = new ArrayList<>();
 
@@ -1877,7 +1915,18 @@ public class BoardGUI extends JPanel {
                 g2d.setColor((row + col) % 2 == 0 ? scheme.dark() : scheme.light());
                 g2d.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
                 g2d.dispose();
+            }
+        }
 
+        if (useOnline) {
+            Image image = onlineAssets.getSavedBoard();
+            g.drawImage(image, 0, 0, this);
+        }
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                int r1 = view == BoardView.WHITE ? decBoardSize - row : row;
+                int c1 = view == BoardView.WHITE ? col : decBoardSize - col;
                 if (coordinateDisplayType == CoordinateDisplayType.INSIDE) {
                     if (c1 == 0) {
                         g.setColor((row + col) % 2 == 0 ? scheme.light() : scheme.dark());
@@ -1891,7 +1940,6 @@ public class BoardGUI extends JPanel {
                     }
                 }
 
-
                 if (staticHighlights[row][col] != null) {
                     g.setColor(staticHighlights[row][col].getColor());
                     g.fillRect(c1 * pieceSize, r1 * pieceSize, pieceSize, pieceSize);
@@ -1903,19 +1951,37 @@ public class BoardGUI extends JPanel {
                     g.fillRect((c1) * pieceSize, (r1) * pieceSize, pieceSize, pieceSize);
                 }
 
-                for (Move move : moves) {
-                    if (move.getTo().equals(new BoardCoordinate(row, col, this))) {
-                        if (gamePieces[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
-                            if (chess.shouldShowAvailableSquares) {
-                                drawHint(g, scheme, r1, c1, move.getTaken() != null);
+                Piece[][] visible = getVisibleGamePieces();
+                if (isPremoving) {
+                    for (Move.SimpleMove move : premoves) {
+                        if (move.to().equals(new BoardCoordinate(row, col, this))) {
+                            if (visible[tileSelected.row()][tileSelected.col()] != null && visible[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
+                                if (chess.shouldShowAvailableSquares) {
+                                    drawHint(g, scheme, r1, c1, false);
+                                }
+                            } else {
+                                if (chess.shouldShowOppositionAvailableSquares) {
+                                    drawHint(g, scheme, r1, c1, false);
+                                }
                             }
-                        } else {
-                            if (chess.shouldShowOppositionAvailableSquares) {
-                                drawHint(g, scheme, r1, c1, move.getTaken() != null);
+                        }
+                    }
+                } else {
+                    for (Move move : moves) {
+                        if (move.getTo().equals(new BoardCoordinate(row, col, this))) {
+                            if (visible[tileSelected.row()][tileSelected.col()] != null && visible[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
+                                if (chess.shouldShowAvailableSquares) {
+                                    drawHint(g, scheme, r1, c1, move.getTaken() != null);
+                                }
+                            } else {
+                                if (chess.shouldShowOppositionAvailableSquares) {
+                                    drawHint(g, scheme, r1, c1, move.getTaken() != null);
+                                }
                             }
                         }
                     }
                 }
+
                 for (BoardCoordinate castleRookSquare : castleRookSquares) {
                     if (castleRookSquare.equals(new BoardCoordinate(row, col, this))) {
                         if (gamePieces[castleRookSquare.row()][castleRookSquare.col()].isWhite() == playAsWhite) {
@@ -2011,6 +2077,14 @@ public class BoardGUI extends JPanel {
 
     public Piece[][] getGamePieces() {
         return gamePieces;
+    }
+
+    public Piece[][] getVisibleGamePieces() {
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        for (Move.SimpleMove premove : premoves) {
+            newBoard = moveResult(newBoard, premove.to(), premove.from(), premove.to());
+        }
+        return newBoard;
     }
 
     public Piece[][] getSide(boolean white, Piece[][] board) {
@@ -2208,6 +2282,7 @@ public class BoardGUI extends JPanel {
 
     public Move getRandomMove(Piece[][] board) {
         List<Move> moves = getAllValidMoves(board, !playAsWhite, false);
+        if (moves.isEmpty()) return null;
         Random random = new Random();
         return moves.get(random.nextInt(moves.size()));
     }
@@ -2221,7 +2296,7 @@ public class BoardGUI extends JPanel {
             for (int j = 0; j < boardSize; j++) {
                 BoardCoordinate possibleTile = new BoardCoordinate(i, j, this);
                 if (piece.validMove(coordinate, possibleTile, true) || piece.validMove(coordinate, possibleTile, false)) {
-                    moves.add(new Move.SimpleMove(piece, coordinate, possibleTile));
+                    moves.add(new Move.SimpleMove(this, piece, coordinate, possibleTile));
                 }
             }
         }
@@ -2233,11 +2308,12 @@ public class BoardGUI extends JPanel {
         if (piece == null || coordinate == null || gameOver != null) {
             return moves;
         }
+        if (piece != gamePieces[coordinate.row()][coordinate.col()]) return moves;
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
                 BoardCoordinate possibleTile = new BoardCoordinate(i, j, this);
                 BoardCoordinate epTake = getEnpassantTakeSquare();
-                if (getEnpassantTargetSquare() != null && board[epTake.row()][epTake.col()].isWhite() != piece.isWhite() && possibleTile.equals(getEnpassantTargetSquare()) && piece instanceof Pawn && piece.validMove(coordinate, possibleTile, true)) {
+                if (getEnpassantTargetSquare() != null && (board[epTake.row()][epTake.col()] != null && (board[epTake.row()][epTake.col()].isWhite() != piece.isWhite() && possibleTile.equals(getEnpassantTargetSquare()) && piece instanceof Pawn && piece.validMove(coordinate, possibleTile, true)))) {
                     if (kingAvoidsCheck(board, piece, getEnpassantTakeSquare(), coordinate, possibleTile)) {
                         Piece[][] newBoard = moveResult(board, epTake, coordinate, possibleTile);
 
@@ -2255,7 +2331,7 @@ public class BoardGUI extends JPanel {
                                 }
                             }
                         }
-                        moves.add(new Move(piece, coordinate, possibleTile, check, true, epSQt, taken, null, null, Move.MoveType.MOVE));
+                        moves.add(new Move(this, piece, coordinate, possibleTile, check, true, epSQt, taken, null, null, Move.MoveType.MOVE));
                     }
                 } else if (piece instanceof King && getRook(board, piece.isWhite(), Move.CastleType.KINGSIDE) != null && defaultCastleSquares(piece.isWhite(), Move.CastleType.KINGSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleKingside : blackCanCastleKingside)) {
                     Piece[][] newBoard = castleResult(piece.isWhite(), Move.CastleType.KINGSIDE);
@@ -2272,7 +2348,7 @@ public class BoardGUI extends JPanel {
                                     check = Move.Check.MATE;
                                 }
                             }
-                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.KINGSIDE, Move.MoveType.CASTLE));
+                            moves.add(new Move(this, piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.KINGSIDE, Move.MoveType.CASTLE));
                         }
                     }
                 } else if (piece instanceof King && getRook(board, piece.isWhite(), Move.CastleType.QUEENSIDE) != null && defaultCastleSquares(piece.isWhite(), Move.CastleType.QUEENSIDE).contains(possibleTile) && (piece.isWhite() ? whiteCanCastleQueenside : blackCanCastleQueenside)) {
@@ -2289,7 +2365,7 @@ public class BoardGUI extends JPanel {
                                 }
                             }
 
-                            moves.add(new Move(piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE, Move.MoveType.CASTLE));
+                            moves.add(new Move(this, piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE, Move.MoveType.CASTLE));
                         }
                     }
                 } else {
@@ -2308,7 +2384,7 @@ public class BoardGUI extends JPanel {
                                     }
                                 }
                             }
-                            moves.add(new Move(piece, coordinate, possibleTile, check, false, possibleTile, taken, null, null, Move.MoveType.MOVE));
+                            moves.add(new Move(this, piece, coordinate, possibleTile, check, false, possibleTile, taken, null, null, Move.MoveType.MOVE));
                         }
                     }
                 }
@@ -2347,6 +2423,21 @@ public class BoardGUI extends JPanel {
         return allMoves;
     }
 
+    public HashMap<Piece, BoardCoordinate> getTypeSimilars(Piece[][] board, Piece pc) {
+        HashMap<Piece, BoardCoordinate> coordinates = new HashMap<>();
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                Piece piece = board[i][j];
+                BoardCoordinate coordinate = new BoardCoordinate(i, j, this);
+                if (piece == null) continue;
+                if (piece.getAbbr().equals(pc.getAbbr()) && piece.isWhite() == pc.isWhite()) {
+                    coordinates.put(piece, coordinate);
+                }
+            }
+        }
+        return coordinates;
+    }
+
     public List<Move.SimpleMove> getAttackers(Piece[][] board, Piece piece, BoardCoordinate tile, boolean white) {
         List<Move.SimpleMove> allMoves = new ArrayList<>();
         for (int i = 0; i < boardSize; i++) {
@@ -2355,7 +2446,7 @@ public class BoardGUI extends JPanel {
                 Piece pieceFrom = board[i][j];
                 if (pieceFrom != null && pieceFrom != piece && !from.equals(tile)) {
                     if (pieceFrom.isWhite() == white && pieceFrom.validMove(from, tile, true) && notBlocked(board, from, tile)) {
-                        allMoves.add(new Move.SimpleMove(pieceFrom, from, tile));
+                        allMoves.add(new Move.SimpleMove(this, pieceFrom, from, tile));
                     }
                 }
             }
@@ -2365,6 +2456,10 @@ public class BoardGUI extends JPanel {
 
     public boolean kingIsInCheck(Piece[][] board, boolean white) {
         BoardCoordinate king = getKing(getSide(white, board));
+
+        if (getKing(getSide(true, board)) == null || getKing(getSide(false, board)) == null) {
+            return tileIsInCheck(board, getKing(getSide(white, gamePieces)), white);
+        }
 
         return tileIsInCheck(board, king, white);
     }
@@ -2387,6 +2482,9 @@ public class BoardGUI extends JPanel {
 
     public boolean kingAvoidsCheck(Piece[][] board, Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to) {
         Piece[][] newBoard = moveResult(board, takes, from, to);
+        if (getKing(getSide(true, newBoard)) == null || getKing(getSide(false, newBoard)) == null) {
+            return !kingIsInCheck(gamePieces, piece.isWhite());
+        }
 
         return !kingIsInCheck(newBoard, piece.isWhite());
     }
@@ -2460,7 +2558,7 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        Move move = new Move(piece, from, to, check, !takes.equals(to), takes, taken,null, null, Move.MoveType.MOVE); // TODO
+        Move move = new Move(this, piece, from, to, check, !takes.equals(to), takes, taken,null, null, Move.MoveType.MOVE); // TODO
 
         history.add(move);
         piece.incrementMoves();
@@ -2577,7 +2675,7 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        Move move = new Move(king, kingFrom, kingTo, check, false, null, null, null, type, Move.MoveType.CASTLE);
+        Move move = new Move(this, king, kingFrom, kingTo, check, false, null, null, null, type, Move.MoveType.CASTLE);
         history.add(move);
 
         if (white) {
@@ -2754,17 +2852,17 @@ public class BoardGUI extends JPanel {
                 case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
-                    history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
                 }
                 case RESIGNATION_BLACK -> {
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
-                    history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
                 }
                 case RESIGNATION_WHITE -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
-                    history.add(new Move(null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
                 }
             }
             displayPieces();
@@ -2878,6 +2976,23 @@ public class BoardGUI extends JPanel {
 
     public void endComputerTurn() {
         if (!gameOver()) {
+            if (!premoves.isEmpty()) {
+                Move move = premoves.get(0).toMove();
+
+                if (availableMoves(gamePieces, move.getPiece(), move.getFrom(), false)
+                        .stream().anyMatch(availableMove ->
+                                availableMove.getFrom().equals(move.getFrom())
+                                        && availableMove.getTo().equals(move.getTo())
+                                        && availableMove.getPiece().getAbbr().equals(move.getPiece().getAbbr())
+                                        && availableMove.getPiece().isWhite() == move.getPiece().isWhite())) {
+                    premoves.remove(0);
+                    if (!movePiece(move.getPiece(), move.getFrom(), move.getTo())) {
+                        premoves.clear();
+                    }
+                } else {
+                    premoves.clear();
+                }
+            }
             highlightChecks();
             displayPieces();
             repaint();
@@ -2887,6 +3002,7 @@ public class BoardGUI extends JPanel {
 
     public void computerRandomMove() {
         Move move = getRandomMove(gamePieces);
+        if (move == null) return;
         moveHighlight(move.getFrom(), move.getTo());
         if (move.getCastleType() != null) {
             rawCastle(!playAsWhite, move.getCastleType());
@@ -2910,7 +3026,7 @@ public class BoardGUI extends JPanel {
                     public void run() {
                         computerRandomMove();
                     }
-                }, 250);
+                }, 5000);
                 case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
@@ -2928,33 +3044,57 @@ public class BoardGUI extends JPanel {
         }
     }
 
-    public void movePiece(Piece piece, BoardCoordinate from, BoardCoordinate to) {
 
+    public boolean movePiece(Piece piece, BoardCoordinate from, BoardCoordinate to) {
+        isPremoving = !premoves.isEmpty();
         if (!from.equals(to)) {
             boolean white = piece.isWhite();
 
-            List<Move> moves = availableMoves(gamePieces, piece, from, false);
-            if (whiteTurn == white && whiteTurn == playAsWhite) {
-                for (Move move : moves) {
-                    if (move.getTo().equals(to)) {
-                        moveHighlight(move.getFrom(), move.getTo());
-                        if (move.getCastleType() != null) {
-                            rawCastle(piece.isWhite(), move.getCastleType());
-                        } else {
-                            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+            if (playAsWhite == white) {
+                if (playAsWhite == whiteTurn) {
+                    List<Move> moves = availableMoves(gamePieces, piece, from, false);
+                    for (Move move : moves) {
+                        if (move.getTo().equals(to)) {
+                            moveHighlight(move.getFrom(), move.getTo());
+                            if (move.getCastleType() != null) {
+                                rawCastle(piece.isWhite(), move.getCastleType());
+                            } else {
+                                rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                            }
+                            if (challenge) {
+                                CommunicationHandler.thread.sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.Move(gameID, !playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, move));
+                            }
+
+                            endTurn();
+                            displayPieces();
+                            repaint();
+                            return true;
                         }
-                        if (challenge) {
-                            CommunicationHandler.thread.sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.Move(gameID, !playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, move));
+                    }
+                } else {
+                    OpponentType[] validOpponentTypes = {
+                            OpponentType.AI_1,
+                            OpponentType.AI_2,
+                            OpponentType.PLAYER
+                    };
+                    if (Arrays.asList(validOpponentTypes).contains(opponentType)) {
+                        List<Move.SimpleMove> moves = availablePremoves(piece, from);
+                        for (Move.SimpleMove move : moves) {
+                            if (move.to().equals(to)) {
+                                premoves.add(new Move.SimpleMove(this, piece, from, to));
+                                highlightPremoves();
+                                displayPieces();
+                                repaint();
+                                return true;
+                            }
                         }
-                        endTurn();
-                        break;
                     }
                 }
             }
         }
         displayPieces();
         repaint();
-        
+        return false;
     }
 
     public void oppositionResign() {
@@ -3106,5 +3246,9 @@ public class BoardGUI extends JPanel {
 
     public long getGameID() {
         return gameID;
+    }
+
+    public boolean isPremoving() {
+        return isPremoving;
     }
 }

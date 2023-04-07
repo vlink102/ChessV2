@@ -1,6 +1,8 @@
 package me.vlink102.personal.chess.internal;
 
+import com.neovisionaries.i18n.CountryCode;
 import me.vlink102.personal.chess.BoardGUI;
+import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.SpecialPiece;
 import me.vlink102.personal.chess.ui.history.CaptureGUI;
@@ -55,9 +57,10 @@ public class OnlineAssets {
         savedBoard = getBoard(boardGUI).getScaledInstance(boardGUI.getPieceSize() * boardGUI.getBoardSize(), boardGUI.getPieceSize() * 8, Image.SCALE_FAST);
     }
 
+
     public void loadCapturedPieces(BoardGUI boardGUI) {
         for (CaptureGUI.CaptureDisplay value : CaptureGUI.CaptureDisplay.values()) {
-            subImages.put(value, CaptureGUI.getSprite(value, boardGUI.getPieceSize() / 4));
+            subImages.put(value, boardGUI.getCaptureGUI().getSprite(value, boardGUI.getPieceSize() / 4));
         }
     }
 

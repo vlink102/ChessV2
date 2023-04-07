@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
 
 public class CaptureGUI extends JPanel {
     private final BoardGUI boardGUI;
-    private static BufferedImage capturedPieces;
+    private final BufferedImage capturedPieces;
 
     public enum CaptureDisplay {
         W_PAWN_1(1, 1, new Dimension(1, 1)),
@@ -67,8 +67,8 @@ public class CaptureGUI extends JPanel {
         }
     }
 
-    public static Image getSprite(CaptureDisplay piece, int size) {
-        return capturedPieces.getSubimage(piece.getX(), piece.getY(), (int) piece.getDimension().getWidth(), (int) piece.getDimension().getHeight()).getScaledInstance(size, -1, Image.SCALE_SMOOTH);
+    public Image getSprite(CaptureDisplay piece, int size) {
+        return capturedPieces.getSubimage(piece.getX(), piece.getY(), (int) piece.getDimension().getWidth(), (int) piece.getDimension().getHeight()).getScaledInstance(-1, size, Image.SCALE_SMOOTH);
     }
 
     public CaptureGUI(BoardGUI boardGUI) {
@@ -81,7 +81,8 @@ public class CaptureGUI extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        setPreferredSize(new Dimension((int) getBounds().getWidth(), (int) getBounds().getHeight()));
         g.drawImage(boardGUI.getOnlineAssets().getSavedCapturePiece(CaptureDisplay.B_QUEEN_1), 0, 0, this);
+        g.drawImage(boardGUI.getOnlineAssets().getSavedCapturePiece(CaptureDisplay.B_PAWN_7), 45, 0, this);
     }
 }
