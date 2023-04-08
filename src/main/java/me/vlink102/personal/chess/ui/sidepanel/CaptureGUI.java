@@ -1,4 +1,4 @@
-package me.vlink102.personal.chess.ui.history;
+package me.vlink102.personal.chess.ui.sidepanel;
 
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;

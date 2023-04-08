@@ -19,6 +19,10 @@ public class CoordinateGUI extends JPanel {
         setFont(chess.getBold().deriveFont( (float) chess.defaultOffset - 4));
     }
 
+    public void updateFonts() {
+        setFont(chess.getDef().deriveFont((float) boardGUI.getPieceSize() / 6));
+    }
+
     /**
      * Draw a String centered in the middle of a Rectangle.
      *

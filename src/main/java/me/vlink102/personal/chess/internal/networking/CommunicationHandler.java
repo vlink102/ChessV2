@@ -179,7 +179,7 @@ public class CommunicationHandler {
 
     public void establishConnection(String uuid) {
         try {
-            InetAddress address = InetAddress.getByName("82.69.40.208");
+            InetAddress address = InetAddress.getByName("127.0.0.1");
             Socket socket = new Socket(address.getHostName(), 55285);
 
             thread = new DataThread(socket);

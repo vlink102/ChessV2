@@ -104,13 +104,25 @@ public class Chess extends JLayeredPane {
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setRequestFocusEnabled(true);
 
+        // TODO DO this for chat panel ( scroll )
+        // TODO Add birthdate and phone to profile + db
+        // TODO add register to login page
+        // TODO do premove logic against other player (packets)
+        // TODO Condense profile request to 1 request (quicker)
+
+
         add(board, DEFAULT_LAYER);
         add(scrollPane, DEFAULT_LAYER);
         add(board.getCaptureGUI(), DEFAULT_LAYER);
         add(board.getCoordinateGUI(), DEFAULT_LAYER);
         add(board.getIconDisplayGUI(), POPUP_LAYER);
+        add(board.getChatGUI(), DEFAULT_LAYER);
 
         updateSidePanelBounds();
+        updateChatPanelBounds();
+        updateBoardBounds();
+        updateCoordinatePanelBounds();
+        updateCapturePanelBounds();
 
         frame.getContentPane().add(this);
         frame.setResizable(true);
@@ -147,7 +159,6 @@ public class Chess extends JLayeredPane {
             }
         });
 
-        refreshWindow();
         Timer timer = new Timer(250, refreshGUIListener());
         timer.start();
         lastSize = board.getPieceSize();
@@ -159,6 +170,8 @@ public class Chess extends JLayeredPane {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         board.requestFocus();
+        refreshWindow();
+        refreshGUI();
     }
 
     public void refreshWindow() {
@@ -171,6 +184,7 @@ public class Chess extends JLayeredPane {
         updateSidePanelBounds();
         updateCoordinatePanelBounds();
         updateCapturePanelBounds();
+        updateChatPanelBounds();
 
         board.getOnlineAssets().updateSavedImage(board);
 
@@ -184,15 +198,19 @@ public class Chess extends JLayeredPane {
     }
 
     public void updateSidePanelBounds() {
-        scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 200, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (board.getHeight() + offSet) - 200);
+        scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (3f/5f)) - 20);
     }
 
     public void updateCapturePanelBounds() {
-        board.getCaptureGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), 180 - offSet);
+        board.getCaptureGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), board.getHeight() / 5);
     }
 
     public void updateCoordinatePanelBounds() {
         board.getCoordinateGUI().setBounds(boardToFrameOffset, boardToFrameOffset - heightOffSet, board.getWidth() + offSet, board.getHeight() + offSet);
+    }
+
+    public void updateChatPanelBounds() {
+        board.getChatGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - (boardToFrameOffset - heightOffSet) - (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), board.getHeight() / 5);
     }
 
     private double lastSize;
@@ -201,6 +219,8 @@ public class Chess extends JLayeredPane {
         boardToFrameOffset = board.getPieceSize();
         sidePanelWidth = Math.min(board.getWidth() / 2, frame.getContentPane().getWidth() - ((boardToFrameOffset * 3) + board.getWidth() + offSet));
         board.setFont(def.deriveFont((float) board.getPieceSize() / 6));
+        board.getSidePanelGUI().updateFonts();
+        board.getCoordinateGUI().updateFonts();
         board.getOnlineAssets().updatePieceDesigns(board);
         board.getOnlineAssets().loadCapturedPieces(board);
 

@@ -13,8 +13,9 @@ import me.vlink102.personal.chess.pieces.special.asian.DragonKing;
 import me.vlink102.personal.chess.pieces.special.historical.*;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
 import me.vlink102.personal.chess.ui.IconDisplayGUI;
-import me.vlink102.personal.chess.ui.history.CaptureGUI;
-import me.vlink102.personal.chess.ui.history.HistoryGUI;
+import me.vlink102.personal.chess.ui.sidepanel.CaptureGUI;
+import me.vlink102.personal.chess.ui.sidepanel.ChatGUI;
+import me.vlink102.personal.chess.ui.sidepanel.HistoryGUI;
 import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 
 import javax.swing.*;
@@ -40,6 +41,8 @@ public class BoardGUI extends JPanel {
     private final CaptureGUI captureGUI;
     private final CoordinateGUI coordinateGUI;
     private final IconDisplayGUI iconDisplayGUI;
+    private final ChatGUI chatGUI;
+
     private CoordinateDisplayType coordinateDisplayType;
 
     private Chess.BoardLayout currentLayout;
@@ -246,6 +249,7 @@ public class BoardGUI extends JPanel {
         this.captureGUI = new CaptureGUI(this);
         this.coordinateGUI = new CoordinateGUI(chess, this);
         this.iconDisplayGUI = new IconDisplayGUI(this);
+        this.chatGUI = new ChatGUI(this);
         this.onlineAssets = new OnlineAssets(this);
         this.isPremoving = false;
 
@@ -2001,7 +2005,12 @@ public class BoardGUI extends JPanel {
         captureGUI.repaint();
         coordinateGUI.repaint();
         iconDisplayGUI.repaint();
+        chatGUI.repaint();
         chess.updateSidePanelBounds();
+        chess.updateChatPanelBounds();
+        chess.updateCapturePanelBounds();
+        chess.updateCoordinatePanelBounds();
+        chess.updateBoardBounds();
     }
 
     public void drawHint(Graphics g, ColorScheme scheme, int row, int col, boolean takes) {
@@ -3026,7 +3035,7 @@ public class BoardGUI extends JPanel {
                     public void run() {
                         computerRandomMove();
                     }
-                }, 5000);
+                }, 250);
                 case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
@@ -3242,6 +3251,10 @@ public class BoardGUI extends JPanel {
 
     public CaptureGUI getCaptureGUI() {
         return captureGUI;
+    }
+
+    public ChatGUI getChatGUI() {
+        return chatGUI;
     }
 
     public long getGameID() {

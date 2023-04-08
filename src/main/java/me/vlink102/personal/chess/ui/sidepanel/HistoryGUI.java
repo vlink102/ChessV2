@@ -1,4 +1,4 @@
-package me.vlink102.personal.chess.ui.history;
+package me.vlink102.personal.chess.ui.sidepanel;
 
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
@@ -32,6 +32,7 @@ public class HistoryGUI extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         List<Move> moveList = new ArrayList<>(boardGUI.getHistory());
 
