@@ -413,6 +413,7 @@ public class BoardGUI extends JPanel {
     @SuppressWarnings("ConstantConditions")
     public void loadFEN(String FEN) {
         if (validateFEN(FEN, boardSize)) {
+            resetBoard();
             gamePieces = new Piece[boardSize][boardSize];
             history = new ArrayList<>();
             String[] sections = FEN.split(" ");
