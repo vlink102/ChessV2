@@ -79,8 +79,8 @@ public class HistoryGUI extends JPanel {
             }
         }
 
-        boardGUI.getSidePanelGUI().revalidate();
-        boardGUI.getSidePanelGUI().repaint();
+        revalidate();
+        repaint();
     }
 
 }

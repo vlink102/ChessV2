@@ -117,8 +117,8 @@ public class BoardGUI extends JPanel {
     }
 
     public enum OpponentType {
-        AI_1,
-        AI_2,
+        COMPUTER,
+        RANDOM,
         AUTO_SWAP,
         MANUAL,
         PLAYER
@@ -164,10 +164,6 @@ public class BoardGUI extends JPanel {
         opponentType = type;
     }
 
-    /**
-     * TODO white sends all game event packets apart from black's resign/move e.g. game over,
-     *  white
-     */
     public void setupBoard(Chess.BoardLayout layout, String precreatedFEN) {
         this.gameOver = null;
         this.premoves = new ArrayList<>();
@@ -249,7 +245,22 @@ public class BoardGUI extends JPanel {
         this.captureGUI = new CaptureGUI(this);
         this.coordinateGUI = new CoordinateGUI(chess, this);
         this.iconDisplayGUI = new IconDisplayGUI(this);
-        this.chatGUI = new ChatGUI(this);
+        if (!challenge) {
+            //CommunicationHandler.ProfileCache opponentCache = CommunicationHandler.getProfileUpdated(opponentUUID);
+            CommunicationHandler.ProfileCache selfCache = CommunicationHandler.getProfileUpdated(ChessMenu.IDENTIFIER);
+
+            ChatGUI.ChatGUIProfile profile = new ChatGUI.ChatGUIProfile(
+                    ChessMenu.fromBase64(selfCache.profilePic()),
+                    ChessMenu.fromBase64(selfCache.profilePic()),
+                    selfCache.name(),
+                    selfCache.name(),
+                    ((Double) CommunicationHandler.get(ChessMenu.IDENTIFIER, "rating")).intValue(),
+                    ((Double) CommunicationHandler.get(ChessMenu.IDENTIFIER, "rating")).intValue());
+            this.chatGUI = new ChatGUI(this, chess, profile);
+
+        } else {
+            this.chatGUI = null;
+        }
         this.onlineAssets = new OnlineAssets(this);
         this.isPremoving = false;
 
@@ -263,6 +274,16 @@ public class BoardGUI extends JPanel {
         addMouseListener(pieceInteraction);
         addMouseMotionListener(pieceInteraction);
 
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), "deselect-all", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setView(playAsWhite ? BoardView.WHITE : BoardView.BLACK);
+                deselect();
+                premoves = new ArrayList<>();
+                repaint();
+                displayPieces();
+            }
+        });
         registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0, false), "black-view", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -365,7 +386,7 @@ public class BoardGUI extends JPanel {
         Move.loadCachedIcons(pieceSize);
         Move.loadCachedHighlights(pieceSize);
 
-        if (opponentType.equals(OpponentType.AI_1) && !playAsWhite && whiteTurn) {
+        if (opponentType.equals(OpponentType.RANDOM) && !playAsWhite && whiteTurn) {
             computerRandomMove();
         }
     }
@@ -1571,6 +1592,8 @@ public class BoardGUI extends JPanel {
                     x0h = e.getX();
                     y0h = e.getY();
 
+                    premoves = new ArrayList<>();
+
                     deselect();
                 }
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -1579,8 +1602,8 @@ public class BoardGUI extends JPanel {
                     removeHighlights(Move.MoveHighlights.ORANGE_HIGHLIGHT);
                     removeHighlights(Move.MoveHighlights.BLUE_HIGHLIGHT);
 
-                    int f1 = (int) (e.getX() / pieceSize);
-                    int r1 = (int) (e.getY() / pieceSize);
+                    int f1 = e.getX() / pieceSize;
+                    int r1 = e.getY() / pieceSize;
 
                     int r2 = view == BoardView.WHITE ? decBoardSize - r1 : r1;
                     int c2 = view == BoardView.WHITE ? f1 : decBoardSize - f1;
@@ -1647,8 +1670,8 @@ public class BoardGUI extends JPanel {
                     double f0 = e.getX() / pieceSize;
                     double r0 = e.getY() / pieceSize;
 
-                    int f1 = (int) (x0h / pieceSize);
-                    int r1 = (int) (y0h / pieceSize);
+                    int f1 = x0h / pieceSize;
+                    int r1 = y0h / pieceSize;
 
                     BoardCoordinate coordinate = new BoardCoordinate(r1, f1, BoardGUI.this);
                     if (f0 == f1 && r0 == r1) {
@@ -1959,7 +1982,7 @@ public class BoardGUI extends JPanel {
                 Piece[][] visible = getVisibleGamePieces();
                 if (isPremoving) {
                     for (Move.SimpleMove move : premoves) {
-                        if (move.to().equals(new BoardCoordinate(row, col, this))) {
+                        if (move.to().equals(new BoardCoordinate(row, col, this)) && tileSelected != null) {
                             if (visible[tileSelected.row()][tileSelected.col()] != null && visible[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
                                 if (chess.shouldShowAvailableSquares) {
                                     drawHint(g, scheme, r1, c1, false);
@@ -1973,7 +1996,7 @@ public class BoardGUI extends JPanel {
                     }
                 } else {
                     for (Move move : moves) {
-                        if (move.getTo().equals(new BoardCoordinate(row, col, this))) {
+                        if (move.getTo().equals(new BoardCoordinate(row, col, this)) && tileSelected != null) {
                             if (visible[tileSelected.row()][tileSelected.col()] != null && visible[tileSelected.row()][tileSelected.col()].isWhite() == playAsWhite) {
                                 if (chess.shouldShowAvailableSquares) {
                                     drawHint(g, scheme, r1, c1, move.getTaken() != null);
@@ -2006,7 +2029,7 @@ public class BoardGUI extends JPanel {
         captureGUI.repaint();
         coordinateGUI.repaint();
         iconDisplayGUI.repaint();
-        chatGUI.repaint();
+        if (chatGUI != null) chatGUI.repaint();
         chess.updateSidePanelBounds();
         chess.updateChatPanelBounds();
         chess.updateCapturePanelBounds();
@@ -2877,23 +2900,29 @@ public class BoardGUI extends JPanel {
             }
             displayPieces();
             repaint();
-            switch (type) {
-                case CHECKMATE_BLACK -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE));
-                case CHECKMATE_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK));
-                case STALEMATE -> chess.createPopUp("Draw by stalemate", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-                case FIFTY_MOVE_RULE -> chess.createPopUp("Draw by 50-move-rule", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-                case ILLEGAL_POSITION -> chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE);
-                case DRAW_BY_AGREEMENT -> chess.createPopUp("Draw by agreement", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-                case RESIGNATION_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
-                case RESIGNATION_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK));
-                case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-                case INSUFFICIENT_MATERIAL -> chess.createPopUp("Draw by insufficient material", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK));
-                case TIME_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins on time", "Game Over", (playAsWhite ? Move.InfoIcons.TIME_WHITE : Move.InfoIcons.WINNER));
-                case TIME_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Won" : "Lost") + ": White wins on time", "Game Over", (!playAsWhite ? Move.InfoIcons.TIME_BLACK : Move.InfoIcons.WINNER));
-                case ABORTED_BLACK -> chess.createPopUp("Game ended: Black aborted game", "Game Over", Move.InfoIcons.ABORTED);
-                case ABORTED_WHITE -> chess.createPopUp("Game ended: White aborted game", "Game Over", Move.InfoIcons.ABORTED);
-                case ABANDONMENT_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins by abandonment", "Game Over", (playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER));
-                case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER));
+            premoves = new ArrayList<>();
+            Object[] options = {"View board", "Exit game"};
+            int r = switch (type) {
+                case CHECKMATE_BLACK -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE), options, 0);
+                case CHECKMATE_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK), options, 0);
+                case STALEMATE -> chess.createPopUp("Draw by stalemate", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case FIFTY_MOVE_RULE -> chess.createPopUp("Draw by 50-move-rule", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case ILLEGAL_POSITION -> chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE, options, 0);
+                case DRAW_BY_AGREEMENT -> chess.createPopUp("Draw by agreement", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case RESIGNATION_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
+                case RESIGNATION_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
+                case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case INSUFFICIENT_MATERIAL -> chess.createPopUp("Draw by insufficient material", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case TIME_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins on time", "Game Over", (playAsWhite ? Move.InfoIcons.TIME_WHITE : Move.InfoIcons.WINNER), options, 0);
+                case TIME_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Won" : "Lost") + ": White wins on time", "Game Over", (!playAsWhite ? Move.InfoIcons.TIME_BLACK : Move.InfoIcons.WINNER), options, 0);
+                case ABORTED_BLACK -> chess.createPopUp("Game ended: Black aborted game", "Game Over", Move.InfoIcons.ABORTED, options, 0);
+                case ABORTED_WHITE -> chess.createPopUp("Game ended: White aborted game", "Game Over", Move.InfoIcons.ABORTED, options, 0);
+                case ABANDONMENT_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins by abandonment", "Game Over", (playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+                case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+            };
+            if (r == 1) {
+                chess.dispatchEvent(new WindowEvent(chess.frame, WindowEvent.WINDOW_CLOSING));
+                chess.frame.dispose();
             }
         }
     }
@@ -2984,6 +3013,8 @@ public class BoardGUI extends JPanel {
         }
     }
 
+
+
     public void endComputerTurn() {
         if (!gameOver()) {
             if (!premoves.isEmpty()) {
@@ -3028,10 +3059,10 @@ public class BoardGUI extends JPanel {
         vert.setValue(vert.getMaximum());
         if (!gameOver()) {
             switch (opponentType) {
-                case AI_1 -> {
+                case COMPUTER -> {
                     // TODO best move
                 }
-                case AI_2 -> new Timer().schedule(new TimerTask() {
+                case RANDOM -> new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
                         computerRandomMove();
@@ -3057,7 +3088,7 @@ public class BoardGUI extends JPanel {
 
     public boolean movePiece(Piece piece, BoardCoordinate from, BoardCoordinate to) {
         isPremoving = !premoves.isEmpty();
-        if (!from.equals(to)) {
+        if (!from.equals(to) && piece != null) {
             boolean white = piece.isWhite();
 
             if (playAsWhite == white) {
@@ -3083,8 +3114,8 @@ public class BoardGUI extends JPanel {
                     }
                 } else {
                     OpponentType[] validOpponentTypes = {
-                            OpponentType.AI_1,
-                            OpponentType.AI_2,
+                            OpponentType.COMPUTER,
+                            OpponentType.RANDOM,
                             OpponentType.PLAYER
                     };
                     if (Arrays.asList(validOpponentTypes).contains(opponentType)) {
@@ -3126,7 +3157,7 @@ public class BoardGUI extends JPanel {
 
     public void offerDraw() {
         switch (opponentType) {
-            case AI_2, AI_1 -> {
+            case RANDOM, COMPUTER -> {
                 // TODO if ai is up material then dont (random chance like 20%) idk
             }
             case MANUAL, AUTO_SWAP -> {
@@ -3172,6 +3203,7 @@ public class BoardGUI extends JPanel {
     }
 
     public void swapPlaySide() {
+        premoves = new ArrayList<>();
         deselect();
         playAsWhite = !playAsWhite;
         view = view == BoardView.WHITE ? BoardView.BLACK : BoardView.WHITE;

@@ -6,6 +6,7 @@ import me.vlink102.personal.chess.internal.MenuScheme;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.packets.RequestOnline;
+import me.vlink102.personal.chess.ui.sidepanel.ChatGUI;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -27,9 +28,16 @@ public class Chess extends JLayeredPane {
     }
 
     private JScrollPane scrollPane;
+    private JScrollPane chatPane;
+    private ChatGUI.InputChat inputField;
+
 
     public JScrollPane getScrollPane() {
         return scrollPane;
+    }
+
+    public JScrollPane getChatPane() {
+        return chatPane;
     }
 
     public JFrame frame;
@@ -39,6 +47,11 @@ public class Chess extends JLayeredPane {
     private final Font def;
     private final Font bold;
     private final Font icons;
+    private final Font google;
+
+    public Font getDefaultFontInstance(float size) {
+        return def.deriveFont(size);
+    }
 
     public boolean shouldRelocateBackline = true;
     public boolean shouldShowAvailableSquares = true;
@@ -70,10 +83,12 @@ public class Chess extends JLayeredPane {
         InputStream def = classLoader.getResourceAsStream("fonts/montserrat-700.2213e098.ttf");
         InputStream bold = classLoader.getResourceAsStream("fonts/montserrat-800.2d88ac8b.ttf");
         InputStream icons = classLoader.getResourceAsStream("fonts/icons.ttf");
+        InputStream google = classLoader.getResourceAsStream("fonts/Roboto-Regular.ttf");
         try {
             this.def = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(def));
             this.bold = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(bold));
             this.icons = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(icons));
+            this.google = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(google));
             ge.registerFont(this.def);
             ge.registerFont(this.bold);
             ge.registerFont(this.icons);
@@ -84,12 +99,11 @@ public class Chess extends JLayeredPane {
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         if ((initialPieceSize * initialBoardSize) + sidePanelWidth + (boardToFrameOffset * 3) + offSet > screen.getWidth()) {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-            JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 100\n - Board size: 8\n\nClick OK to continue...", "Board too large, reduced game size",  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
-            initialPieceSize = 100;
-            initialBoardSize = 8;
+            JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 32\n - Board size: " + initialBoardSize + "\n\nClick OK to continue...", "Board too large, reduced piece size",  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
+            initialPieceSize = 32;
         }
         Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + sidePanelWidth + (boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (boardToFrameOffset * 2) + heightOffSet);
-        frame = new JFrame("Chess [vlink102] Github b16.6.3");
+        frame = new JFrame("Chess [vlink102] Github v" + GameSelector.VERSION);
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -98,17 +112,22 @@ public class Chess extends JLayeredPane {
         scrollPane = new JScrollPane();
         scrollPane.setViewportView(board.getSidePanelGUI());
         scrollPane.setPreferredSize(new Dimension(2000, 2000));
-        scrollPane.setSize(sidePanelWidth, 400);
+        scrollPane.setSize(sidePanelWidth, (int) (board.getHeight() * (3f/5f)) - 20);
         scrollPane.setWheelScrollingEnabled(true);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setRequestFocusEnabled(true);
 
-        // TODO DO this for chat panel ( scroll )
-        // TODO Add birthdate and phone to profile + db
-        // TODO add register to login page
-        // TODO do premove logic against other player (packets)
-        // TODO Condense profile request to 1 request (quicker)
+        chatPane = new JScrollPane();
+        chatPane.setViewportView(board.getChatGUI());
+        chatPane.setPreferredSize(new Dimension(2000, 2000));
+        chatPane.setSize(sidePanelWidth, board.getHeight() / 5);
+        chatPane.setWheelScrollingEnabled(true);
+        chatPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        chatPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        chatPane.setRequestFocusEnabled(true);
+
+        inputField = new ChatGUI.InputChat(30, board.getChatGUI(), this);
 
 
         add(board, DEFAULT_LAYER);
@@ -116,13 +135,10 @@ public class Chess extends JLayeredPane {
         add(board.getCaptureGUI(), DEFAULT_LAYER);
         add(board.getCoordinateGUI(), DEFAULT_LAYER);
         add(board.getIconDisplayGUI(), POPUP_LAYER);
-        add(board.getChatGUI(), DEFAULT_LAYER);
+        add(chatPane, DEFAULT_LAYER);
+        add(inputField, POPUP_LAYER);
 
-        updateSidePanelBounds();
-        updateChatPanelBounds();
-        updateBoardBounds();
-        updateCoordinatePanelBounds();
-        updateCapturePanelBounds();
+        updateAllBounds();
 
         frame.getContentPane().add(this);
         frame.setResizable(true);
@@ -149,6 +165,7 @@ public class Chess extends JLayeredPane {
                     refreshWindow();
                 }
             }
+
         });
 
         frame.addWindowListener(new WindowAdapter() {
@@ -165,13 +182,13 @@ public class Chess extends JLayeredPane {
 
         frame.setJMenuBar(getMenu(challenge));
 
-        frame.setSize(initialSize);
+        frame.getContentPane().setSize(initialSize);
+        refreshWindow();
+        refreshGUI();
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         board.requestFocus();
-        refreshWindow();
-        refreshGUI();
     }
 
     public void refreshWindow() {
@@ -179,17 +196,19 @@ public class Chess extends JLayeredPane {
 
         Dimension dimension = new Dimension(board.getPieceSize() * board.getBoardSize(), board.getPieceSize() * board.getBoardSize());
         board.setPreferredSize(dimension);
+        updateAllBounds();
+        board.getOnlineAssets().updateSavedImage(board);
 
+        board.repaint();
+        board.displayPieces();
+    }
+
+    public void updateAllBounds() {
         updateBoardBounds();
         updateSidePanelBounds();
         updateCoordinatePanelBounds();
         updateCapturePanelBounds();
         updateChatPanelBounds();
-
-        board.getOnlineAssets().updateSavedImage(board);
-
-        board.repaint();
-        board.displayPieces();
     }
 
     public void updateBoardBounds() {
@@ -198,7 +217,11 @@ public class Chess extends JLayeredPane {
     }
 
     public void updateSidePanelBounds() {
-        scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (3f/5f)) - 20);
+        if (board.getChatGUI() != null) {
+            scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (3f/5f)) - 45);
+        } else {
+            scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (4f/5f)));
+        }
     }
 
     public void updateCapturePanelBounds() {
@@ -210,7 +233,10 @@ public class Chess extends JLayeredPane {
     }
 
     public void updateChatPanelBounds() {
-        board.getChatGUI().setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - (boardToFrameOffset - heightOffSet) - (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), board.getHeight() / 5);
+        if (board.getChatGUI() != null) {
+            chatPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - (boardToFrameOffset - heightOffSet) - (board.getHeight() / 5) - 25, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), board.getHeight() / 5);
+            inputField.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - boardToFrameOffset + heightOffSet - 25, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), 25);
+        }
     }
 
     private double lastSize;
@@ -220,6 +246,7 @@ public class Chess extends JLayeredPane {
         sidePanelWidth = Math.min(board.getWidth() / 2, frame.getContentPane().getWidth() - ((boardToFrameOffset * 3) + board.getWidth() + offSet));
         board.setFont(def.deriveFont((float) board.getPieceSize() / 6));
         board.getSidePanelGUI().updateFonts();
+        board.getChatGUI().updateFonts();
         board.getCoordinateGUI().updateFonts();
         board.getOnlineAssets().updatePieceDesigns(board);
         board.getOnlineAssets().loadCapturedPieces(board);
@@ -231,6 +258,7 @@ public class Chess extends JLayeredPane {
 
         board.repaint();
         board.getSidePanelGUI().repaint();
+        board.getChatGUI().repaint();
         board.getCaptureGUI().repaint();
         board.displayPieces();
     }
@@ -293,10 +321,10 @@ public class Chess extends JLayeredPane {
         random.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.setOpponent(BoardGUI.OpponentType.AI_2);
+                board.setOpponent(BoardGUI.OpponentType.RANDOM);
             }
         });
-        if (board.getOpponentType() == BoardGUI.OpponentType.AI_2) {
+        if (board.getOpponentType() == BoardGUI.OpponentType.RANDOM) {
             random.setSelected(true);
         }
         opponentGroup.add(random);
@@ -307,10 +335,10 @@ public class Chess extends JLayeredPane {
         AI.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.setOpponent(BoardGUI.OpponentType.AI_1);
+                board.setOpponent(BoardGUI.OpponentType.COMPUTER);
             }
         });
-        if (board.getOpponentType() == BoardGUI.OpponentType.AI_1) {
+        if (board.getOpponentType() == BoardGUI.OpponentType.COMPUTER) {
             AI.setSelected(true);
         }
         opponentGroup.add(AI);
@@ -894,17 +922,33 @@ public class Chess extends JLayeredPane {
         popUp(this, message, title, highlights);
         requestFocus();
     }
-    
-    public static JLayeredPane popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
-        return parentComponent;
+
+    public int createPopUp(String message, String title, Move.InfoIcons highlights, Object[] options, int defaultOption) {
+        return popUp(this, message, title, highlights, options, defaultOption);
     }
 
-    public static JLayeredPane popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights) {
+    public int createPopUp(String message, String title, Move.MoveHighlights highlights, Object[] options, int defaultOption) {
+        return popUp(this, message, title, highlights, options, defaultOption);
+    }
+
+    public static void popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+    }
+
+    public static int popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights, Object[] options, int defaultOption) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        return JOptionPane.showOptionDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon, options, options[defaultOption]);
+    }
+
+    public static int popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights, Object[] options, int defaultOption) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        return JOptionPane.showOptionDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon, options, options[defaultOption]);
+    }
+
+    public static void popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights) {
         ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
         JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
-        return parentComponent;
     }
 
     public Font getDef() {
@@ -917,5 +961,9 @@ public class Chess extends JLayeredPane {
 
     public Font getIcons() {
         return icons;
+    }
+
+    public Font getGoogle() {
+        return google;
     }
 }

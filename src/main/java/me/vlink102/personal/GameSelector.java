@@ -2,7 +2,9 @@ package me.vlink102.personal;
 
 import com.github.weisj.darklaf.LafManager;
 import com.github.weisj.darklaf.theme.DarculaTheme;
+import com.neovisionaries.i18n.CountryCode;
 import me.vlink102.personal.chess.ChessMenu;
+import me.vlink102.personal.chess.internal.IconListRenderer;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.minesweeper.MSMenu;
 
@@ -11,7 +13,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
 
+import static me.vlink102.personal.chess.ChessMenu.FLAGS;
+
 public class GameSelector {
+    public static final String VERSION = "17.0.1";
+
     private static Image imageIcon;
     public static JFrame frame;
     private static final HashMap<Game, Menu> menuInstances = new HashMap<>();
@@ -29,12 +35,15 @@ public class GameSelector {
         LafManager.install(new DarculaTheme());
         LafManager.setDecorationsEnabled(true);
 
+        locationJComboBox = getLocationJComboBox();
+
         frame = new JFrame("Game Selector");
 
         JPanel panel = new JPanel();
         panel.add(new MenuButton(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                frame.setVisible(false);
                 if (!menuInstances.containsKey(Game.CHESS)) {
                     ChessMenu chessMenu = new ChessMenu();
                     menuInstances.put(Game.CHESS, chessMenu);
@@ -69,6 +78,17 @@ public class GameSelector {
         frame.requestFocus();
     }
 
+    public static JComboBox<CountryCode> locationJComboBox;
+
+    private static JComboBox<CountryCode> getLocationJComboBox() {
+        JComboBox<CountryCode> locationComboBox = new JComboBox<>();
+        locationComboBox.setRenderer(new IconListRenderer(FLAGS));
+        for (CountryCode value : CountryCode.values()) {
+            locationComboBox.addItem(value);
+        }
+        return locationComboBox;
+    }
+
     public static void main(String[] args) {
         EventQueue.invokeLater(GameSelector::initUI);
     }
@@ -76,7 +96,6 @@ public class GameSelector {
     public static void closeMenuInstance(Game game) {
         menuInstances.remove(game);
     }
-
 
     public static Image getImageIcon() {
         return imageIcon;

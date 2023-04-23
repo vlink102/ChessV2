@@ -1,10 +1,13 @@
 package me.vlink102.personal.chess.internal.networking;
 
+import com.mysql.cj.conf.PropertyDefinitions;
+import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.internal.Move;
+import me.vlink102.personal.chess.internal.SwingLink;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Accept;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Decline;
@@ -12,6 +15,7 @@ import me.vlink102.personal.chess.pieces.Piece;
 import org.json.JSONObject;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -42,6 +46,35 @@ public class DataThread extends Thread {
                 if (data.startsWith("{")) {
                     JSONObject object = new JSONObject(data);
                     Set<String> keys = object.keySet();
+                    if (keys.contains("closed-id")) {
+                        String reason = object.getString("reason");
+                        String title = object.getString("closed-id");
+
+                        JOptionPane.showMessageDialog(null, reason, "Connection lost: " + title, JOptionPane.INFORMATION_MESSAGE, null);
+                        System.exit(0);
+                    }
+                    if (keys.contains("version-control-result")) {
+                        boolean validVersion = object.getBoolean("version-control-result");
+                        if (!validVersion) {
+                            String correctVersion = object.getString("correct-version");
+                            String newLink = object.getString("update-link");
+                            JLabel link = new JLabel("You are using an outdated version!\n\nClient: " + GameSelector.VERSION + "\nServer: " + correctVersion + "\n\nUpdate: ");
+                            SwingLink swingLink = new SwingLink(" - " + newLink, newLink);
+                            JPanel updatePanel = new JPanel();
+                            updatePanel.setLayout(new BoxLayout(updatePanel, BoxLayout.Y_AXIS));
+                            updatePanel.add(Box.createRigidArea(new Dimension(updatePanel.getWidth(), 20)));
+                            updatePanel.add(link);
+                            updatePanel.add(swingLink);
+                            updatePanel.add(Box.createRigidArea(new Dimension(updatePanel.getWidth(), 20)));
+                            JOptionPane.showMessageDialog(null, updatePanel, "Invalid Version", JOptionPane.ERROR_MESSAGE, new ImageIcon(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE).getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
+                            System.exit(0);
+                        }
+                        boolean banned = object.getBoolean("banned");
+                        if (banned) {
+                            JOptionPane.showMessageDialog(null, "You are banned", "Unable to connect", JOptionPane.INFORMATION_MESSAGE, null);
+                            System.exit(0);
+                        }
+                    }
                     if (keys.contains("online_players")) {
                         onlinePlayers = object.getJSONObject("online_players");
                         onlinePlayers.remove(ChessMenu.IDENTIFIER);

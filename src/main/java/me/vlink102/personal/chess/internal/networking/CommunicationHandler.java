@@ -3,11 +3,15 @@ package me.vlink102.personal.chess.internal.networking;
 import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.networking.packets.Online;
 import me.vlink102.personal.chess.internal.networking.packets.RequestOnline;
+import me.vlink102.personal.chess.internal.networking.packets.VersionControl;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.sql.*;
-import java.util.Objects;
+import java.util.*;
+import java.util.List;
 
 
 public class CommunicationHandler {
@@ -19,6 +23,10 @@ public class CommunicationHandler {
     private static int port;
 
     public static DataThread thread;
+
+    public static HashMap<String, ProfileCache> cachedProfiles = new HashMap<>();
+
+    public record ProfileCache(String profilePic, String about, String name, int age, String location) {}
 
     public CommunicationHandler(String user, String host, String dbName, int port) {
         CommunicationHandler.user = user;
@@ -60,6 +68,7 @@ public class CommunicationHandler {
         }
     }
 
+    @Deprecated
     public static int getAge(String uuid) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
         try (Connection connection = DriverManager.getConnection(url);
@@ -75,6 +84,7 @@ public class CommunicationHandler {
         }
     }
 
+    @Deprecated
     public static String getLocation(String uuid) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
         try (Connection connection = DriverManager.getConnection(url);
@@ -90,6 +100,7 @@ public class CommunicationHandler {
         }
     }
 
+    @Deprecated
     public static String getAboutMe(String uuid) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
         try (Connection connection = DriverManager.getConnection(url);
@@ -157,6 +168,21 @@ public class CommunicationHandler {
 
     }
 
+    public static Object get(String uuid, String column) {
+        String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
+        try (Connection connection = DriverManager.getConnection(url);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM `PLAYERS` WHERE `uuid`='"+ uuid +"';");
+             ResultSet set = statement.executeQuery()) {
+            if (set.next()) {
+                return set.getObject(column);
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void setString(String column, String value) {
         String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
         try (Connection connection = DriverManager.getConnection(url);
@@ -177,20 +203,64 @@ public class CommunicationHandler {
         }
     }
 
+    public static ProfileCache getDatabaseProfile(String uuid, boolean shouldRegister) {
+        String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
+        try (Connection connection = DriverManager.getConnection(url);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM `PLAYERS` WHERE `uuid`='"+ uuid +"';");
+             ResultSet set = statement.executeQuery()) {
+            if (set.next()) {
+                ProfileCache cache = new ProfileCache(set.getString("pfp"), set.getString("about"), set.getString("name"), set.getInt("age"), set.getString("location"));
+                if (shouldRegister) {
+                    cachedProfiles.put(uuid, cache);
+                }
+                return cache;
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void loadProfiles() {
+        String url = "jdbc:mysql://" + user + ":" + pws + "@" + host + ":" + port + "/" + dbName;
+        try (Connection connection = DriverManager.getConnection(url);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM `PLAYERS`;");
+             ResultSet set = statement.executeQuery()) {
+            while (set.next()) {
+                cachedProfiles.put(set.getString("uuid"), new ProfileCache(set.getString("pfp"), set.getString("about"), set.getString("name"), set.getInt("age"), set.getString("location")));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ProfileCache getProfile(String uuid) {
+        if (cachedProfiles.containsKey(uuid)) {
+            return cachedProfiles.get(uuid);
+        }
+        return getDatabaseProfile(uuid, true);
+    }
+
+    public static ProfileCache getProfileUpdated(String uuid) {
+        return getDatabaseProfile(uuid, true);
+    }
+
     public void establishConnection(String uuid) {
         try {
-            InetAddress address = InetAddress.getByName("127.0.0.1");
+            InetAddress address = InetAddress.getByName("82.69.40.208");
             Socket socket = new Socket(address.getHostName(), 55285);
 
             thread = new DataThread(socket);
             thread.start();
 
             thread.sendPacket(new Online(uuid));
+            thread.sendPacket(new VersionControl(uuid));
             thread.sendPacket(new RequestOnline(uuid));
 
-        } catch (ConnectException e) {
-            System.out.println("Connection refused: " + e.getCause());
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.out.println("Failed to connect: " + e.getCause());
+            JOptionPane.showMessageDialog(null, "Could not connect to game server: " + e.getMessage() + " (" + e.getCause() + ")", "Server error", JOptionPane.ERROR_MESSAGE, null);
             throw new RuntimeException(e);
         }
 
