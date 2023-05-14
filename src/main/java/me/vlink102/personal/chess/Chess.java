@@ -10,6 +10,7 @@ import me.vlink102.personal.chess.ui.sidepanel.ChatGUI;
 import org.json.JSONObject;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -64,7 +65,17 @@ public class Chess extends JLayeredPane {
     public int offSet = 0;
     public int heightOffSet = 0;
 
-    public static final MenuScheme menuScheme = new MenuScheme(new Color(49,46,43), new Color(39,37,34), new Color(31,30,27), new Color(43,41,39), new Color(64,61,57), new Color(152,151,149), new Color(195, 194, 194), new Color(149, 148, 147));
+    public static final MenuScheme menuScheme = new MenuScheme(
+            new Color(49,46,43),
+            new Color(39,37,34),
+            new Color(31,30,27),
+            new Color(43,41,39),
+            new Color(64,61,57),
+            new Color(152,151,149),
+            new Color(195, 194, 194),
+            new Color(149, 148, 147),
+            new Color(88,87,85)
+    );
 
     public enum BoardLayout {
         CHESS960,
@@ -741,6 +752,7 @@ public class Chess extends JLayeredPane {
         hintStyles.add(moveStyles);
         return hintStyles;
     }
+
 
     public JMenuBar getMenu(boolean challenge) {
         JMenuBar settings = new JMenuBar();

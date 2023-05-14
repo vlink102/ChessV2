@@ -5,11 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="stuff">
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/CapturedPieces.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/BoardGUI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/Chess.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/classroom/ClassroomGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/classroom/ClassroomGUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/sidepanel/ChatGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/sidepanel/ChatGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/MenuScheme.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/internal/MenuScheme.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/interactive/PieceInteraction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/interactive/PieceInteraction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/sidepanel/CaptureGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/sidepanel/CaptureGUI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/sidepanel/HistoryGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/vlink102/personal/chess/ui/sidepanel/HistoryGUI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -138,6 +140,9 @@
     </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="7a728a80-ad3f-4cfb-9eb5-8e32535b3759" name="Changes" comment="" />
@@ -187,7 +192,7 @@
       <workItem from="1682170684943" duration="41879000" />
       <workItem from="1683925160024" duration="3925000" />
       <workItem from="1683999142529" duration="4185000" />
-      <workItem from="1684071991660" duration="7627000" />
+      <workItem from="1684071991660" duration="23728000" />
     </task>
     <task id="LOCAL-00001" summary="stuff">
       <created>1674428968387</created>
@@ -357,7 +362,14 @@
       <option name="project" value="LOCAL" />
       <updated>1682286818195</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="stuff">
+      <created>1684081348912</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1684081348912</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

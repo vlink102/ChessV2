@@ -202,6 +202,11 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         }
     }
 
+    @Override
+    public void mouseMoved(MouseEvent e) {
+
+    }
+
     private void updateComponentDragPosition(MouseEvent e) {
         if (movedPiece == null) return;
 
@@ -218,7 +223,4 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         movedPiece.setLocation(x - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset + chess.offSet, y - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset - chess.heightOffSet);
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
-    }
 }

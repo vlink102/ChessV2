@@ -1,21 +1,19 @@
 package me.vlink102.personal.chess.ui.sidepanel;
 
-import com.github.weisj.darklaf.ui.tooltip.DarkDefaultToolTipBorder;
+import com.sun.jdi.NativeMethodException;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
-import org.w3c.dom.css.Rect;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.security.KeyPair;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +39,24 @@ public class HistoryGUI extends JPanel {
             public void mousePressed(MouseEvent e) {
                 Component c = getComponentAt(e.getPoint());
                 if (c instanceof JLabel label) {
-                    int val = Integer.parseInt(label.getText());
-                    boardGUI.setSelectedMove(val);
+                    try {
+                        int val = Integer.parseInt(label.getText());
+                        boardGUI.setSelectedMove(val);
+                    } catch (NumberFormatException exception) {
+                        boardGUI.setSelectedMove(boardGUI.getHistory().size());
+                    }
+                }
+            }
+        });
+
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                Component c = getComponentAt(e.getPoint());
+                if (c instanceof JLabel) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                } else {
+                    setCursor(Cursor.getDefaultCursor());
                 }
             }
         });
@@ -120,9 +134,20 @@ public class HistoryGUI extends JPanel {
             Rectangle moveRect = new Rectangle(25, i * (25), 25, 25);
             Rectangle rectangle = new Rectangle(50, i * (25), getWidth() / 4, 25);
             Rectangle rectangle1 = new Rectangle((getWidth() / 4) + (50), i * (25), getWidth() / 4, 25);
+
             if (i % 2 == 0) {
                 g.setColor(Chess.menuScheme.pieceHistoryAlternateColor());
                 g.fillRect(0, i * (25), getWidth(), 25);
+            }
+            if (j == boardGUI.getSelectedMove()) {
+                g.setColor(Chess.menuScheme.selectedMove());
+                g.fillRoundRect((int) rectangle.getX() - 10, (int) rectangle.getY(), (int) rectangle.getWidth() - 30, (int) rectangle.getHeight(), 10, 10);
+                g.setColor(Chess.menuScheme.moveNumberColor());
+            }
+            if (j+1 == boardGUI.getSelectedMove()) {
+                g.setColor(Chess.menuScheme.selectedMove());
+                g.fillRoundRect((int) rectangle1.getX() - 10, (int) rectangle1.getY(), (int) rectangle1.getWidth() - 30, (int) rectangle1.getHeight(), 10, 10);
+                g.setColor(Chess.menuScheme.moveNumberColor());
             }
             g.setColor(Chess.menuScheme.moveNumberColor());
             CoordinateGUI.drawLeftString(g, i + ".", moveRect, moveNumberFont);
@@ -133,7 +158,6 @@ public class HistoryGUI extends JPanel {
                 g.setColor(moved);
             }
 
-            int rgba = (moved.getRGB() << 8) | moved.getAlpha();
             addButton(rectangle, j);
             CoordinateGUI.drawLeftString(g, move.toString(), rectangle, moveFont);
 

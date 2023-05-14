@@ -1,11 +1,10 @@
 package me.vlink102.personal.chess;
 
-import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.*;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.packets.game.Abort;
-import me.vlink102.personal.chess.internal.networking.packets.game.draw.OfferDraw;
 import me.vlink102.personal.chess.internal.networking.packets.game.Resign;
+import me.vlink102.personal.chess.internal.networking.packets.game.draw.OfferDraw;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.SpecialPiece;
 import me.vlink102.personal.chess.pieces.generic.*;
@@ -14,23 +13,24 @@ import me.vlink102.personal.chess.pieces.special.asian.DragonKing;
 import me.vlink102.personal.chess.pieces.special.historical.*;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
 import me.vlink102.personal.chess.ui.IconDisplayGUI;
+import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 import me.vlink102.personal.chess.ui.sidepanel.CaptureGUI;
 import me.vlink102.personal.chess.ui.sidepanel.ChatGUI;
 import me.vlink102.personal.chess.ui.sidepanel.HistoryGUI;
-import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.security.Key;
-import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.*;
 
 public class BoardGUI extends JPanel {
     private final boolean challenge;
     private final String opponentUUID;
     private final long gameID;
+
+    private int randomBotDelay;
 
     private volatile boolean isPremoving;
 
@@ -68,7 +68,7 @@ public class BoardGUI extends JPanel {
     private Move.MoveHighlights[][] moveHighlights;
     private Move.InfoIcons[][] gameHighlights;
     private ColorScheme.StaticColors[][] staticHighlights;
-    private List<Piece> capturedPieces;
+    private CapturedPieces capturedPieces;
     private boolean playAsWhite;
     private BoardView view;
 
@@ -188,7 +188,7 @@ public class BoardGUI extends JPanel {
         this.moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
         this.gameHighlights = new Move.InfoIcons[boardSize][boardSize];
         this.staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
-        this.capturedPieces = new ArrayList<>();
+        this.capturedPieces = new CapturedPieces();
 
         this.halfMoveClock = 0;
         this.fullMoveCount = 1;
@@ -251,6 +251,7 @@ public class BoardGUI extends JPanel {
         this.moveMethod = moveMethod;
         this.captureStyle = captureStyle;
         this.moveStyle = moveStyle;
+        this.randomBotDelay = 2000;
         this.historyGUI = new HistoryGUI(chess,this);
         this.captureGUI = new CaptureGUI(this);
         this.coordinateGUI = new CoordinateGUI(chess, this);
@@ -1533,14 +1534,15 @@ public class BoardGUI extends JPanel {
     }
 
     public void showHangingPieces() {
+        Piece[][] board = getVisibleGamePieces();
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                if (gamePieces[i][j] != null) {
-                    if (isHanging(gamePieces, new BoardCoordinate(i, j, this))) {
-                        if (gamePieces[i][j].isWhite() == playAsWhite) {
+                if (board[i][j] != null) {
+                    if (isHanging(board, new BoardCoordinate(i, j, this))) {
+                        if (board[i][j].isWhite() == playAsWhite) {
                             highlightedSquares[i][j] = Move.MoveHighlights.HANGING_BAD;
                             highlightIconAccompaniment[i][j] = Move.MoveHighlights.HANGING_BAD;
-                        } else if (gamePieces[i][j].isWhite() != playAsWhite) {
+                        } else if (board[i][j].isWhite() != playAsWhite) {
                             highlightedSquares[i][j] = Move.MoveHighlights.HANGING_GOOD;
                             highlightIconAccompaniment[i][j] = Move.MoveHighlights.HANGING_GOOD;
                         }
@@ -1551,11 +1553,12 @@ public class BoardGUI extends JPanel {
     }
 
     public void showTrades(boolean points) {
+        Piece[][] board = getVisibleGamePieces();
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                if (gamePieces[i][j] != null) {
+                if (board[i][j] != null) {
                     BoardCoordinate tile = new BoardCoordinate(i, j, this);
-                    TradeType type = tradeOff(gamePieces, tile, whiteTurn, points);
+                    TradeType type = tradeOff(board, tile, whiteTurn, points);
                     if (type != null) {
                         switch (type) {
                             case BLACK -> {
@@ -1769,7 +1772,7 @@ public class BoardGUI extends JPanel {
     }
 
     public void highlightPremoves() {
-        moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
+        removePremoveHighlights();
         for (Move.SimpleMove premove : premoves) {
             BoardCoordinate from = premove.from();
             BoardCoordinate to = premove.to();
@@ -2002,6 +2005,7 @@ public class BoardGUI extends JPanel {
                     }
                 }
 
+
                 if (staticHighlights[row][col] != null) {
                     g.setColor(staticHighlights[row][col].getColor());
                     g.fillRect(c1 * pieceSize, r1 * pieceSize, pieceSize, pieceSize);
@@ -2147,15 +2151,15 @@ public class BoardGUI extends JPanel {
     }
 
     public Piece[][] getVisibleGamePieces() {
-        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
-        for (Move.SimpleMove premove : premoves) {
-            newBoard = moveResult(newBoard, premove.to(), premove.from(), premove.to());
-        }
-
-        if (selectedMove != snapshots.size()) {
+        if (selectedMove != snapshots.size() - 1) {
             return snapshots.get(selectedMove);
+        } else {
+            Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+            for (Move.SimpleMove premove : premoves) {
+                newBoard = moveResult(newBoard, premove.to(), premove.from(), premove.to());
+            }
+            return newBoard;
         }
-        return newBoard;
     }
 
     public Piece[][] getSide(boolean white, Piece[][] board) {
@@ -2376,10 +2380,10 @@ public class BoardGUI extends JPanel {
 
     public List<Move> availableMoves(Piece[][] board, Piece piece, BoardCoordinate coordinate, boolean isCheckingForMate) {
         List<Move> moves = new ArrayList<>();
-        if (piece == null || coordinate == null || gameOver != null) {
+        if (piece == null || coordinate == null) {
             return moves;
         }
-        if (piece != gamePieces[coordinate.row()][coordinate.col()]) return moves;
+        if (piece != board[coordinate.row()][coordinate.col()]) return moves;
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
                 BoardCoordinate possibleTile = new BoardCoordinate(i, j, this);
@@ -2618,7 +2622,10 @@ public class BoardGUI extends JPanel {
         gamePieces[takes.row()][takes.col()] = null;
         gamePieces[to.row()][to.col()] = moved;
 
-        capturedPieces.add(taken);
+        if (taken != null) {
+            capturedPieces.add(taken);
+            captureGUI.updatePanel();
+        }
 
         Move.Check check = null;
         if (kingIsInCheck(gamePieces, !piece.isWhite())) {
@@ -2904,6 +2911,9 @@ public class BoardGUI extends JPanel {
 
     public void createGameOverScreen(GameOverType type) {
         historyGUI.repaint();
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        snapshots.add(newBoard);
+        premoves.clear();
         if (type != null) {
             gameHighlights = new Move.InfoIcons[boardSize][boardSize];
             staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
@@ -3040,13 +3050,8 @@ public class BoardGUI extends JPanel {
     }
 
     public void highlightChecks(Piece[][] board) {
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                if (staticHighlights[i][j] == ColorScheme.StaticColors.CHECK) {
-                    staticHighlights[i][j] = null;
-                }
-            }
-        }
+        staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
+
         if (kingIsInCheck(board, true)) {
             BoardCoordinate king = getKing(getSide(true, board));
             staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.CHECK;
@@ -3059,15 +3064,25 @@ public class BoardGUI extends JPanel {
         if (kingIsCheckmated(board, true)) {
             BoardCoordinate king = getKing(getSide(true, board));
             staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.MATE;
+            gameHighlights[king.row()][king.col()] = Move.InfoIcons.CHECKMATE_WHITE;
+            BoardCoordinate other = getKing(getSide(false, board));
+            gameHighlights[other.row()][other.col()] = Move.InfoIcons.WINNER;
+            return;
         }
         if (kingIsCheckmated(board, false)) {
             BoardCoordinate king = getKing(getSide(false, board));
             staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.MATE;
+            gameHighlights[king.row()][king.col()] = Move.InfoIcons.CHECKMATE_BLACK;
+            BoardCoordinate other = getKing(getSide(true, board));
+            gameHighlights[other.row()][other.col()] = Move.InfoIcons.WINNER;
+            return;
         }
+
+        gameHighlights = new Move.InfoIcons[boardSize][boardSize];
     }
 
     public void highlightChecks() {
-        highlightChecks(gamePieces);
+        highlightChecks(snapshots.get(selectedMove));
     }
 
 
@@ -3095,7 +3110,6 @@ public class BoardGUI extends JPanel {
             displayPieces();
             repaint();
         }
-        historyGUI.repaint();
         setSelectedMove(history.size());
     }
 
@@ -3125,7 +3139,7 @@ public class BoardGUI extends JPanel {
                     public void run() {
                         computerRandomMove();
                     }
-                }, 250);
+                }, randomBotDelay);
                 case AUTO_SWAP -> new Timer().schedule(new TimerTask() {
                     @Override
                     public void run() {
@@ -3141,14 +3155,12 @@ public class BoardGUI extends JPanel {
             displayPieces();
             repaint();
         }
-        historyGUI.repaint();
         setSelectedMove(history.size());
     }
 
-
     public boolean movePiece(Piece piece, BoardCoordinate from, BoardCoordinate to) {
         isPremoving = !premoves.isEmpty();
-        if (!from.equals(to) && piece != null && selectedMove == history.size()) {
+        if (!from.equals(to) && piece != null && gameOver == null) {
             boolean white = piece.isWhite();
 
             if (playAsWhite == white) {
@@ -3359,18 +3371,29 @@ public class BoardGUI extends JPanel {
         selectedMove = Math.min(selectedMove, history.size());
         selectedMove = Math.max(0, selectedMove);
         this.selectedMove = selectedMove;
-        premoves = new ArrayList<>();
 
-
-        highlightChecks();
+        highlightChecks(snapshots.get(selectedMove));
         Move last = history.get(Math.max(0, selectedMove -1));
         if (last.getType().equals(Move.MoveType.MOVE) || last.getType().equals(Move.MoveType.CASTLE)) {
             moveHighlight(last.getFrom(), last.getTo());
         }
 
+        gameHighlights = new Move.InfoIcons[boardSize][boardSize];
+
         displayPieces();
+        historyGUI.repaint();
         repaint();
     }
 
+    public void setRandomBotDelay(int randomBotDelay) {
+        this.randomBotDelay = randomBotDelay;
+    }
 
+    public int getSelectedMove() {
+        return selectedMove;
+    }
+
+    public CapturedPieces getCapturedPieces() {
+        return capturedPieces;
+    }
 }
