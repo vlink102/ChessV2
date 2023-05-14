@@ -269,6 +269,68 @@ public class ClassroomGUI extends JPanel {
         return BoardGUI.translateBoard(board, boardSize).toString();
     }
 
+    public static Piece[][] generateBoard(String FEN, int boardSize, BoardGUI boardGUI) {
+        Piece[][] gamePieces = new Piece[boardSize][boardSize];
+        String[] board = FEN.split("/");
+
+        for (int rank = 0; rank < boardSize; rank++) {
+            String row = board[(boardSize - 1) - rank];
+            String[] chars = row.split("");
+            StringBuilder parseEmpty = new StringBuilder();
+
+            for (int i = 0; i < chars.length; i++) {
+                String s = chars[i];
+
+                if (s.equals(")")) {
+                    continue;
+                }
+                if (s.equals("(")) {
+                    String number = "";
+                    for (int j = 1; j < chars.length; j++) {
+                        if (Character.isDigit(chars[j + i].toCharArray()[0])) {
+                            number += Integer.parseInt(chars[j + i]);
+                        } else {
+                            if (chars[j + i].equals(")")) {
+                                i += j;
+                            }
+                            break;
+                        }
+                    }
+                    parseEmpty.append(" ".repeat(Integer.parseInt(number)));
+                } else {
+                    if (s.matches("\\d")) {
+                        parseEmpty.append(" ".repeat(Integer.parseInt(s)));
+                    } else {
+                        parseEmpty.append(s);
+                    }
+                }
+            }
+            String[] newRow = parseEmpty.toString().split("");
+            for (int i = 0; i < boardSize; i++) {
+                boolean isUpper = newRow[i].matches("[A-Z]");
+                switch (newRow[i].toLowerCase()) {
+                    case "r" -> gamePieces[rank][i] = new Rook(boardGUI, isUpper, new BoardCoordinate(rank, i, boardGUI));
+                    case "n" -> gamePieces[rank][i] = new Knight(boardGUI, isUpper);
+                    case "b" -> gamePieces[rank][i] = new Bishop(boardGUI, isUpper);
+                    case "q" -> gamePieces[rank][i] = new Queen(boardGUI, isUpper);
+                    case "k" -> gamePieces[rank][i] = new King(boardGUI, isUpper);
+                    case "p" -> gamePieces[rank][i] = new Pawn(boardGUI, isUpper);
+                    case " " -> gamePieces[rank][i] = null;
+                    case "a" -> gamePieces[rank][i] = new Amazon(boardGUI, isUpper);
+                    case "c" -> gamePieces[rank][i] = new Camel(boardGUI, isUpper);
+                    case "e" -> gamePieces[rank][i] = new Elephant(boardGUI, isUpper);
+                    case "s" -> gamePieces[rank][i] = new Princess(boardGUI, isUpper);
+                    case "m" -> gamePieces[rank][i] = new Man(boardGUI, isUpper);
+                    case "i" -> gamePieces[rank][i] = new Minister(boardGUI, isUpper);
+                    case "h" -> gamePieces[rank][i] = new Empress(boardGUI, isUpper);
+                    case "y" -> gamePieces[rank][i] = new DragonKing(boardGUI, isUpper);
+                    case "u" -> gamePieces[rank][i] = new DragonHorse(boardGUI, isUpper);
+                }
+            }
+        }
+        return gamePieces;
+    }
+
     public void loadFEN(String FEN) {
         if (FEN.split(" ").length > 0) {
             FEN = FEN.split(" ")[0];

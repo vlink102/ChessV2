@@ -1,12 +1,21 @@
 package me.vlink102.personal.chess.ui.sidepanel;
 
+import com.github.weisj.darklaf.ui.tooltip.DarkDefaultToolTipBorder;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
+import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
+import org.w3c.dom.css.Rect;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,14 +28,65 @@ public class HistoryGUI extends JPanel {
     public HistoryGUI(Chess chess, BoardGUI boardGUI) {
         this.boardGUI = boardGUI;
         this.chess = chess;
+
         setOpaque(true);
         setBackground(Chess.menuScheme.darkerBackground());
+        setBorder(new EmptyBorder(3, 5, 3, 5));
+        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), (int) getBounds().getSize().getHeight()));
+
         updateFonts();
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                Component c = getComponentAt(e.getPoint());
+                if (c instanceof JLabel label) {
+                    int val = Integer.parseInt(label.getText());
+                    boardGUI.setSelectedMove(val);
+                }
+            }
+        });
     }
 
     public void updateFonts() {
         this.moveNumberFont = chess.getDef().deriveFont((float) 12);
         this.moveFont = chess.getDef().deriveFont((float) 14);
+    }
+
+    /*
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), boardGUI.getHistory().size() * 30));
+        revalidate();
+    }
+     */
+    public List<JPanel> getPanels() {
+        List<JPanel> panels = new ArrayList<>();
+        List<Move> history = boardGUI.getHistory();
+        for (int i = 0; i < history.size(); i++) {
+            if (i % 2 == 0) {
+                if (history.size() > i + 1) {
+                    panels.add(ChessMenu.CreateChessGame.getCouplePanel(new JLabel(history.get(i).toString()), new JLabel(history.get(i + 1).toString()), true));
+                } else {
+                    panels.add(ChessMenu.CreateChessGame.getCouplePanel(new JLabel(history.get(i).toString()), new JLabel(), true));
+                }
+            }
+        }
+        return panels;
+    }
+
+    public void updateHistory() {
+        /*
+        removeAll();
+        List<JPanel> panels = getPanels();
+        for (JPanel panel : panels) {
+            panel.setVisible(true);
+            add(panel);
+        }
+        revalidate();
+
+         */
     }
 
     @Override
@@ -37,6 +97,8 @@ public class HistoryGUI extends JPanel {
         List<Move> moveList = new ArrayList<>(boardGUI.getHistory());
 
         setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), ((moveList.size() / 2) * 25) + 50));
+
+        removeAll();
 
         int i = 0;
         int j = 0;
@@ -65,22 +127,35 @@ public class HistoryGUI extends JPanel {
             g.setColor(Chess.menuScheme.moveNumberColor());
             CoordinateGUI.drawLeftString(g, i + ".", moveRect, moveNumberFont);
 
+            Color moved = boardGUI.getBoardTheme().getScheme().getMoved();
+
             if (j == moveList.size()) {
-                g.setColor(boardGUI.getBoardTheme().getScheme().getMoved());
+                g.setColor(moved);
             }
+
+            int rgba = (moved.getRGB() << 8) | moved.getAlpha();
+            addButton(rectangle, j);
             CoordinateGUI.drawLeftString(g, move.toString(), rectangle, moveFont);
 
             if (!(j + 1 > moveList.size())) {
                 if (j + 1 == moveList.size()) {
-                    g.setColor(boardGUI.getBoardTheme().getScheme().getMoved());
+                    g.setColor(moved);
                 }
                 Move move2 = moveList.get(j);
+                addButton(rectangle1, j + 1);
                 CoordinateGUI.drawLeftString(g, move2.toString(), rectangle1, moveFont);
             }
         }
-
-        revalidate();
-        repaint();
     }
 
+
+    private void addButton(Rectangle rectangle, int moveNo) {
+        JLabel b = new JLabel(String.valueOf(moveNo));
+        b.setSize((int) rectangle.getWidth(), (int) rectangle.getHeight());
+        b.setFont(moveFont);
+        add(b);
+        b.setVisible(false);
+        b.setLocation((int) (rectangle.getX()), (int) rectangle.getY());
+
+    }
 }

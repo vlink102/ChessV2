@@ -1,5 +1,6 @@
 package me.vlink102.personal.chess;
 
+import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.*;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.packets.game.Abort;
@@ -21,6 +22,7 @@ import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.security.Key;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -33,6 +35,10 @@ public class BoardGUI extends JPanel {
     private volatile boolean isPremoving;
 
     private List<Move.SimpleMove> premoves;
+
+    private List<Piece[][]> snapshots;
+
+    private int selectedMove;
 
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
@@ -167,7 +173,7 @@ public class BoardGUI extends JPanel {
     public void setupBoard(Chess.BoardLayout layout, String precreatedFEN) {
         this.gameOver = null;
         this.premoves = new ArrayList<>();
-
+        this.snapshots = new ArrayList<>();
 
         if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
             this.currentLayout = Chess.BoardLayout.DEFAULT;
@@ -200,7 +206,11 @@ public class BoardGUI extends JPanel {
         this.tileSelected = null;
         this.selected = null;
 
+        this.selectedMove = 0;
+
         setupPieces(layout);
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        snapshots.add(newBoard);
         if (challenge && layout != Chess.BoardLayout.DEFAULT) {
             switch (layout) {
                 case CHESS960 -> setupChallengeChess960(precreatedFEN);
@@ -306,6 +316,30 @@ public class BoardGUI extends JPanel {
                 setView(playAsWhite ? BoardView.WHITE : BoardView.BLACK);
                 displayPieces();
                 repaint();
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), "previous-move", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setSelectedMove(selectedMove - 1);
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, false), "next-move", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setSelectedMove(selectedMove + 1);
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), "current-move", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setSelectedMove(history.size());
+            }
+        });
+        registerKeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), "first-move", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setSelectedMove(0);
             }
         });
 
@@ -2117,6 +2151,10 @@ public class BoardGUI extends JPanel {
         for (Move.SimpleMove premove : premoves) {
             newBoard = moveResult(newBoard, premove.to(), premove.from(), premove.to());
         }
+
+        if (selectedMove != snapshots.size()) {
+            return snapshots.get(selectedMove);
+        }
         return newBoard;
     }
 
@@ -2594,6 +2632,9 @@ public class BoardGUI extends JPanel {
         Move move = new Move(this, piece, from, to, check, !takes.equals(to), takes, taken,null, null, Move.MoveType.MOVE); // TODO
 
         history.add(move);
+        historyGUI.updateHistory();
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        snapshots.add(newBoard);
         piece.incrementMoves();
 
         if (move.getPiece() instanceof Rook rook) {
@@ -2710,6 +2751,9 @@ public class BoardGUI extends JPanel {
 
         Move move = new Move(this, king, kingFrom, kingTo, check, false, null, null, null, type, Move.MoveType.CASTLE);
         history.add(move);
+        historyGUI.updateHistory();
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        snapshots.add(newBoard);
 
         if (white) {
             whiteCanCastleKingside = false;
@@ -2995,7 +3039,7 @@ public class BoardGUI extends JPanel {
         return lookahead.toString() + matchPart;
     }
 
-    public void highlightChecks() {
+    public void highlightChecks(Piece[][] board) {
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
                 if (staticHighlights[i][j] == ColorScheme.StaticColors.CHECK) {
@@ -3003,14 +3047,27 @@ public class BoardGUI extends JPanel {
                 }
             }
         }
-        if (kingIsInCheck(gamePieces, true)) {
-            BoardCoordinate king = getKing(getSide(true, gamePieces));
+        if (kingIsInCheck(board, true)) {
+            BoardCoordinate king = getKing(getSide(true, board));
             staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.CHECK;
         }
-        if (kingIsInCheck(gamePieces, false)) {
-            BoardCoordinate king = getKing(getSide(false, gamePieces));
+        if (kingIsInCheck(board, false)) {
+            BoardCoordinate king = getKing(getSide(false, board));
             staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.CHECK;
         }
+
+        if (kingIsCheckmated(board, true)) {
+            BoardCoordinate king = getKing(getSide(true, board));
+            staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.MATE;
+        }
+        if (kingIsCheckmated(board, false)) {
+            BoardCoordinate king = getKing(getSide(false, board));
+            staticHighlights[king.row()][king.col()] = ColorScheme.StaticColors.MATE;
+        }
+    }
+
+    public void highlightChecks() {
+        highlightChecks(gamePieces);
     }
 
 
@@ -3039,6 +3096,7 @@ public class BoardGUI extends JPanel {
             repaint();
         }
         historyGUI.repaint();
+        setSelectedMove(history.size());
     }
 
     public void computerRandomMove() {
@@ -3083,12 +3141,14 @@ public class BoardGUI extends JPanel {
             displayPieces();
             repaint();
         }
+        historyGUI.repaint();
+        setSelectedMove(history.size());
     }
 
 
     public boolean movePiece(Piece piece, BoardCoordinate from, BoardCoordinate to) {
         isPremoving = !premoves.isEmpty();
-        if (!from.equals(to) && piece != null) {
+        if (!from.equals(to) && piece != null && selectedMove == history.size()) {
             boolean white = piece.isWhite();
 
             if (playAsWhite == white) {
@@ -3294,7 +3354,23 @@ public class BoardGUI extends JPanel {
         return gameID;
     }
 
-    public boolean isPremoving() {
-        return isPremoving;
+    public void setSelectedMove(int selectedMove) {
+        if (history.isEmpty() || snapshots.size() == 1) return;
+        selectedMove = Math.min(selectedMove, history.size());
+        selectedMove = Math.max(0, selectedMove);
+        this.selectedMove = selectedMove;
+        premoves = new ArrayList<>();
+
+
+        highlightChecks();
+        Move last = history.get(Math.max(0, selectedMove -1));
+        if (last.getType().equals(Move.MoveType.MOVE) || last.getType().equals(Move.MoveType.CASTLE)) {
+            moveHighlight(last.getFrom(), last.getTo());
+        }
+
+        displayPieces();
+        repaint();
     }
+
+
 }

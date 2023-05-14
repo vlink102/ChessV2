@@ -234,7 +234,7 @@ public class Chess extends JLayeredPane {
 
     public void updateChatPanelBounds() {
         if (board.getChatGUI() != null) {
-            chatPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - (boardToFrameOffset - heightOffSet) - (board.getHeight() / 5) - 25, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), board.getHeight() / 5);
+            chatPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - (boardToFrameOffset - heightOffSet) - (board.getHeight() / 5) - 25, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (board.getHeight() / 5) - 10);
             inputField.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - boardToFrameOffset + heightOffSet - 25, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), 25);
         }
     }
@@ -245,7 +245,7 @@ public class Chess extends JLayeredPane {
         boardToFrameOffset = board.getPieceSize();
         sidePanelWidth = Math.min(board.getWidth() / 2, frame.getContentPane().getWidth() - ((boardToFrameOffset * 3) + board.getWidth() + offSet));
         board.setFont(def.deriveFont((float) board.getPieceSize() / 6));
-        board.getSidePanelGUI().updateFonts();
+
         board.getChatGUI().updateFonts();
         board.getCoordinateGUI().updateFonts();
         board.getOnlineAssets().updatePieceDesigns(board);
@@ -257,7 +257,6 @@ public class Chess extends JLayeredPane {
         lastSize = board.getWidth() / (double) board.getBoardSize();
 
         board.repaint();
-        board.getSidePanelGUI().repaint();
         board.getChatGUI().repaint();
         board.getCaptureGUI().repaint();
         board.displayPieces();

@@ -45,6 +45,9 @@ public class ChatGUI extends JPanel {
         this.chatHistory = new ArrayList<>();
         this.profile = profile;
 
+        setOpaque(true);
+        setBackground(Chess.menuScheme.darkerBackground());
+
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(new EmptyBorder(3, 5, 3, 5));
         setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), (int) getBounds().getSize().getHeight()));
@@ -78,15 +81,18 @@ public class ChatGUI extends JPanel {
 
         label.setFont(chatFont);
         add(label);
-    }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), chatHistory.size() * 15));
+        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), chatHistory.size() * 15 + 10));
+
         revalidate();
 
+        EventQueue.invokeLater(() -> {
+            JScrollBar b = chess.getChatPane().getVerticalScrollBar();
+            b.setValue(b.getMaximum());
+        });
     }
+
+    int last = 0;
 
     public static class InputChat extends PlaceholderTextField {
         public InputChat(int pCols, ChatGUI chatGUI, Chess chess) {
@@ -99,8 +105,6 @@ public class ChatGUI extends JPanel {
                         return;
                     }
                     chatGUI.addMessage(getText());
-                    JScrollBar bar = chess.getChatPane().getVerticalScrollBar();
-                    bar.setValue(bar.getMaximum());
                     setText(null);
                 }
             });
