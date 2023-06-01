@@ -1,9 +1,13 @@
 package me.vlink102.personal.chess.ui.sidepanel;
 
+import com.neovisionaries.i18n.CountryCode;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.ChessMenu;
 import me.vlink102.personal.chess.internal.PlaceholderTextField;
+import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
+import me.vlink102.personal.chess.internal.networking.DataThread;
+import me.vlink102.personal.chess.internal.networking.packets.game.social.ChatMessage;
 import me.vlink102.personal.chess.ui.CoordinateGUI;
 import org.w3c.dom.css.Rect;
 
@@ -26,7 +30,7 @@ public class ChatGUI extends JPanel {
     private final BoardGUI boardGUI;
     private final Chess chess;
 
-    public record ChatEntry(long time, String name, String fullMessage) {}
+    public record ChatEntry(long time, String name, String fullMessage, String profanityFilter, boolean local) {}
 
     private final List<ChatEntry> chatHistory;
     private final ChatGUIProfile profile;
@@ -37,7 +41,15 @@ public class ChatGUI extends JPanel {
         return chatFont;
     }
 
-    public record ChatGUIProfile(Image opponentProfile, Image selfProfile, String opponentName, String selfName, int opponentElo, int selfElo) {}
+    /**
+     * @param opponentProfile
+     * @param selfProfile
+     * @param opponentName
+     * @param selfName
+     * @param opponentElo
+     * @param selfElo
+     */
+    public record ChatGUIProfile(Image opponentProfile, Image selfProfile, String opponentName, String selfName, int opponentElo, int selfElo, CountryCode opponentCode, CountryCode selfCode) {}
 
     public ChatGUI(BoardGUI boardGUI, Chess chess, ChatGUIProfile profile) {
         this.boardGUI = boardGUI;
@@ -74,10 +86,35 @@ public class ChatGUI extends JPanel {
         return pane;
     }
 
-    public void addMessage(String message) {
-        ChatEntry entry = new ChatEntry(System.currentTimeMillis(), profile.selfName, message);
+    public void updateChat() {
+        removeAll();
+        if (boardGUI.isChatFilterEnabled()) {
+            for (ChatEntry entry : chatHistory) {
+                JLabel label = new JLabel("<html><font size='-2' color='gray'>[" + getTime(entry.time) + "]</font>  <font color='" + (entry.local ? "yellow" : "gray") + "'><b>" + entry.name + "</b></font>  <font color='white'>" + entry.profanityFilter + "</font></html>");
+
+                label.setFont(chatFont);
+                add(label);
+            }
+        } else {
+            for (ChatEntry entry : chatHistory) {
+                JLabel label = new JLabel("<html><font size='-2' color='gray'>[" + getTime(entry.time) + "]</font>  <font color='" + (entry.local ? "yellow" : "gray") + "'><b>" + entry.name + "</b></font>  <font color='white'>" + entry.fullMessage + "</font></html>");
+
+                label.setFont(chatFont);
+                add(label);
+            }
+        }
+        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), chatHistory.size() * 15 + 10));
+        revalidate();
+        EventQueue.invokeLater(() -> {
+            JScrollBar b = chess.getChatPane().getVerticalScrollBar();
+            b.setValue(b.getMaximum());
+        });
+    }
+
+    public void addMessage(String message, boolean isLocal) {
+        ChatEntry entry = new ChatEntry(System.currentTimeMillis(), (isLocal ? profile.selfName : profile.opponentName), message, boardGUI.getProfanityFilter().filterBadWords(message), isLocal);
         chatHistory.add(entry);
-        JLabel label = new JLabel("<html><font size='-2' color='gray'>[" + getTime(entry.time) + "]</font>  <font color='yellow'><b>" + entry.name + "</b></font>  <font color='white'>" + entry.fullMessage + "</font></html>");
+        JLabel label = new JLabel("<html><font size='-2' color='gray'>[" + getTime(entry.time) + "]</font>  <font color='" + (isLocal ? "yellow" : "gray") + "'><b>" + entry.name + "</b></font>  <font color='white'>" + (boardGUI.isChatFilterEnabled() ? entry.profanityFilter : entry.fullMessage) + "</font></html>");
 
         label.setFont(chatFont);
         add(label);
@@ -89,13 +126,14 @@ public class ChatGUI extends JPanel {
         EventQueue.invokeLater(() -> {
             JScrollBar b = chess.getChatPane().getVerticalScrollBar();
             b.setValue(b.getMaximum());
+            if (isLocal) {
+                CommunicationHandler.thread.sendPacket(new ChatMessage(ChessMenu.IDENTIFIER, message, boardGUI.getGameID()));
+            }
         });
     }
 
-    int last = 0;
-
     public static class InputChat extends PlaceholderTextField {
-        public InputChat(int pCols, ChatGUI chatGUI, Chess chess) {
+        public InputChat(int pCols, ChatGUI chatGUI) {
             super(pCols);
             addActionListener(new AbstractAction() {
                 @Override
@@ -104,12 +142,13 @@ public class ChatGUI extends JPanel {
                     if (text.isEmpty() || text.isBlank()) {
                         return;
                     }
-                    chatGUI.addMessage(getText());
+                    chatGUI.addMessage(getText(), true);
                     setText(null);
                 }
             });
             setVisible(true);
             setOpaque(true);
+            requestFocusInWindow();
             validate();
         }
     }
@@ -119,5 +158,9 @@ public class ChatGUI extends JPanel {
         calendar.setTimeInMillis(time);
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
         return dateFormat.format(calendar.getTime());
+    }
+
+    public ChatGUIProfile getProfile() {
+        return profile;
     }
 }

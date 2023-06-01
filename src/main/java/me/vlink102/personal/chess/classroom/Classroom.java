@@ -117,16 +117,12 @@ public class Classroom extends JLayeredPane {
     }
 
     public JMenuItem getCopyFENItem() {
-        return getCopyFENItem(board.translateBoardToFEN(board.getGamePieces()));
-    }
-
-    public static JMenuItem getCopyFENItem(String s) {
         JMenuItem getFEN = new JMenuItem("Copy FEN");
         getFEN.getAccessibleContext().setAccessibleDescription("Copies a FEN (Forsyth-Edwards Notation) of the current board state to your clipboard");
         getFEN.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                StringSelection selection = new StringSelection(s);
+                StringSelection selection = new StringSelection(board.translateBoardToFEN(board.getGamePieces()));
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 clipboard.setContents(selection, null);
             }

@@ -75,9 +75,23 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         }
     }
 
+    BoardCoordinate currentPicked = null;
+
     private void addToDragLayer(MouseEvent e) {
         x0 = e.getX();
         y0 = e.getY();
+
+        int pieceSize = boardGUI.getPieceSize();
+
+        int f0 = x0 / pieceSize;
+        int r0 = y0 / pieceSize;
+
+        switch (boardGUI.getView()) {
+            case BLACK -> f0 = boardGUI.decBoardSize - f0;
+            case WHITE -> r0 = boardGUI.decBoardSize - r0;
+        }
+
+        currentPicked = new BoardCoordinate(r0, f0, boardGUI);
 
         Component componentClicked = boardGUI.findComponentAt(x0, y0);
 
@@ -124,7 +138,8 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
     public void mouseReleased(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e)) {
             chess.setCursor(null);
-
+            isDragging = false;
+            currentPicked = null;
             double pieceSize = boardGUI.getPieceSize();
 
             switch (boardGUI.getMoveMethod()) {
@@ -196,6 +211,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
     @Override
     public void mouseDragged(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e)) {
+            isDragging = true;
             if (boardGUI.getMoveMethod() == BoardGUI.MoveStyle.BOTH || boardGUI.getMoveMethod() == BoardGUI.MoveStyle.DRAG) {
                 updateComponentDragPosition(e);
             }
@@ -206,6 +222,8 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
     public void mouseMoved(MouseEvent e) {
 
     }
+
+    public boolean isDragging = false;
 
     private void updateComponentDragPosition(MouseEvent e) {
         if (movedPiece == null) return;
@@ -223,4 +241,7 @@ public class PieceInteraction implements MouseListener, MouseMotionListener {
         movedPiece.setLocation(x - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset + chess.offSet, y - (boardGUI.getPieceSize() / 2) + chess.boardToFrameOffset - chess.heightOffSet);
     }
 
+    public BoardCoordinate getCurrentPicked() {
+        return currentPicked;
+    }
 }

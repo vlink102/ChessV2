@@ -74,4 +74,61 @@ public class CapturedPieces {
         if (rook2 > 0) bruhBruh.add(boardGUI.getOnlineAssets().getSavedCapturePiece(CaptureGUI.CaptureDisplay.valueOf(prefix + "ROOK_" + rook2)));
         res.put(white, bruhBruh);
     }
+
+    public int getPawn() {
+        return pawn;
+    }
+
+    public int getPawn2() {
+        return pawn2;
+    }
+
+    public int getKnight() {
+        return knight;
+    }
+
+    public int getKnight2() {
+        return knight2;
+    }
+
+    public int getQueen() {
+        return queen;
+    }
+
+    public int getQueen2() {
+        return queen2;
+    }
+
+    public int getBishop() {
+        return bishop;
+    }
+
+    public int getBishop2() {
+        return bishop2;
+    }
+
+    public int getRook() {
+        return rook;
+    }
+
+    public int getRook2() {
+        return rook2;
+    }
+
+    public CapturedPieces(int pawn, int pawn2, int knight, int knight2, int queen, int queen2, int bishop, int bishop2, int rook, int rook2) {
+        this.pawn = pawn;
+        this.pawn2 = pawn2;
+        this.knight = knight;
+        this.knight2 = knight2;
+        this.queen = queen;
+        this.queen2 = queen2;
+        this.bishop = bishop;
+        this.bishop2 = bishop2;
+        this.rook = rook;
+        this.rook2 = rook2;
+    }
+
+    public CapturedPieces clonePieces() {
+        return new CapturedPieces(pawn, pawn2, knight, knight2, queen, queen2, bishop, bishop2, rook, rook2);
+    }
 }

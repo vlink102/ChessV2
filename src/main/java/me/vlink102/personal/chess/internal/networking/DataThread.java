@@ -115,6 +115,16 @@ public class DataThread extends Thread {
                         Chess.createChallengeDeclinedWindow(declinedChallengeData);
                         pendingChallenges.remove(challengeID);
                     }
+                    if (keys.contains("chat-uuid")) {
+                        long gameID = object.getLong("chat-game-id");
+                        for (Chess instance : ChessMenu.getInstances()) {
+                            if (instance.getBoard().getGameID() == gameID) {
+                                BoardGUI boardGUI = instance.getBoard();
+                                String message = object.getString("chat-message");
+                                boardGUI.getChatGUI().addMessage(message, false);
+                            }
+                        }
+                    }
                     if (keys.contains("game-id")) {
                         // Is move
                         long gameID = object.getLong("game-id");
@@ -125,11 +135,25 @@ public class DataThread extends Thread {
                                 System.out.println(move);
                                 boardGUI.moveHighlight(move.getFrom(), move.getTo());
                                 if (move.getCastleType() == null) {
-                                    boardGUI.rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                                    boardGUI.rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), false);
                                 } else {
                                     boardGUI.rawCastle(move.getPiece().isWhite(), move.getCastleType());
                                 }
                                 boardGUI.endComputerTurn();
+                            }
+                        }
+                    }
+                    if (keys.contains("end-game-id")) {
+                        long gameID = object.getLong("end-game-id");
+                        for (Chess instance : ChessMenu.getInstances()) {
+                            if (instance.getBoard().getGameID() == gameID) {
+                                int oldRating = object.getInt("end-game-rating-old");
+                                int newRating = object.getInt("end-game-rating-new");
+
+                                int reason = object.getInt("end-game-reason");
+
+                                BoardGUI boardGUI = instance.getBoard();
+                                boardGUI.finaliseGame(convert(reason), oldRating, newRating);
                             }
                         }
                     }
@@ -187,6 +211,28 @@ public class DataThread extends Thread {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public BoardGUI.GameOverType convert(int gameOverReason) {
+        return switch (gameOverReason) {
+            case 0 -> BoardGUI.GameOverType.STALEMATE;
+            case 1 -> BoardGUI.GameOverType.CHECKMATE_WHITE;
+            case 2 -> BoardGUI.GameOverType.CHECKMATE_BLACK;
+            case 3 -> BoardGUI.GameOverType.ABORTED_WHITE;
+            case 4 -> BoardGUI.GameOverType.ABORTED_BLACK;
+            case 5 -> BoardGUI.GameOverType.DRAW_BY_REPETITION;
+            case 6 -> BoardGUI.GameOverType.DRAW_BY_AGREEMENT;
+            case 7 -> BoardGUI.GameOverType.ABANDONMENT_WHITE;
+            case 8 -> BoardGUI.GameOverType.ABANDONMENT_BLACK;
+            case 9 -> BoardGUI.GameOverType.TIME_WHITE;
+            case 10 -> BoardGUI.GameOverType.TIME_BLACK;
+            case 50 -> BoardGUI.GameOverType.FIFTY_MOVE_RULE;
+            case 99 -> BoardGUI.GameOverType.INSUFFICIENT_MATERIAL;
+            case 100 -> BoardGUI.GameOverType.RESIGNATION_WHITE;
+            case 101 -> BoardGUI.GameOverType.RESIGNATION_BLACK;
+            case 200 -> BoardGUI.GameOverType.ILLEGAL_POSITION;
+            default -> throw new IllegalStateException("Unexpected value: " + gameOverReason);
+        };
     }
 
     private Move parseMove(JSONObject object) {

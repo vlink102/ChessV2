@@ -153,8 +153,8 @@ public class ClassroomGUI extends JPanel {
             switch (boardSize) {
                 case 4 -> {
                     board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0, this));
-                    board[backLine][1] = new Queen(this, white);
-                    board[backLine][2] = new King(this, white);
+                    board[backLine][2] = new Queen(this, white);
+                    board[backLine][1] = new King(this, white);
                     board[backLine][3] = new Knight(this, white);
                 }
                 case 5 -> {

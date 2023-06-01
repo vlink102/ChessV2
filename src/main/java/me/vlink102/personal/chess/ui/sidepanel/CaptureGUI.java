@@ -7,14 +7,17 @@ import me.vlink102.personal.chess.internal.Move;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Flow;
 
 public class CaptureGUI extends JPanel {
     private final BoardGUI boardGUI;
+    private final Chess chess;
     private final BufferedImage capturedPieces;
 
     public enum CaptureDisplay {
@@ -76,12 +79,20 @@ public class CaptureGUI extends JPanel {
         return capturedPieces.getSubimage(piece.getX(), piece.getY(), (int) piece.getDimension().getWidth(), (int) piece.getDimension().getHeight()).getScaledInstance(-1, size, Image.SCALE_SMOOTH);
     }
 
-    public CaptureGUI(BoardGUI boardGUI) {
+    public CaptureGUI(Chess chess, BoardGUI boardGUI) {
+        this.chess = chess;
         this.boardGUI = boardGUI;
         capturedPieces = Move.getBufferedResource("/captured-pieces.png");
         setOpaque(true);
         setBackground(Chess.menuScheme.darkerBackground());
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        updateFonts();
+    }
+
+    private Font font;
+
+    public void updateFonts() {
+        this.font = chess.getDef().deriveFont((float) boardGUI.getPieceSize() / 6);
     }
 
     @Override
@@ -92,26 +103,39 @@ public class CaptureGUI extends JPanel {
 
     public void updatePanel() {
         removeAll();
-        for (JPanel panel : getCapturePanel(boardGUI.getCapturedPieces())) {
+        for (JPanel panel : getCapturePanel()) {
+            panel.setOpaque(false);
+            panel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
             add(panel);
         }
         revalidate();
     }
 
-    public List<JPanel> getCapturePanel(CapturedPieces pieces) {
+    public List<JPanel> getCapturePanel() {
         List<JPanel> bruh = new ArrayList<>();
-        bruh.add(heheheha(true, pieces));
-        bruh.add(heheheha(false, pieces));
+        CapturedPieces pieces = boardGUI.getAdvantageHistory().get(boardGUI.getSelectedMove());
+        BoardGUI.MaterialAdvantage advantage = boardGUI.calculateMaterialAdvantage(pieces);
+        bruh.add(heheheha(true, pieces, advantage));
+        bruh.add(heheheha(false, pieces, advantage));
         return bruh;
     }
 
-    private JPanel heheheha(boolean white, CapturedPieces pieces) {
+    private JPanel heheheha(boolean white, CapturedPieces pieces, BoardGUI.MaterialAdvantage advantage) {
         JPanel panel = new JPanel();
-        panel.setLayout(new FlowLayout());
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         HashMap<Boolean, List<Image>> display2 = pieces.getDisplays(boardGUI);
         for (Image image : display2.get(white)) {
-            panel.add(new JLabel(new ImageIcon(image)));
+            JLabel label = new JLabel(new ImageIcon(image));
+            label.setAlignmentY(CENTER_ALIGNMENT);
+            panel.add(label);
         }
+        if (((advantage.result() == 1) && white) || ((advantage.result() == -1) && !white)) {
+            JLabel label = new JLabel("  +" + Math.abs(advantage.getPts()));
+            label.setFont(font);
+            label.setAlignmentY(CENTER_ALIGNMENT);
+            panel.add(label);
+        }
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
         return panel;
     }
 }

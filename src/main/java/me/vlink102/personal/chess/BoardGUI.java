@@ -1,8 +1,10 @@
 package me.vlink102.personal.chess;
 
+import com.neovisionaries.i18n.CountryCode;
 import me.vlink102.personal.chess.internal.*;
 import me.vlink102.personal.chess.internal.networking.CommunicationHandler;
 import me.vlink102.personal.chess.internal.networking.packets.game.Abort;
+import me.vlink102.personal.chess.internal.networking.packets.game.End;
 import me.vlink102.personal.chess.internal.networking.packets.game.Resign;
 import me.vlink102.personal.chess.internal.networking.packets.game.draw.OfferDraw;
 import me.vlink102.personal.chess.pieces.Piece;
@@ -17,6 +19,7 @@ import me.vlink102.personal.chess.ui.interactive.PieceInteraction;
 import me.vlink102.personal.chess.ui.sidepanel.CaptureGUI;
 import me.vlink102.personal.chess.ui.sidepanel.ChatGUI;
 import me.vlink102.personal.chess.ui.sidepanel.HistoryGUI;
+import me.vlink102.personal.chess.ui.sidepanel.ProfileGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,6 +35,10 @@ public class BoardGUI extends JPanel {
 
     private int randomBotDelay;
 
+    private boolean isChatEnabled;
+    private boolean isChatFilterEnabled;
+    private boolean soundsEnabled;
+
     private volatile boolean isPremoving;
 
     private List<Move.SimpleMove> premoves;
@@ -43,11 +50,15 @@ public class BoardGUI extends JPanel {
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
 
+    private final AudioManager audioManager;
+    private final ProfanityFilter profanityFilter;
+
     private final HistoryGUI historyGUI;
     private final CaptureGUI captureGUI;
     private final CoordinateGUI coordinateGUI;
     private final IconDisplayGUI iconDisplayGUI;
     private final ChatGUI chatGUI;
+    private final ProfileGUI profileGUI;
 
     private CoordinateDisplayType coordinateDisplayType;
 
@@ -97,24 +108,35 @@ public class BoardGUI extends JPanel {
     private GameOverType gameOver = null;
 
     private List<String> gameFENHistory;
+    private List<CapturedPieces> advantageHistory;
 
+    /**
+     * CHECKMATE_WHITE: WHITE WINS
+     * CHECKMATE_BLACK: BLACK WINS
+     * RESIGNATION_WHITE: BLACK WINS
+     * RESIGNATION_BLACK: WHITE WINS
+     * ABANDONMENT_WHITE: WHITE WINS
+     * ABANDONMENT_BLACK: BLACK WINS
+     * TIME_WHITE: WHITE WINS
+     * TIME_BLACK: BLACK WINS
+     */
     public enum GameOverType {
         STALEMATE,
-        CHECKMATE_WHITE,
-        CHECKMATE_BLACK,
+        CHECKMATE_WHITE, // WHITE WINS
+        CHECKMATE_BLACK, // BLACK WINS
         FIFTY_MOVE_RULE,
         INSUFFICIENT_MATERIAL,
         DRAW_BY_REPETITION,
         DRAW_BY_AGREEMENT,
-        RESIGNATION_WHITE,
-        RESIGNATION_BLACK,
+        RESIGNATION_WHITE, // BLACK WINS
+        RESIGNATION_BLACK, // WHITE WINS
         ILLEGAL_POSITION,
         ABORTED_WHITE,
         ABORTED_BLACK,
-        ABANDONMENT_WHITE,
-        ABANDONMENT_BLACK,
-        TIME_WHITE,
-        TIME_BLACK
+        ABANDONMENT_WHITE, // WHITE WINS
+        ABANDONMENT_BLACK, // BLACK WINS
+        TIME_WHITE, // WHITE WINS
+        TIME_BLACK // BLACK WINS
     }
 
     public enum BoardView {
@@ -168,6 +190,7 @@ public class BoardGUI extends JPanel {
 
     public void setOpponent(OpponentType type) {
         opponentType = type;
+        profileGUI.updateAll();
     }
 
     public void setupBoard(Chess.BoardLayout layout, String precreatedFEN) {
@@ -202,6 +225,7 @@ public class BoardGUI extends JPanel {
 
         this.history = new ArrayList<>();
         this.gameFENHistory = new ArrayList<>();
+        this.advantageHistory = new ArrayList<>();
 
         this.tileSelected = null;
         this.selected = null;
@@ -211,6 +235,7 @@ public class BoardGUI extends JPanel {
         setupPieces(layout);
         Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
         snapshots.add(newBoard);
+        advantageHistory.add(capturedPieces.clonePieces());
         if (challenge && layout != Chess.BoardLayout.DEFAULT) {
             switch (layout) {
                 case CHESS960 -> setupChallengeChess960(precreatedFEN);
@@ -251,29 +276,49 @@ public class BoardGUI extends JPanel {
         this.moveMethod = moveMethod;
         this.captureStyle = captureStyle;
         this.moveStyle = moveStyle;
-        this.randomBotDelay = 2000;
+        this.randomBotDelay = 1000;
+        this.profanityFilter = new ProfanityFilter();
+        this.audioManager = new AudioManager(this);
         this.historyGUI = new HistoryGUI(chess,this);
-        this.captureGUI = new CaptureGUI(this);
+        this.captureGUI = new CaptureGUI(chess, this);
         this.coordinateGUI = new CoordinateGUI(chess, this);
         this.iconDisplayGUI = new IconDisplayGUI(this);
-        if (!challenge) {
-            //CommunicationHandler.ProfileCache opponentCache = CommunicationHandler.getProfileUpdated(opponentUUID);
+        if (opponentUUID == null) {
             CommunicationHandler.ProfileCache selfCache = CommunicationHandler.getProfileUpdated(ChessMenu.IDENTIFIER);
 
             ChatGUI.ChatGUIProfile profile = new ChatGUI.ChatGUIProfile(
-                    ChessMenu.fromBase64(selfCache.profilePic()),
-                    ChessMenu.fromBase64(selfCache.profilePic()),
+                    ChessMenu.fromBase64(ChessMenu.PROFILE_PLACEHOLDER),
+                    selfCache.profilePic().equals("") ? ChessMenu.fromBase64(ChessMenu.PROFILE_PLACEHOLDER) : ChessMenu.fromBase64(selfCache.profilePic()),
+                    "Computer",
                     selfCache.name(),
-                    selfCache.name(),
+                    0,
                     ((Double) CommunicationHandler.get(ChessMenu.IDENTIFIER, "rating")).intValue(),
-                    ((Double) CommunicationHandler.get(ChessMenu.IDENTIFIER, "rating")).intValue());
+                    CountryCode.SG,
+                    CountryCode.valueOf((selfCache.location().equals("") ? "UNDEFINED" : selfCache.location()))
+            );
             this.chatGUI = new ChatGUI(this, chess, profile);
-
         } else {
-            this.chatGUI = null;
+            CommunicationHandler.ProfileCache opponentCache = CommunicationHandler.getProfileUpdated(opponentUUID);
+            CommunicationHandler.ProfileCache selfCache = CommunicationHandler.getProfileUpdated(ChessMenu.IDENTIFIER);
+
+            ChatGUI.ChatGUIProfile profile = new ChatGUI.ChatGUIProfile(
+                    opponentCache.profilePic().equals("") ? ChessMenu.fromBase64(ChessMenu.PROFILE_PLACEHOLDER) : ChessMenu.fromBase64(opponentCache.profilePic()),
+                    selfCache.profilePic().equals("") ? ChessMenu.fromBase64(ChessMenu.PROFILE_PLACEHOLDER) : ChessMenu.fromBase64(selfCache.profilePic()),
+                    opponentCache.name(),
+                    selfCache.name(),
+                    ((Double) CommunicationHandler.get(opponentUUID, "rating")).intValue(),
+                    ((Double) CommunicationHandler.get(ChessMenu.IDENTIFIER, "rating")).intValue(),
+                    CountryCode.valueOf((opponentCache.location().equals("") ? "UNDEFINED" : opponentCache.location())),
+                    CountryCode.valueOf((selfCache.location().equals("") ? "UNDEFINED" : selfCache.location()))
+            );
+            this.chatGUI = new ChatGUI(this, chess, profile);
         }
+        this.profileGUI = new ProfileGUI(chess, this);
         this.onlineAssets = new OnlineAssets(this);
         this.isPremoving = false;
+        this.isChatEnabled = true;
+        this.isChatFilterEnabled = false;
+        this.soundsEnabled = true;
 
         setFont(chess.getDef().deriveFont(chess.defaultOffset - 4f));
 
@@ -424,6 +469,17 @@ public class BoardGUI extends JPanel {
         if (opponentType.equals(OpponentType.RANDOM) && !playAsWhite && whiteTurn) {
             computerRandomMove();
         }
+
+        if (!opponentType.equals(OpponentType.PLAYER)) {
+            EventQueue.invokeLater(() -> {
+                chess.getInputField().setPlaceholder("Chat is disabled.");
+                chess.getInputField().setEnabled(false);
+            });
+        }
+
+        if (soundsEnabled) audioManager.play(AudioPlayer.AudioLink.GAME_START);
+
+        profanityFilter.buildDictionaryTree(Move.getFile("/blacklisted.txt"));
     }
 
     public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
@@ -1254,6 +1310,10 @@ public class BoardGUI extends JPanel {
 
     public void displayPieces() {
         Piece[][] newBoard = getVisibleGamePieces();
+        BoardCoordinate b = pieceInteraction.getCurrentPicked();
+        int f = b == null ? -1 : b.col();
+        int r = b == null ? -1 : b.row();
+
 
         for (int row = 0; row < boardSize; row++) {
             for (int col = 0; col < boardSize; col++) {
@@ -1265,7 +1325,9 @@ public class BoardGUI extends JPanel {
                     panel.removeAll();
                 }
                 if (newBoard[r1][c1] != null) {
-                    panel.add(new JLabel(new ImageIcon(newBoard[r1][c1].getIcon())));
+                    if (!(f == c1 && r == r1)) {
+                        panel.add(new JLabel(new ImageIcon(newBoard[r1][c1].getIcon())));
+                    }
                 }
                 panel.validate();
             }
@@ -1299,8 +1361,8 @@ public class BoardGUI extends JPanel {
             switch (boardSize) {
                 case 4 -> {
                     board[backLine][0] = white ? "R" : "r";
-                    board[backLine][1] = white ? "Q" : "q";
-                    board[backLine][2] = white ? "K" : "k";
+                    board[backLine][2] = white ? "Q" : "q";
+                    board[backLine][1] = white ? "K" : "k";
                     board[backLine][3] = white ? "N" : "n";
                 }
                 case 5 -> {
@@ -1358,8 +1420,8 @@ public class BoardGUI extends JPanel {
             switch (boardSize) {
                 case 4 -> {
                     board[backLine][0] = new Rook(this, white, new BoardCoordinate(backLine, 0, this));
-                    board[backLine][1] = new Queen(this, white);
-                    board[backLine][2] = new King(this, white);
+                    board[backLine][2] = new Queen(this, white);
+                    board[backLine][1] = new King(this, white);
                     board[backLine][3] = new Knight(this, white);
                 }
                 case 5 -> {
@@ -1552,6 +1614,42 @@ public class BoardGUI extends JPanel {
         }
     }
 
+    public static class MaterialAdvantage {
+        private int pts;
+
+        public MaterialAdvantage() {
+            this.pts = 0;
+        }
+
+        private void increment(boolean white, int pts) {
+            this.pts += pts * (white ? 1 : -1);
+        }
+
+        public int result() {
+            return Integer.compare(pts, 0);
+        }
+
+        public int getPts() {
+            return pts;
+        }
+    }
+
+    // FIXME
+    public MaterialAdvantage calculateMaterialAdvantage(CapturedPieces capturedPieces) {
+        MaterialAdvantage advantage = new MaterialAdvantage();
+        advantage.increment(true, capturedPieces.getPawn());
+        advantage.increment(false, capturedPieces.getPawn2());
+        advantage.increment(true, capturedPieces.getBishop() * 3);
+        advantage.increment(false, capturedPieces.getBishop2() * 3);
+        advantage.increment(true, capturedPieces.getKnight() * 3);
+        advantage.increment(false, capturedPieces.getKnight2() * 3);
+        advantage.increment(true, capturedPieces.getRook() * 5);
+        advantage.increment(false, capturedPieces.getRook2() * 5);
+        advantage.increment(true, capturedPieces.getQueen() * 9);
+        advantage.increment(false, capturedPieces.getQueen2() * 9);
+        return advantage;
+    }
+
     public void showTrades(boolean points) {
         Piece[][] board = getVisibleGamePieces();
         for (int i = 0; i < boardSize; i++) {
@@ -1655,7 +1753,7 @@ public class BoardGUI extends JPanel {
                         case WHITE -> row = decBoardSize - row;
                     }
 
-                    if (gamePieces[r2][c2] != null) {
+                    if (getVisibleGamePieces()[r2][c2] != null) {
                         BoardCoordinate clicked = new BoardCoordinate(row, col, BoardGUI.this);
                         updateSelectedPiece(row, col, clicked);
                     }
@@ -2131,6 +2229,7 @@ public class BoardGUI extends JPanel {
 
     public void setView(BoardView view) {
         this.view = view;
+        profileGUI.updateAll();
     }
 
     public void setBoardTheme(Colours boardTheme) {
@@ -2614,7 +2713,7 @@ public class BoardGUI extends JPanel {
         return null;
     }
 
-    public void rawMove(Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to) {
+    public void rawMove(Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to, boolean selfMove) {
         Piece moved = gamePieces[from.row()][from.col()];
         Piece taken = gamePieces[takes.row()][takes.col()];
 
@@ -2681,6 +2780,8 @@ public class BoardGUI extends JPanel {
                 blackCanCastleQueenside = false;
             }
         }
+
+        advantageHistory.add(capturedPieces.clonePieces());
 
         halfMoveClock++;
         if (!whiteTurn) {
@@ -2770,6 +2871,7 @@ public class BoardGUI extends JPanel {
             blackCanCastleQueenside = false;
         }
 
+        advantageHistory.add(capturedPieces.clonePieces());
         halfMoveClock++;
         if (!whiteTurn) {
             fullMoveCount++;
@@ -2909,76 +3011,138 @@ public class BoardGUI extends JPanel {
         return false;
     }
 
+    private int gameOverID() {
+        if (gameOver == null) return -1;
+        return switch (gameOver) {
+            case STALEMATE -> 0;
+            case CHECKMATE_WHITE -> 1;
+            case CHECKMATE_BLACK -> 2;
+            case FIFTY_MOVE_RULE -> 50;
+            case INSUFFICIENT_MATERIAL -> 99;
+            case DRAW_BY_REPETITION -> 5;
+            case DRAW_BY_AGREEMENT -> 6;
+            case RESIGNATION_WHITE -> 100;
+            case RESIGNATION_BLACK -> 101;
+            case ILLEGAL_POSITION -> 200;
+            case ABORTED_WHITE -> 3;
+            case ABORTED_BLACK -> 4;
+            case ABANDONMENT_WHITE -> 7;
+            case ABANDONMENT_BLACK -> 8;
+            case TIME_WHITE -> 9;
+            case TIME_BLACK -> 10;
+        };
+    }
+
     public void createGameOverScreen(GameOverType type) {
         historyGUI.repaint();
         Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
         snapshots.add(newBoard);
         premoves.clear();
+        displayPieces();
+        repaint();
         if (type != null) {
+            if (playAsWhite && challenge) {
+                CommunicationHandler.thread.sendPacket(new End(gameID, gameOverID()));
+            }
+
+            chess.getInputField().setEnabled(false);
+            chess.getInputField().setPlaceholder("Game has ended");
             gameHighlights = new Move.InfoIcons[boardSize][boardSize];
             staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
             highlightIconAccompaniment = new Move.MoveHighlights[boardSize][boardSize];
 
             highlightChecks();
 
-            BoardCoordinate whiteKing = getKing(getSide(true, gamePieces));
-            BoardCoordinate blackKing = getKing(getSide(false, gamePieces));
-            switch (type) {
+            if (soundsEnabled) audioManager.play(AudioPlayer.AudioLink.GAME_END);
+
+            if (!challenge) {
+                finaliseGame(type, 0, 0);
+            }
+        }
+    }
+
+    public void finaliseGame(GameOverType type, int oldRating, int newRating) {
+        if (!type.equals(gameOver)) return;
+        
+        int ratingDiff = newRating - oldRating;
+        String diff = ratingDiff > 0 ? "+" + ratingDiff : String.valueOf(ratingDiff);
+        
+        BoardCoordinate whiteKing = getKing(getSide(true, gamePieces));
+        BoardCoordinate blackKing = getKing(getSide(false, gamePieces));
+        EventQueue.invokeLater(() -> {
+            Object[] options = {"View board", "Exit game"};
+            int r = switch (type) {
                 case CHECKMATE_BLACK -> {
                     staticHighlights[whiteKing.row()][whiteKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
 
-                    // TODO leave elo calc to server
+                    yield chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE), options, 0);
                 }
                 case CHECKMATE_WHITE -> {
                     staticHighlights[blackKing.row()][blackKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+
+                    yield chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK), options, 0);
                 }
-                case STALEMATE, ILLEGAL_POSITION, INSUFFICIENT_MATERIAL, DRAW_BY_REPETITION, FIFTY_MOVE_RULE, DRAW_BY_AGREEMENT -> {
+                case STALEMATE -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
                     history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+
+                    yield chess.createPopUp("Draw by stalemate\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                }
+                case FIFTY_MOVE_RULE -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Draw by 50-move-rule\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                }
+                case ILLEGAL_POSITION -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE, options, 0);
+                }
+                case DRAW_BY_AGREEMENT -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Draw by agreement\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
                 }
                 case RESIGNATION_BLACK -> {
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.RESIGN_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
                     history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
+                    yield chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
                 }
                 case RESIGNATION_WHITE -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.RESIGN_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
                     history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
+                    yield chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
                 }
-            }
-            displayPieces();
-            repaint();
-            premoves = new ArrayList<>();
-            Object[] options = {"View board", "Exit game"};
-            int r = switch (type) {
-                case CHECKMATE_BLACK -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE), options, 0);
-                case CHECKMATE_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK), options, 0);
-                case STALEMATE -> chess.createPopUp("Draw by stalemate", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
-                case FIFTY_MOVE_RULE -> chess.createPopUp("Draw by 50-move-rule", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
-                case ILLEGAL_POSITION -> chess.createPopUp("Draw by illegal position", "Game Over", Move.MoveHighlights.MISTAKE, options, 0);
-                case DRAW_BY_AGREEMENT -> chess.createPopUp("Draw by agreement", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
-                case RESIGNATION_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by resignation", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
-                case RESIGNATION_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
-                case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
-                case INSUFFICIENT_MATERIAL -> chess.createPopUp("Draw by insufficient material", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
-                case TIME_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins on time", "Game Over", (playAsWhite ? Move.InfoIcons.TIME_WHITE : Move.InfoIcons.WINNER), options, 0);
-                case TIME_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Won" : "Lost") + ": White wins on time", "Game Over", (!playAsWhite ? Move.InfoIcons.TIME_BLACK : Move.InfoIcons.WINNER), options, 0);
-                case ABORTED_BLACK -> chess.createPopUp("Game ended: Black aborted game", "Game Over", Move.InfoIcons.ABORTED, options, 0);
-                case ABORTED_WHITE -> chess.createPopUp("Game ended: White aborted game", "Game Over", Move.InfoIcons.ABORTED, options, 0);
-                case ABANDONMENT_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins by abandonment", "Game Over", (playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
-                case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+                case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case INSUFFICIENT_MATERIAL -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Draw by insufficient material\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                }
+                case TIME_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins on time\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.TIME_WHITE : Move.InfoIcons.WINNER), options, 0);
+                case TIME_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Won" : "Lost") + ": White wins on time\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.TIME_BLACK : Move.InfoIcons.WINNER), options, 0);
+                case ABORTED_BLACK -> chess.createPopUp("Game ended: Black aborted game\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", Move.InfoIcons.ABORTED, options, 0);
+                case ABORTED_WHITE -> chess.createPopUp("Game ended: White aborted game\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", Move.InfoIcons.ABORTED, options, 0);
+                case ABANDONMENT_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins by abandonment\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+                case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
             };
+
             if (r == 1) {
                 chess.dispatchEvent(new WindowEvent(chess.frame, WindowEvent.WINDOW_CLOSING));
                 chess.frame.dispose();
             }
-        }
+        });
     }
 
     public boolean gameOver() {
@@ -3120,7 +3284,7 @@ public class BoardGUI extends JPanel {
         if (move.getCastleType() != null) {
             rawCastle(!playAsWhite, move.getCastleType());
         } else {
-            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), false);
         }
         endComputerTurn();
     }
@@ -3172,7 +3336,7 @@ public class BoardGUI extends JPanel {
                             if (move.getCastleType() != null) {
                                 rawCastle(piece.isWhite(), move.getCastleType());
                             } else {
-                                rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                                rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), true);
                             }
                             if (challenge) {
                                 CommunicationHandler.thread.sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.Move(gameID, !playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, move));
@@ -3230,7 +3394,42 @@ public class BoardGUI extends JPanel {
     public void offerDraw() {
         switch (opponentType) {
             case RANDOM, COMPUTER -> {
-                // TODO if ai is up material then dont (random chance like 20%) idk
+                if (gameOver == null) {
+                    Random random = new Random();
+                    MaterialAdvantage currentMaterialAdvantage = calculateMaterialAdvantage(advantageHistory.get(advantageHistory.size() - 1));
+                    int result = currentMaterialAdvantage.result();
+                    int pts = currentMaterialAdvantage.getPts();
+                    if ((result < 0 && playAsWhite) || (result > 0 && !playAsWhite)) { // Computer is winning
+                        if (Math.abs(pts) > 5) {
+                            if (random.nextDouble() >= 0.95D) { // very Low chance of accepting
+                                gameOver = GameOverType.DRAW_BY_AGREEMENT;
+                                createGameOverScreen(gameOver);
+                            }
+                        } else {
+                            if (random.nextDouble() >= 0.85D) { // Low chance of accepting
+                                gameOver = GameOverType.DRAW_BY_AGREEMENT;
+                                createGameOverScreen(gameOver);
+                            }
+                        }
+                    } else if (result != 0) { // Player is winning
+                        if (Math.abs(pts) > 5) {
+                            if (random.nextDouble() >= 0.25D) { // Very high chance of accepting
+                                gameOver = GameOverType.DRAW_BY_AGREEMENT;
+                                createGameOverScreen(gameOver);
+                            }
+                        } else {
+                            if (random.nextDouble() >= 0.4D) { // high chance of accepting
+                                gameOver = GameOverType.DRAW_BY_AGREEMENT;
+                                createGameOverScreen(gameOver);
+                            }
+                        }
+                    } else {
+                        if (random.nextDouble() >= 0.5D) { // equal chance of accepting
+                            gameOver = GameOverType.DRAW_BY_AGREEMENT;
+                            createGameOverScreen(gameOver);
+                        }
+                    }
+                }
             }
             case MANUAL, AUTO_SWAP -> {
                 if (gameOver == null) {
@@ -3378,8 +3577,36 @@ public class BoardGUI extends JPanel {
             moveHighlight(last.getFrom(), last.getTo());
         }
 
+        if (soundsEnabled) {
+            if (last.getCheck() != null) {
+                if (last.getCheck() == Move.Check.CHECK) {
+                    audioManager.play(AudioPlayer.AudioLink.MOVE_CHECK);
+                }
+            } else {
+                if (last.getTaken() != null) {
+                    audioManager.play(AudioPlayer.AudioLink.CAPTURE);
+                } else {
+                    if (last.getPromotes() != null) {
+                        audioManager.play(AudioPlayer.AudioLink.PROMOTE);
+                    } else if (last.getType() == Move.MoveType.CASTLE) {
+                        audioManager.play(AudioPlayer.AudioLink.CASTLE);
+                    } else {
+                        if (last.getPiece().isWhite() == playAsWhite) {
+                            audioManager.play(AudioPlayer.AudioLink.MOVE_SELF);
+                        } else {
+                            audioManager.play(AudioPlayer.AudioLink.MOVE_OPPONENT);
+                        }
+                    }
+                }
+            }
+        }
+
         gameHighlights = new Move.InfoIcons[boardSize][boardSize];
 
+        JScrollBar bar = chess.getScrollPane().getVerticalScrollBar();
+        bar.setValue(selectedMove * 10);
+
+        captureGUI.updatePanel();
         displayPieces();
         historyGUI.repaint();
         repaint();
@@ -3395,5 +3622,58 @@ public class BoardGUI extends JPanel {
 
     public CapturedPieces getCapturedPieces() {
         return capturedPieces;
+    }
+
+    public ProfileGUI getProfileGUI() {
+        return profileGUI;
+    }
+
+    public String getOpponentUUID() {
+        return opponentUUID;
+    }
+
+    public boolean selfAtBottom() {
+        if (view == BoardView.WHITE) {
+            return playAsWhite;
+        } else {
+            return !playAsWhite;
+        }
+    }
+
+    public List<CapturedPieces> getAdvantageHistory() {
+        return advantageHistory;
+    }
+
+    public void setIsChatEnabled(boolean isChatEnabled) {
+        this.isChatEnabled = isChatEnabled;
+        chess.getInputField().setEnabled(isChatEnabled);
+    }
+
+    public boolean getIsChatEnabled() {
+        return isChatEnabled;
+    }
+
+    public PieceInteraction getPieceInteraction() {
+        return pieceInteraction;
+    }
+
+    public void setSoundsEnabled(boolean soundsEnabled) {
+        this.soundsEnabled = soundsEnabled;
+    }
+
+    public boolean isSoundsEnabled() {
+        return soundsEnabled;
+    }
+
+    public void setChatFilterEnabled(boolean chatFilterEnabled) {
+        isChatFilterEnabled = chatFilterEnabled;
+    }
+
+    public boolean isChatFilterEnabled() {
+        return isChatFilterEnabled;
+    }
+
+    public ProfanityFilter getProfanityFilter() {
+        return profanityFilter;
     }
 }

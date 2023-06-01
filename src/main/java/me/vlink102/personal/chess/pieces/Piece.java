@@ -3,7 +3,6 @@ package me.vlink102.personal.chess.pieces;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.classroom.ClassroomGUI;
 import me.vlink102.personal.chess.internal.BoardCoordinate;
-import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.pieces.generic.*;
 import org.json.JSONObject;
 
@@ -29,9 +28,9 @@ public abstract class Piece {
         this.icon = board.getClassroomAssets().getSavedPiece(board, this);
     }
 
-    public abstract boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture);
-
     public abstract int points();
+
+    public abstract boolean validMove(BoardCoordinate from, BoardCoordinate to, boolean capture);
 
     public boolean isDiagonal(BoardCoordinate from, BoardCoordinate to) {
         return Math.abs(from.col() - to.col()) == Math.abs(from.row() - to.row());

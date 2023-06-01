@@ -10,10 +10,10 @@ import me.vlink102.personal.chess.ui.sidepanel.ChatGUI;
 import org.json.JSONObject;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -23,6 +23,8 @@ import java.util.Objects;
 
 public class Chess extends JLayeredPane {
     private final BoardGUI board;
+    private int windowRepackSpeed = 1000;
+    private int innerContextRefreshRate = 250;
 
     public BoardGUI getBoard() {
         return board;
@@ -31,7 +33,6 @@ public class Chess extends JLayeredPane {
     private JScrollPane scrollPane;
     private JScrollPane chatPane;
     private ChatGUI.InputChat inputField;
-
 
     public JScrollPane getScrollPane() {
         return scrollPane;
@@ -127,6 +128,7 @@ public class Chess extends JLayeredPane {
         scrollPane.setWheelScrollingEnabled(true);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setRequestFocusEnabled(true);
 
         chatPane = new JScrollPane();
@@ -136,16 +138,17 @@ public class Chess extends JLayeredPane {
         chatPane.setWheelScrollingEnabled(true);
         chatPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         chatPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        chatPane.getVerticalScrollBar().setUnitIncrement(16);
         chatPane.setRequestFocusEnabled(true);
 
-        inputField = new ChatGUI.InputChat(30, board.getChatGUI(), this);
-
+        inputField = new ChatGUI.InputChat(30, board.getChatGUI());
 
         add(board, DEFAULT_LAYER);
         add(scrollPane, DEFAULT_LAYER);
         add(board.getCaptureGUI(), DEFAULT_LAYER);
         add(board.getCoordinateGUI(), DEFAULT_LAYER);
         add(board.getIconDisplayGUI(), POPUP_LAYER);
+        add(board.getProfileGUI(), DEFAULT_LAYER);
         add(chatPane, DEFAULT_LAYER);
         add(inputField, POPUP_LAYER);
 
@@ -187,8 +190,16 @@ public class Chess extends JLayeredPane {
             }
         });
 
-        Timer timer = new Timer(250, refreshGUIListener());
+        Timer timer = new Timer(innerContextRefreshRate, refreshGUIListener());
         timer.start();
+        Timer timer2 = new Timer(windowRepackSpeed, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshWindow();
+                refreshGUI();
+            }
+        });
+        timer2.start();
         lastSize = board.getPieceSize();
 
         frame.setJMenuBar(getMenu(challenge));
@@ -210,8 +221,8 @@ public class Chess extends JLayeredPane {
         updateAllBounds();
         board.getOnlineAssets().updateSavedImage(board);
 
-        board.repaint();
         board.displayPieces();
+        board.repaint();
     }
 
     public void updateAllBounds() {
@@ -220,6 +231,12 @@ public class Chess extends JLayeredPane {
         updateCoordinatePanelBounds();
         updateCapturePanelBounds();
         updateChatPanelBounds();
+        updateProfileBounds();
+    }
+
+    public void updateProfileBounds() {
+        int y = ((boardToFrameOffset - heightOffSet) - (board.getPieceSize() / 2)) / 2;
+        board.getProfileGUI().setBounds((boardToFrameOffset + offSet), y, 400, frame.getContentPane().getHeight() - (y*2));
     }
 
     public void updateBoardBounds() {
@@ -258,7 +275,9 @@ public class Chess extends JLayeredPane {
         board.setFont(def.deriveFont((float) board.getPieceSize() / 6));
 
         board.getChatGUI().updateFonts();
+        board.getCaptureGUI().updateFonts();
         board.getCoordinateGUI().updateFonts();
+        board.getProfileGUI().updateFonts();
         board.getOnlineAssets().updatePieceDesigns(board);
         board.getOnlineAssets().loadCapturedPieces(board);
 
@@ -270,6 +289,7 @@ public class Chess extends JLayeredPane {
         board.repaint();
         board.getChatGUI().repaint();
         board.getCaptureGUI().repaint();
+        board.getProfileGUI().updateAll();
         board.displayPieces();
     }
 
@@ -282,7 +302,17 @@ public class Chess extends JLayeredPane {
     }
 
     public JMenuItem getCopyFENItem() {
-        return Classroom.getCopyFENItem(board.translateBoardToFEN(board.getGamePieces()));
+        JMenuItem getFEN = new JMenuItem("Copy FEN");
+        getFEN.getAccessibleContext().setAccessibleDescription("Copies a FEN (Forsyth-Edwards Notation) of the current board state to your clipboard");
+        getFEN.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StringSelection selection = new StringSelection(board.translateBoardToFEN(board.getGamePieces()));
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(selection, null);
+            }
+        });
+        return getFEN;
     }
 
     public JMenuItem getLoadFENItem() {
@@ -668,6 +698,208 @@ public class Chess extends JLayeredPane {
         return fenOptions;
     }
 
+    public JMenuItem getGUIOptionsItem() {
+        JMenuItem guiOptions = new JMenu("Secret Settings");
+        JMenuItem windowRepackSpeed = new JMenu("Window Refresh Rate");
+        ButtonGroup group = new ButtonGroup();
+        JMenuItem s1 = new JRadioButtonMenuItem("250ms (0.25s)");
+        s1.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.windowRepackSpeed = 250;
+            }
+        });
+        JMenuItem s2 = new JRadioButtonMenuItem("500ms (0.5s)");
+        s2.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.windowRepackSpeed = 500;
+            }
+        });
+        JMenuItem s3 = new JRadioButtonMenuItem("1000ms (1s)");
+        s3.setSelected(true);
+        s3.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.windowRepackSpeed = 1000;
+            }
+        });
+        JMenuItem s4 = new JRadioButtonMenuItem("2000ms (2s)");
+        s4.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.windowRepackSpeed = 2000;
+            }
+        });
+        JMenuItem s5 = new JRadioButtonMenuItem("5000ms (5s)");
+        s5.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.windowRepackSpeed = 5000;
+            }
+        });
+        group.add(s1);
+        group.add(s2);
+        group.add(s3);
+        group.add(s4);
+        group.add(s5);
+        windowRepackSpeed.add(s1);
+        windowRepackSpeed.add(s2);
+        windowRepackSpeed.add(s3);
+        windowRepackSpeed.add(s4);
+        windowRepackSpeed.add(s5);
+
+        JMenuItem innerContextRefreshRate = new JMenu("Inner Context Refresh Rate");
+        ButtonGroup group2 = new ButtonGroup();
+        JMenuItem o1 = new JRadioButtonMenuItem("50ms (0.05s)");
+        o1.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.innerContextRefreshRate = 50;
+            }
+        });
+        JMenuItem o2 = new JRadioButtonMenuItem("100ms (0.1s)");
+        o2.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.innerContextRefreshRate = 100;
+            }
+        });
+        JMenuItem o3 = new JRadioButtonMenuItem("250ms (0.25s)");
+        o3.setSelected(true);
+        o3.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.innerContextRefreshRate = 250;
+            }
+        });
+        JMenuItem o4 = new JRadioButtonMenuItem("500ms (0.5s)");
+        o4.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Chess.this.innerContextRefreshRate = 500;
+            }
+        });
+        group2.add(o1);
+        group2.add(o2);
+        group2.add(o3);
+        group2.add(o4);
+        innerContextRefreshRate.add(o1);
+        innerContextRefreshRate.add(o2);
+        innerContextRefreshRate.add(o3);
+        innerContextRefreshRate.add(o4);
+
+        JMenuItem randomMoveBotWaitTime = new JMenu("Random Bot Speed");
+        ButtonGroup group3 = new ButtonGroup();
+        JMenuItem z1 = new JRadioButtonMenuItem("Instantaneous");
+        z1.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(1); // Safety idk
+            }
+        });
+        JMenuItem z2 = new JRadioButtonMenuItem("50ms (0.05s)");
+        z2.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(50);
+            }
+        });
+        JMenuItem z3 = new JRadioButtonMenuItem("100ms (0.1s)");
+        z3.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(100);
+            }
+        });
+        JMenuItem z4 = new JRadioButtonMenuItem("250ms (0.25s)");
+        z4.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(250);
+            }
+        });
+        JMenuItem z5 = new JRadioButtonMenuItem("500ms (0.5s)");
+        z5.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(500);
+            }
+        });
+        JMenuItem z6 = new JRadioButtonMenuItem("1000ms (1s)");
+        z6.setSelected(true);
+        z6.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(1000);
+            }
+        });
+        JMenuItem z7 = new JRadioButtonMenuItem("2000ms (2s)");
+        z7.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(2000);
+            }
+        });
+        JMenuItem z8 = new JRadioButtonMenuItem("5000ms (5s)");
+        z8.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setRandomBotDelay(5000);
+            }
+        });
+        group3.add(z1);
+        group3.add(z2);
+        group3.add(z3);
+        group3.add(z4);
+        group3.add(z5);
+        group3.add(z6);
+        group3.add(z7);
+        group3.add(z8);
+        randomMoveBotWaitTime.add(z1);
+        randomMoveBotWaitTime.add(z2);
+        randomMoveBotWaitTime.add(z3);
+        randomMoveBotWaitTime.add(z4);
+        randomMoveBotWaitTime.add(z5);
+        randomMoveBotWaitTime.add(z6);
+        randomMoveBotWaitTime.add(z7);
+        randomMoveBotWaitTime.add(z8);
+
+        JMenuItem disableChat = new JMenuItem("Toggle Chat");
+        disableChat.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setIsChatEnabled(!board.getIsChatEnabled());
+            }
+        });
+
+        JMenuItem toggleSounds = new JMenuItem("Toggle Sounds");
+        toggleSounds.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setSoundsEnabled(!board.isSoundsEnabled());
+            }
+        });
+
+        JMenuItem toggleChatFilter = new JMenuItem("Toggle Chat Filter");
+        toggleChatFilter.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setChatFilterEnabled(!board.isChatFilterEnabled());
+                board.getChatGUI().updateChat();
+            }
+        });
+        
+        guiOptions.add(toggleSounds);
+        guiOptions.add(disableChat);
+        guiOptions.add(toggleChatFilter);
+        guiOptions.add(randomMoveBotWaitTime);
+        guiOptions.add(windowRepackSpeed);
+        guiOptions.add(innerContextRefreshRate);
+
+        return guiOptions;
+    }
+
     public JMenuItem getShowAllyHintItem() {
         JMenuItem showAvailableSquares = new JRadioButtonMenuItem("Show Moves", shouldShowAvailableSquares);
         showAvailableSquares.getAccessibleContext().setAccessibleDescription("Displays possible moves when selecting a piece");
@@ -789,6 +1021,7 @@ public class Chess extends JLayeredPane {
         JMenu options = new JMenu("Options");
         if (!challenge) {
             options.add(getFenOptionsItem());
+            options.add(getGUIOptionsItem());
         }
 
         JMenuItem hintMenu = new JMenu("Hints");
@@ -976,5 +1209,9 @@ public class Chess extends JLayeredPane {
 
     public Font getGoogle() {
         return google;
+    }
+
+    public ChatGUI.InputChat getInputField() {
+        return inputField;
     }
 }

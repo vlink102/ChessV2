@@ -5,12 +5,15 @@ import me.vlink102.personal.chess.Chess;
 import me.vlink102.personal.chess.pieces.Piece;
 import me.vlink102.personal.chess.pieces.generic.King;
 import me.vlink102.personal.chess.pieces.generic.Pawn;
+import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -80,12 +83,16 @@ public class Move {
         return Toolkit.getDefaultToolkit().getImage(res);
     }
 
-    public static File getFile(String string) {
-        URL res = Chess.class.getResource(string);
+    public static File getFile(final String fileName) {
+        URL res = Chess.class.getResource(fileName);
         if (res == null) {
             return null;
         }
-        return new File(res.getFile());
+        try {
+            return new File(res.toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static BufferedImage getBufferedResource(String string) {
