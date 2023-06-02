@@ -31,7 +31,7 @@ public class Move {
     private final boolean enPassant;
     private final BoardCoordinate takeSquare;
     private Piece taken;
-    private final Piece promotes;
+    private Piece promotes;
     private final CastleType castleType;
 
     private final String importContent;
@@ -302,7 +302,7 @@ public class Move {
                         move.append(to.toNotation());
                     }
                     if (promotes != null) {
-                        move.append(promotes.getAbbr());
+                        move.append("=").append(promotes.getAbbr());
                     }
                 } else {
                     move.append(piece.getAbbr());
@@ -412,7 +412,254 @@ public class Move {
         }
     }
 
+    public static Move parse(BoardGUI boardGUI, Piece[][] board, String moveString, boolean white) {
+        Check check = (moveString.endsWith("#") ? Check.MATE : (moveString.endsWith("+") ? Check.CHECK : null));
+        if (moveString.matches("(^O-O-O[+#]?)")) {
+            BoardCoordinate kingFrom = boardGUI.getKing(boardGUI.getSide(white, board));
+            BoardCoordinate kingTo = boardGUI.newKingFile(white, CastleType.QUEENSIDE);
+            return new Move(boardGUI, board[kingFrom.row()][kingFrom.col()], kingFrom, kingTo, check, false, null, null, null, CastleType.QUEENSIDE, MoveType.CASTLE);
+        }
+        if (moveString.matches("(^O-O[+#]?)")) {
+            BoardCoordinate kingFrom = boardGUI.getKing(boardGUI.getSide(white, board));
+            BoardCoordinate kingTo = boardGUI.newKingFile(white, CastleType.KINGSIDE);
+            return new Move(boardGUI, board[kingFrom.row()][kingFrom.col()], kingFrom, kingTo, check, false, null, null, null, CastleType.KINGSIDE, MoveType.CASTLE);
+        }
+        if (moveString.matches("(^[a-h]\\d[+#]?)")) { // pawn move (no capture) e4
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[1]);
+            int col = BoardCoordinate.parseCol(split[0]);
+            int oldRow = (white ? newRow - 1 : newRow + 1);
+            Piece moved = board[oldRow][col];
+
+            if (moved == null && (newRow == 3 || newRow == 4)) {
+                oldRow = (white ? newRow - 2 : newRow + 2);
+                moved = board[oldRow][col];
+            }
+
+            BoardCoordinate from = new BoardCoordinate(oldRow, col, boardGUI);
+            BoardCoordinate to = new BoardCoordinate(newRow, col, boardGUI);
+
+            return new Move(boardGUI, moved, from, to, check, false, to, null, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[a-h]x[a-h]\\d[+#]?)")) { // pawn capture exd5
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[3]);
+            int newCol = BoardCoordinate.parseCol(split[2]);
+            int oldCol = BoardCoordinate.parseCol(split[0]);
+            int oldRow = (white ? newRow - 1 : newRow + 1);
+            Piece moved = board[oldRow][oldCol];
+            Piece taken = board[newRow][newCol];
+            BoardCoordinate takes = null;
+            boolean enPassant = false;
+            if (taken == null) { // is enpassant
+                takes = new BoardCoordinate(oldRow, newCol, boardGUI);
+                enPassant = true;
+                taken = board[oldRow][newCol];
+            } else {
+                takes = new BoardCoordinate(newRow, newCol, boardGUI);
+            }
+            BoardCoordinate from = new BoardCoordinate(oldRow, oldCol, boardGUI);
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+
+            return new Move(boardGUI, moved, from, to, check, enPassant, takes, taken, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[a-h][81][=]?[QRNB][+#]?)")) { // pawn promotion (no capture) b8=R
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[1]);
+            int col = BoardCoordinate.parseCol(split[0]);
+            int oldRow = (white ? newRow - 1 : newRow + 1);
+            Piece moved = board[oldRow][col];
+            BoardCoordinate from = new BoardCoordinate(oldRow, col, boardGUI);
+            BoardCoordinate to = new BoardCoordinate(newRow, col, boardGUI);
+
+            int choice = switch (split[3]) {
+                case "Q" -> 1;
+                case "R" -> 2;
+                case "N" -> 3;
+                case "B" -> 4;
+                default -> -1;
+            };
+
+            Piece promotes = BoardGUI.conv(boardGUI, choice, to, white);
+
+            return new Move(boardGUI, moved, from, to, check, false, to, null, promotes, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[a-h]x[a-h][81][=]?[QRNB][+#]?)")) { // pawn promotion capture bxc8=Q
+            String[] split = moveString.split("");
+            int oldCol = BoardCoordinate.parseCol(split[0]);
+            int newCol = BoardCoordinate.parseCol(split[2]);
+            int newRow = BoardCoordinate.parseRow(split[3]);
+            int oldRow = (white ? newRow - 1 : newRow + 1);
+
+            Piece moved = board[oldRow][oldCol];
+            Piece taken = board[newRow][newCol];
+
+            BoardCoordinate takes = new BoardCoordinate(newRow, newCol, boardGUI);
+            BoardCoordinate from = new BoardCoordinate(oldRow, oldCol, boardGUI);
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+
+            int choice = switch (split[5]) {
+                case "Q" -> 1;
+                case "R" -> 2;
+                case "N" -> 3;
+                case "B" -> 4;
+                default -> -1;
+            };
+
+            Piece promotes = BoardGUI.conv(boardGUI, choice, to, white);
+
+            return new Move(boardGUI, moved, from, to, check, false, takes, taken, promotes, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[RNBQ][a-h]{2}\\d[+#]?)")) { // ambiguous move #1 (no capture) Nbd2
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[3]);
+            int newCol = BoardCoordinate.parseCol(split[2]);
+            int oldCol = BoardCoordinate.parseCol(split[1]);
+
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+            BoardCoordinate from = findPieceInColumn(oldCol, boardGUI, board, to, split[0], white);
+
+            Piece moved = board[from.row()][from.col()];
+
+            return new Move(boardGUI, moved, from, to, check, false, to, null, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[RNBQ][a-h]x[a-h]\\d[+#]?)")) { // ambiguous capture #1 Nbxd2
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[4]);
+            int newCol = BoardCoordinate.parseCol(split[3]);
+            int oldCol = BoardCoordinate.parseCol(split[1]);
+
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+            BoardCoordinate from = findPieceInColumn(oldCol, boardGUI, board, to, split[0], white);
+
+            Piece moved = board[from.row()][from.col()];
+            BoardCoordinate takes = new BoardCoordinate(newRow, newCol, boardGUI);
+            Piece taken = board[newRow][newCol];
+
+            return new Move(boardGUI, moved, from, to, check, false, takes, taken, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[QRNB](?>[a-h]\\d){2}[+#]?)")) { // ambiguous move #2 (no capture) Be4d5
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[4]);
+            int newCol = BoardCoordinate.parseCol(split[3]);
+            int oldRow = BoardCoordinate.parseRow(split[2]);
+            int oldCol = BoardCoordinate.parseCol(split[1]);
+
+            BoardCoordinate from = new BoardCoordinate(oldRow, oldCol, boardGUI);
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+            Piece moved = board[oldRow][oldCol];
+
+            return new Move(boardGUI, moved, from, to, check, false, to, null, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[QRNB][a-h]\\dx[a-h]\\d[+#]?)")) { // ambiguous capture #2 Be4xd5
+            String[] split = moveString.split("");
+            int newRow = BoardCoordinate.parseRow(split[5]);
+            int newCol = BoardCoordinate.parseCol(split[4]);
+            int oldRow = BoardCoordinate.parseRow(split[2]);
+            int oldCol = BoardCoordinate.parseCol(split[1]);
+
+            BoardCoordinate from = new BoardCoordinate(oldRow, oldCol, boardGUI);
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+            BoardCoordinate takes = new BoardCoordinate(newRow, newCol, boardGUI);
+            Piece taken = board[newRow][newCol];
+            Piece moved = board[oldRow][oldCol];
+
+            return new Move(boardGUI, moved, from, to, check, false, takes, taken, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[RNBQK][a-h]\\d[+#]?)")) { // normal move (no capture) Ra8
+            String[] split = moveString.split("");
+            int newCol = BoardCoordinate.parseCol(split[1]);
+            int newRow = BoardCoordinate.parseRow(split[2]);
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+            BoardCoordinate from = findPiece(boardGUI, board, to, split[0], white);
+            if (from == null) throw new RuntimeException();
+            Piece moved = board[from.row()][from.col()];
+
+            return new Move(boardGUI, moved, from, to, check, false, to, null, null, null, MoveType.MOVE);
+        }
+        if (moveString.matches("(^[RNBQK]x[a-h]\\d[+#]?)")) { // normal capture Rxa8
+            String[] split = moveString.split("");
+            int newCol = BoardCoordinate.parseCol(split[2]);
+            int newRow = BoardCoordinate.parseRow(split[3]);
+            BoardCoordinate to = new BoardCoordinate(newRow, newCol, boardGUI);
+            BoardCoordinate takes = new BoardCoordinate(newRow, newCol, boardGUI);
+            Piece taken = board[newRow][newCol];
+            BoardCoordinate from = findPiece(boardGUI, board, to, split[0], white);
+            if (from == null) throw new RuntimeException();
+            Piece moved = board[from.row()][from.col()];
+
+            return new Move(boardGUI, moved, from, to, check, false, takes, taken, null, null, MoveType.MOVE);
+        }
+        if (moveString.equalsIgnoreCase("0-1")) {
+            if (!boardGUI.isGameOver()) {
+                boardGUI.setGameOver(BoardGUI.GameOverType.RESIGNATION_WHITE);
+            }
+            return new Move(boardGUI, null, null, null, null, false, null, null, null, null, MoveType.BLACK);
+        }
+        if (moveString.equalsIgnoreCase("1-0")) {
+            if (!boardGUI.isGameOver()) {
+                boardGUI.setGameOver(BoardGUI.GameOverType.RESIGNATION_BLACK);
+            }
+            return new Move(boardGUI, null, null, null, null, false, null, null, null, null, MoveType.WHITE);
+        }
+        if (moveString.equalsIgnoreCase("1/2-1/2")) {
+            if (!boardGUI.isGameOver()) {
+                boardGUI.setGameOver(BoardGUI.GameOverType.DRAW_BY_AGREEMENT);
+            }
+            return new Move(boardGUI, null, null, null, null, false, null, null, null, null, MoveType.DRAW);
+        }
+        return null;
+    }
+
+    private static BoardCoordinate findPiece(BoardGUI boardGUI, Piece[][] board, BoardCoordinate to, String abbr, boolean white) {
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                Piece piece = board[i][j];
+                if (piece != null) {
+                    if (piece.isWhite() != white) continue;
+                    BoardCoordinate from = new BoardCoordinate(i, j, boardGUI);
+                    if (piece.getAbbr().equalsIgnoreCase(abbr) && piece.validMove(from, to, board[to.row()][to.col()] != null) && boardGUI.notBlocked(board, from, to)) {
+                        return new BoardCoordinate(i, j, boardGUI);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static BoardCoordinate findPieceInColumn(int col, BoardGUI boardGUI, Piece[][] board, BoardCoordinate to, String abbr, boolean white) {
+        for (int i = 0; i < board.length; i++) {
+            Piece piece = board[i][col];
+            if (piece != null) {
+                if (piece.isWhite() != white) continue;
+                BoardCoordinate from = new BoardCoordinate(i, col, boardGUI);
+                if (piece.getAbbr().equalsIgnoreCase(abbr) && piece.validMove(from, to, board[to.row()][to.col()] != null) && boardGUI.notBlocked(board, from, to)) {
+                    return new BoardCoordinate(i, col, boardGUI);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static BoardCoordinate findPieceInRow(int row, BoardGUI boardGUI, Piece[][] board, BoardCoordinate to, String abbr, boolean white) {
+        for (int i = 0; i < board.length; i++) {
+            Piece piece = board[row][i];
+            if (piece != null) {
+                if (piece.isWhite() != white) continue;
+                BoardCoordinate from = new BoardCoordinate(row, i, boardGUI);
+                if (piece.getAbbr().equalsIgnoreCase(abbr) && piece.validMove(from, to, board[to.row()][to.col()] != null) && boardGUI.notBlocked(board, from, to)) {
+                    return new BoardCoordinate(row, i, boardGUI);
+                }
+            }
+        }
+        return null;
+    }
+
     public MoveType getType() {
         return type;
+    }
+
+    public void setPromotes(Piece promotes) {
+        this.promotes = promotes;
     }
 }

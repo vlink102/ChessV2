@@ -86,6 +86,17 @@ public class ChatGUI extends JPanel {
         return pane;
     }
 
+    public void clearChat() {
+        removeAll();
+        chatHistory.clear();
+        setPreferredSize(new Dimension((int) getBounds().getSize().getWidth(), 10));
+        revalidate();
+        EventQueue.invokeLater(() -> {
+            JScrollBar b = chess.getChatPane().getVerticalScrollBar();
+            b.setValue(b.getMaximum());
+        });
+    }
+
     public void updateChat() {
         removeAll();
         if (boardGUI.isChatFilterEnabled()) {

@@ -22,67 +22,38 @@ import java.io.InputStream;
 import java.util.Objects;
 
 public class Chess extends JLayeredPane {
-    private final BoardGUI board;
-    private int windowRepackSpeed = 1000;
-    private int innerContextRefreshRate = 250;
-
-    public BoardGUI getBoard() {
-        return board;
-    }
-
-    private JScrollPane scrollPane;
-    private JScrollPane chatPane;
-    private ChatGUI.InputChat inputField;
-
-    public JScrollPane getScrollPane() {
-        return scrollPane;
-    }
-
-    public JScrollPane getChatPane() {
-        return chatPane;
-    }
-
-    public JFrame frame;
-
+    public static final MenuScheme menuScheme = new MenuScheme(
+            new Color(49, 46, 43),
+            new Color(39, 37, 34),
+            new Color(31, 30, 27),
+            new Color(43, 41, 39),
+            new Color(64, 61, 57),
+            new Color(152, 151, 149),
+            new Color(195, 194, 194),
+            new Color(149, 148, 147),
+            new Color(88, 87, 85)
+    );
     public final BufferedImage[] iconSprites = new BufferedImage[75];
-
+    public final int defaultOffset = 20;
+    private final BoardGUI board;
     private final Font def;
     private final Font bold;
     private final Font icons;
     private final Font google;
-
-    public Font getDefaultFontInstance(float size) {
-        return def.deriveFont(size);
-    }
-
+    public JFrame frame;
     public boolean shouldRelocateBackline = true;
     public boolean shouldShowAvailableSquares = true;
     public boolean shouldShowOppositionAvailableSquares = false;
-
     public int boardToFrameOffset = 100;
     public int sidePanelWidth = 400;
-
-    public final int defaultOffset = 20;
     public int offSet = 0;
     public int heightOffSet = 0;
-
-    public static final MenuScheme menuScheme = new MenuScheme(
-            new Color(49,46,43),
-            new Color(39,37,34),
-            new Color(31,30,27),
-            new Color(43,41,39),
-            new Color(64,61,57),
-            new Color(152,151,149),
-            new Color(195, 194, 194),
-            new Color(149, 148, 147),
-            new Color(88,87,85)
-    );
-
-    public enum BoardLayout {
-        CHESS960,
-        DEFAULT
-    }
-
+    private int windowRepackSpeed = 1000;
+    private int innerContextRefreshRate = 250;
+    private final JScrollPane scrollPane;
+    private final JScrollPane chatPane;
+    private final ChatGUI.InputChat inputField;
+    private double lastSize;
     public Chess(boolean challenge, long gameID, String opponentUUID, String precreatedFEN, int initialPieceSize, int initialBoardSize, boolean useOnline, boolean playAsWhite, BoardGUI.OpponentType type, BoardGUI.GameType gameType, Chess.BoardLayout layout, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {
         BufferedImage image = Move.getBufferedResource("/iconnav.png");
 
@@ -111,7 +82,7 @@ public class Chess extends JLayeredPane {
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         if ((initialPieceSize * initialBoardSize) + sidePanelWidth + (boardToFrameOffset * 3) + offSet > screen.getWidth()) {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(Move.MoveHighlights.MISTAKE)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-            JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 32\n - Board size: " + initialBoardSize + "\n\nClick OK to continue...", "Board too large, reduced piece size",  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
+            JOptionPane.showConfirmDialog(null, initialBoardSize + "*" + initialBoardSize + " board with piece size " + initialPieceSize + " (" + initialBoardSize * initialPieceSize + "*" + initialBoardSize * initialPieceSize + ")" + "\nis larger than the available space (" + screen.width + "*" + screen.height + ")\n\nFix Successful:\n - Piece size: 32\n - Board size: " + initialBoardSize + "\n\nClick OK to continue...", "Board too large, reduced piece size", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, icon);
             initialPieceSize = 32;
         }
         Dimension initialSize = new Dimension((initialPieceSize * initialBoardSize) + sidePanelWidth + (boardToFrameOffset * 3) + offSet, (initialPieceSize * initialBoardSize) + (boardToFrameOffset * 2) + heightOffSet);
@@ -124,7 +95,7 @@ public class Chess extends JLayeredPane {
         scrollPane = new JScrollPane();
         scrollPane.setViewportView(board.getSidePanelGUI());
         scrollPane.setPreferredSize(new Dimension(2000, 2000));
-        scrollPane.setSize(sidePanelWidth, (int) (board.getHeight() * (3f/5f)) - 20);
+        scrollPane.setSize(sidePanelWidth, (int) (board.getHeight() * (3f / 5f)) - 20);
         scrollPane.setWheelScrollingEnabled(true);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -213,6 +184,146 @@ public class Chess extends JLayeredPane {
         board.requestFocus();
     }
 
+    public static SocialMenuResult createSocialMenu() {
+        JPanel panel = new JPanel();
+        CommunicationHandler.thread.sendPacket(new RequestOnline(ChessMenu.IDENTIFIER));
+        JSONObject object = CommunicationHandler.thread.onlinePlayers;
+        if (object == null || object.isEmpty()) return null;
+        DefaultListModel<String> model = new DefaultListModel<>();
+        JList<String> list = new JList<>(model);
+        list.setSelectionMode(DefaultListSelectionModel.SINGLE_SELECTION);
+        list.setFixedCellWidth(200);
+        list.setFixedCellHeight(40);
+        for (String uuid : object.keySet()) {
+            model.addElement(object.getString(uuid));
+        }
+        panel.add(list);
+
+        return new SocialMenuResult(panel, list);
+    }
+
+    public static ChallengeAcceptResult createChallengeAcceptWindow(JSONObject object, JSONObject data) {
+        if (object == null) return null;
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        String[][] tableData = {
+                {"Opponent:", CommunicationHandler.nameFromUUID(object.getString("challenger"))},
+                {"Board Size:", String.valueOf(data.getInt("board-size"))},
+                {"Game type:", data.getString("game-type").replaceAll("_", " ")},
+                {"Layout:", data.getString("layout")},
+                {"Playing as:", (!data.getBoolean("white") ? "White" : "Black")}
+        };
+
+        String[] columnNames = {"Label", "Value"};
+
+        JTable table = new JTable(tableData, columnNames);
+        table.setTableHeader(null);
+        table.setShowGrid(false);
+
+        SpinnerModel model = new SpinnerNumberModel(100, 32, 150, 1);
+        JSpinner spinner = new JSpinner(model);
+        JLabel label = new JLabel("Piece Size (px): ");
+        JPanel pieceSizePanel = ChessMenu.CreateChessGame.getCouplePanel(label, spinner, true);
+
+        JComboBox<BoardGUI.PieceDesign> pieceDesignJComboBox = new JComboBox<>(BoardGUI.PieceDesign.values());
+        pieceDesignJComboBox.setSelectedItem(BoardGUI.PieceDesign.NEO);
+        JLabel pieceDesignLabel = new JLabel("Piece Theme: ");
+        JPanel pieceDesignPanel = ChessMenu.CreateChessGame.getCouplePanel(pieceDesignLabel, pieceDesignJComboBox, true);
+
+        JComboBox<BoardGUI.Colours> boardThemeJComboBox = new JComboBox<>(BoardGUI.Colours.values());
+        boardThemeJComboBox.setSelectedItem(BoardGUI.Colours.GREEN);
+        JLabel boardThemeLabel = new JLabel("Board Theme: ");
+        JPanel boardThemePanel = ChessMenu.CreateChessGame.getCouplePanel(boardThemeLabel, boardThemeJComboBox, true);
+
+        JComboBox<BoardGUI.MoveStyle> moveMethodJComboBox = new JComboBox<>(BoardGUI.MoveStyle.values());
+        moveMethodJComboBox.setSelectedItem(BoardGUI.MoveStyle.BOTH);
+        JLabel moveMethodLabel = new JLabel("Move Method: ");
+        JPanel moveMethodPanel = ChessMenu.CreateChessGame.getCouplePanel(moveMethodLabel, moveMethodJComboBox, true);
+
+        JComboBox<BoardGUI.HintStyle.Move> moveJComboBox = new JComboBox<>(BoardGUI.HintStyle.Move.values());
+        moveJComboBox.setSelectedItem(BoardGUI.HintStyle.Move.DOT);
+        JLabel moveLabel = new JLabel("Move Style: ");
+        JPanel movePanel = ChessMenu.CreateChessGame.getCouplePanel(moveLabel, moveJComboBox, true);
+
+        JComboBox<BoardGUI.HintStyle.Capture> captureJComboBox = new JComboBox<>(BoardGUI.HintStyle.Capture.values());
+        captureJComboBox.setSelectedItem(BoardGUI.HintStyle.Capture.RING);
+        JLabel captureLabel = new JLabel("Capture Style: ");
+        JPanel capturePanel = ChessMenu.CreateChessGame.getCouplePanel(captureLabel, captureJComboBox, true);
+
+        JComboBox<BoardGUI.CoordinateDisplayType> coordinateDisplayTypeJComboBox = new JComboBox<>(BoardGUI.CoordinateDisplayType.values());
+        coordinateDisplayTypeJComboBox.setSelectedItem(BoardGUI.CoordinateDisplayType.INSIDE);
+        JLabel cdtLabel = new JLabel("Coordinate Display: ");
+        JPanel cdtPanel = ChessMenu.CreateChessGame.getCouplePanel(cdtLabel, coordinateDisplayTypeJComboBox, true);
+
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
+        panel.add(table);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 15)));
+        panel.add(pieceSizePanel);
+        panel.add(new JSeparator());
+        panel.add(pieceDesignPanel);
+        panel.add(boardThemePanel);
+        panel.add(new JSeparator());
+        panel.add(moveMethodPanel);
+        panel.add(new JSeparator());
+        panel.add(movePanel);
+        panel.add(capturePanel);
+        panel.add(new JSeparator());
+        panel.add(cdtPanel);
+        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
+
+        Object[] options = {"Accept", "Decline"};
+
+        int result = JOptionPane.showOptionDialog(null, panel, CommunicationHandler.nameFromUUID(object.getString("challenger")) + " sent a challenge!", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+        if (result != JOptionPane.OK_OPTION) {
+            return null;
+        }
+
+        return new ChallengeAcceptResult((Integer) spinner.getValue(), (BoardGUI.PieceDesign) pieceDesignJComboBox.getSelectedItem(), (BoardGUI.Colours) boardThemeJComboBox.getSelectedItem(), (BoardGUI.MoveStyle) moveMethodJComboBox.getSelectedItem(), (BoardGUI.HintStyle.Move) moveJComboBox.getSelectedItem(), (BoardGUI.HintStyle.Capture) captureJComboBox.getSelectedItem(), (BoardGUI.CoordinateDisplayType) coordinateDisplayTypeJComboBox.getSelectedItem());
+    }
+
+    public static void createChallengeDeclinedWindow(JSONObject object) {
+        JOptionPane.showMessageDialog(null, CommunicationHandler.nameFromUUID(object.getString("challenged")) + " declined your challenge.", "Challenge aborted", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(Move.InfoIcons.ABORTED)).getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
+    }
+
+    public static void popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        JOptionPane.showConfirmDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+    }
+
+    public static int popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights, Object[] options, int defaultOption) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        return JOptionPane.showOptionDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon, options, options[defaultOption]);
+    }
+
+    public static int popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights, Object[] options, int defaultOption) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        return JOptionPane.showOptionDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon, options, options[defaultOption]);
+    }
+
+    public static void popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights) {
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
+        JOptionPane.showConfirmDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
+    }
+
+    public BoardGUI getBoard() {
+        return board;
+    }
+
+    public JScrollPane getScrollPane() {
+        return scrollPane;
+    }
+
+    public JScrollPane getChatPane() {
+        return chatPane;
+    }
+
+    public Font getDefaultFontInstance(float size) {
+        return def.deriveFont(size);
+    }
+
     public void refreshWindow() {
         board.setPieceSize((frame.getContentPane().getHeight() - ((boardToFrameOffset * 2))) / board.getBoardSize());
 
@@ -236,7 +347,7 @@ public class Chess extends JLayeredPane {
 
     public void updateProfileBounds() {
         int y = ((boardToFrameOffset - heightOffSet) - (board.getPieceSize() / 2)) / 2;
-        board.getProfileGUI().setBounds((boardToFrameOffset + offSet), y, 400, frame.getContentPane().getHeight() - (y*2));
+        board.getProfileGUI().setBounds((boardToFrameOffset + offSet), y, 400, frame.getContentPane().getHeight() - (y * 2));
     }
 
     public void updateBoardBounds() {
@@ -246,9 +357,9 @@ public class Chess extends JLayeredPane {
 
     public void updateSidePanelBounds() {
         if (board.getChatGUI() != null) {
-            scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (3f/5f)) - 45);
+            scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (3f / 5f)) - 45);
         } else {
-            scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (4f/5f)));
+            scrollPane.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, (boardToFrameOffset - heightOffSet) + 10 + (board.getHeight() / 5), Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), (int) (board.getHeight() * (4f / 5f)));
         }
     }
 
@@ -266,8 +377,6 @@ public class Chess extends JLayeredPane {
             inputField.setBounds((boardToFrameOffset * 2) + board.getWidth() + offSet, frame.getContentPane().getHeight() - boardToFrameOffset + heightOffSet - 25, Math.min(sidePanelWidth - offSet, frame.getContentPane().getWidth() - ((3 * boardToFrameOffset) + board.getWidth() + offSet)), 25);
         }
     }
-
-    private double lastSize;
 
     public void refreshGUI() {
         boardToFrameOffset = board.getPieceSize();
@@ -349,6 +458,28 @@ public class Chess extends JLayeredPane {
         });
         loadFEN.add(inputLoad);
         return loadFEN;
+    }
+
+    public JMenuItem getLoadPGNItem() {
+        JMenuItem loadPGN = new JMenu("Load PGN");
+        loadPGN.getAccessibleContext().setAccessibleDescription("Loads a PGN");
+        JMenuItem clipboardLoad = new JMenuItem("Load from clipboard");
+        clipboardLoad.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                try {
+                    Object PGN = clipboard.getData(DataFlavor.stringFlavor);
+                    if (PGN != null) {
+                        board.loadPGN(PGN.toString());
+                    }
+                } catch (UnsupportedFlavorException | IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+        loadPGN.add(clipboardLoad);
+        return loadPGN;
     }
 
     public JMenuItem getOpponentMenuItem() {
@@ -468,7 +599,7 @@ public class Chess extends JLayeredPane {
         resetBoard.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.resetBoard();
+                board.resetBoard(true);
             }
         });
 
@@ -476,7 +607,7 @@ public class Chess extends JLayeredPane {
         defaultLayoutReset.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.resetBoard(BoardLayout.DEFAULT);
+                board.resetBoard(BoardLayout.DEFAULT, true);
             }
         });
         resetBoard.add(defaultLayoutReset);
@@ -485,7 +616,7 @@ public class Chess extends JLayeredPane {
         chess960Reset.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.resetBoard(BoardLayout.CHESS960);
+                board.resetBoard(BoardLayout.CHESS960, true);
             }
         });
         resetBoard.add(chess960Reset);
@@ -873,11 +1004,11 @@ public class Chess extends JLayeredPane {
             }
         });
 
-        JMenuItem toggleSounds = new JMenuItem("Toggle Sounds");
-        toggleSounds.addActionListener(new AbstractAction() {
+        JMenuItem clearChat = new JMenuItem("Clear Chat");
+        clearChat.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.setSoundsEnabled(!board.isSoundsEnabled());
+                board.getChatGUI().clearChat();
             }
         });
 
@@ -889,10 +1020,20 @@ public class Chess extends JLayeredPane {
                 board.getChatGUI().updateChat();
             }
         });
-        
-        guiOptions.add(toggleSounds);
+
+        JMenuItem toggleSounds = new JMenuItem("Toggle Sounds");
+        toggleSounds.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.setSoundsEnabled(!board.isSoundsEnabled());
+            }
+        });
+
+
         guiOptions.add(disableChat);
+        guiOptions.add(clearChat);
         guiOptions.add(toggleChatFilter);
+        guiOptions.add(toggleSounds);
         guiOptions.add(randomMoveBotWaitTime);
         guiOptions.add(windowRepackSpeed);
         guiOptions.add(innerContextRefreshRate);
@@ -985,7 +1126,6 @@ public class Chess extends JLayeredPane {
         return hintStyles;
     }
 
-
     public JMenuBar getMenu(boolean challenge) {
         JMenuBar settings = new JMenuBar();
         JMenu generalMenu = new JMenu("General");
@@ -994,6 +1134,12 @@ public class Chess extends JLayeredPane {
         if (!challenge) {
             FEN.add(getCopyFENItem());
             FEN.add(getLoadFENItem());
+        }
+
+        JMenu PGN = new JMenu("PGN");
+        if (!challenge) {
+            //PGN.add(getCopyPGNItem());
+            PGN.add(getLoadPGNItem());
         }
 
         JMenu gameOptions = new JMenu("Game");
@@ -1035,6 +1181,7 @@ public class Chess extends JLayeredPane {
 
         settings.add(generalMenu);
         settings.add(gameOptions);
+        settings.add(PGN);
         settings.add(FEN);
         settings.add(getBoardDesignMenuItem());
         settings.add(getPieceDesignMenuItem());
@@ -1043,118 +1190,10 @@ public class Chess extends JLayeredPane {
         return settings;
     }
 
-    public record SocialMenuResult(JPanel panel, JList<String> list) {}
-
-    public static SocialMenuResult createSocialMenu() {
-        JPanel panel = new JPanel();
-        CommunicationHandler.thread.sendPacket(new RequestOnline(ChessMenu.IDENTIFIER));
-        JSONObject object = CommunicationHandler.thread.onlinePlayers;
-        if (object == null || object.isEmpty()) return null;
-        DefaultListModel<String> model = new DefaultListModel<>();
-        JList<String> list = new JList<>(model);
-        list.setSelectionMode(DefaultListSelectionModel.SINGLE_SELECTION);
-        list.setFixedCellWidth(200);
-        list.setFixedCellHeight(40);
-        for (String uuid : object.keySet()) {
-            model.addElement(object.getString(uuid));
-        }
-        panel.add(list);
-
-        return new SocialMenuResult(panel, list);
-    }
-
-    public record ChallengeAcceptResult(int pSz, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme, BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle, BoardGUI.HintStyle.Capture captureStyle, BoardGUI.CoordinateDisplayType coordinateDisplayType) {}
-
-    public static ChallengeAcceptResult createChallengeAcceptWindow(JSONObject object, JSONObject data) {
-        if (object == null) return null;
-
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-        String[][] tableData = {
-                {"Opponent:", CommunicationHandler.nameFromUUID(object.getString("challenger"))},
-                {"Board Size:", String.valueOf(data.getInt("board-size"))},
-                {"Game type:", data.getString("game-type").replaceAll("_", " ")},
-                {"Layout:", data.getString("layout")},
-                {"Playing as:", (!data.getBoolean("white") ? "White" : "Black")}
-        };
-
-        String[] columnNames = {"Label", "Value"};
-
-        JTable table = new JTable(tableData, columnNames);
-        table.setTableHeader(null);
-        table.setShowGrid(false);
-
-        SpinnerModel model = new SpinnerNumberModel(100, 32, 150, 1);
-        JSpinner spinner = new JSpinner(model);
-        JLabel label = new JLabel("Piece Size (px): ");
-        JPanel pieceSizePanel = ChessMenu.CreateChessGame.getCouplePanel(label, spinner, true);
-
-        JComboBox<BoardGUI.PieceDesign> pieceDesignJComboBox = new JComboBox<>(BoardGUI.PieceDesign.values());
-        pieceDesignJComboBox.setSelectedItem(BoardGUI.PieceDesign.NEO);
-        JLabel pieceDesignLabel = new JLabel("Piece Theme: ");
-        JPanel pieceDesignPanel = ChessMenu.CreateChessGame.getCouplePanel(pieceDesignLabel, pieceDesignJComboBox, true);
-
-        JComboBox<BoardGUI.Colours> boardThemeJComboBox = new JComboBox<>(BoardGUI.Colours.values());
-        boardThemeJComboBox.setSelectedItem(BoardGUI.Colours.GREEN);
-        JLabel boardThemeLabel = new JLabel("Board Theme: ");
-        JPanel boardThemePanel = ChessMenu.CreateChessGame.getCouplePanel(boardThemeLabel, boardThemeJComboBox, true);
-
-        JComboBox<BoardGUI.MoveStyle> moveMethodJComboBox = new JComboBox<>(BoardGUI.MoveStyle.values());
-        moveMethodJComboBox.setSelectedItem(BoardGUI.MoveStyle.BOTH);
-        JLabel moveMethodLabel = new JLabel("Move Method: ");
-        JPanel moveMethodPanel = ChessMenu.CreateChessGame.getCouplePanel(moveMethodLabel, moveMethodJComboBox, true);
-
-        JComboBox<BoardGUI.HintStyle.Move> moveJComboBox = new JComboBox<>(BoardGUI.HintStyle.Move.values());
-        moveJComboBox.setSelectedItem(BoardGUI.HintStyle.Move.DOT);
-        JLabel moveLabel = new JLabel("Move Style: ");
-        JPanel movePanel = ChessMenu.CreateChessGame.getCouplePanel(moveLabel, moveJComboBox, true);
-
-        JComboBox<BoardGUI.HintStyle.Capture> captureJComboBox = new JComboBox<>(BoardGUI.HintStyle.Capture.values());
-        captureJComboBox.setSelectedItem(BoardGUI.HintStyle.Capture.RING);
-        JLabel captureLabel = new JLabel("Capture Style: ");
-        JPanel capturePanel = ChessMenu.CreateChessGame.getCouplePanel(captureLabel, captureJComboBox, true);
-
-        JComboBox<BoardGUI.CoordinateDisplayType> coordinateDisplayTypeJComboBox = new JComboBox<>(BoardGUI.CoordinateDisplayType.values());
-        coordinateDisplayTypeJComboBox.setSelectedItem(BoardGUI.CoordinateDisplayType.INSIDE);
-        JLabel cdtLabel = new JLabel("Coordinate Display: ");
-        JPanel cdtPanel = ChessMenu.CreateChessGame.getCouplePanel(cdtLabel, coordinateDisplayTypeJComboBox, true);
-
-        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
-        panel.add(table);
-        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 15)));
-        panel.add(pieceSizePanel);
-        panel.add(new JSeparator());
-        panel.add(pieceDesignPanel);
-        panel.add(boardThemePanel);
-        panel.add(new JSeparator());
-        panel.add(moveMethodPanel);
-        panel.add(new JSeparator());
-        panel.add(movePanel);
-        panel.add(capturePanel);
-        panel.add(new JSeparator());
-        panel.add(cdtPanel);
-        panel.add(Box.createRigidArea(new Dimension(panel.getWidth(), 20)));
-
-        Object[] options = {"Accept", "Decline"};
-
-        int result = JOptionPane.showOptionDialog(null, panel, CommunicationHandler.nameFromUUID(object.getString("challenger")) + " sent a challenge!", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-
-        if (result != JOptionPane.OK_OPTION) {
-            return null;
-        }
-
-        return new ChallengeAcceptResult((Integer) spinner.getValue(), (BoardGUI.PieceDesign) pieceDesignJComboBox.getSelectedItem(), (BoardGUI.Colours) boardThemeJComboBox.getSelectedItem(), (BoardGUI.MoveStyle) moveMethodJComboBox.getSelectedItem(), (BoardGUI.HintStyle.Move) moveJComboBox.getSelectedItem(), (BoardGUI.HintStyle.Capture) captureJComboBox.getSelectedItem(), (BoardGUI.CoordinateDisplayType) coordinateDisplayTypeJComboBox.getSelectedItem());
-    }
-
     public int createDrawGameWindow(BoardGUI board, JSONObject object) {
         if (object == null) return JOptionPane.CANCEL_OPTION;
         Object[] options = {"Accept", "Decline"};
         return JOptionPane.showOptionDialog(board, CommunicationHandler.nameFromUUID(object.getString("draw_uuid")) + " offered a draw.", "Incoming draw request", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-    }
-
-    public static void createChallengeDeclinedWindow(JSONObject object) {
-        JOptionPane.showMessageDialog(null, CommunicationHandler.nameFromUUID(object.getString("challenged")) + " declined your challenge.", "Challenge aborted", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(Move.InfoIcons.ABORTED)).getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
     }
 
     public void createPopUp(String message, String title, Move.MoveHighlights highlights) {
@@ -1175,26 +1214,6 @@ public class Chess extends JLayeredPane {
         return popUp(this, message, title, highlights, options, defaultOption);
     }
 
-    public static void popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
-    }
-
-    public static int popUp(JLayeredPane parentComponent, String message, String title, Move.InfoIcons highlights, Object[] options, int defaultOption) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getInfoIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        return JOptionPane.showOptionDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon, options, options[defaultOption]);
-    }
-
-    public static int popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights, Object[] options, int defaultOption) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        return JOptionPane.showOptionDialog(parentComponent, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon, options, options[defaultOption]);
-    }
-
-    public static void popUp(JLayeredPane parentComponent, String message, String title, Move.MoveHighlights highlights) {
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(Move.getMoveHighlightIcon(highlights)).getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-        JOptionPane.showConfirmDialog(parentComponent, message, title,  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, imageIcon);
-    }
-
     public Font getDef() {
         return def;
     }
@@ -1213,5 +1232,19 @@ public class Chess extends JLayeredPane {
 
     public ChatGUI.InputChat getInputField() {
         return inputField;
+    }
+
+    public enum BoardLayout {
+        CHESS960,
+        DEFAULT
+    }
+
+    public record SocialMenuResult(JPanel panel, JList<String> list) {
+    }
+
+    public record ChallengeAcceptResult(int pSz, BoardGUI.PieceDesign pieceTheme, BoardGUI.Colours boardTheme,
+                                        BoardGUI.MoveStyle moveMethod, BoardGUI.HintStyle.Move moveStyle,
+                                        BoardGUI.HintStyle.Capture captureStyle,
+                                        BoardGUI.CoordinateDisplayType coordinateDisplayType) {
     }
 }

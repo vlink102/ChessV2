@@ -31,8 +31,12 @@ public class OnlineAssets {
         return savedPieces.get((piece.isWhite() ? "w" : "b") + piece.getAbbr().toLowerCase()).getScaledInstance(boardGUI.getPieceSize(), boardGUI.getPieceSize(), Image.SCALE_SMOOTH);
     }
 
+    public Image getSavedPiece(BoardGUI boardGUI, String abbr) {
+        return savedPieces.get(abbr.toLowerCase()).getScaledInstance(boardGUI.getPieceSize(), boardGUI.getPieceSize(), Image.SCALE_SMOOTH);
+    }
+
     public Image getPiece(BoardGUI boardGUI, String abbr) {
-        if (abbr.matches("[wb][rnbqkp]")) {
+        if (abbr.toLowerCase().matches("[wb][rnbqkp]")) {
             return Move.getResource("/themes/pieces/" + boardGUI.getPieceTheme().getLinkString() + "/" + abbr + ".png");
         } else {
             return Move.getResource("/special-pieces/" + abbr + ".png");

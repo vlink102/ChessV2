@@ -29,47 +29,38 @@ import java.util.Timer;
 import java.util.*;
 
 public class BoardGUI extends JPanel {
+    public final int boardSize;
+    public final int decBoardSize;
     private final boolean challenge;
     private final String opponentUUID;
     private final long gameID;
-
-    private int randomBotDelay;
-
-    private boolean isChatEnabled;
-    private boolean isChatFilterEnabled;
-    private boolean soundsEnabled;
-
-    private volatile boolean isPremoving;
-
-    private List<Move.SimpleMove> premoves;
-
-    private List<Piece[][]> snapshots;
-
-    private int selectedMove;
-
     private final Chess chess;
     private final PieceInteraction pieceInteraction;
-
     private final AudioManager audioManager;
     private final ProfanityFilter profanityFilter;
-
     private final HistoryGUI historyGUI;
     private final CaptureGUI captureGUI;
     private final CoordinateGUI coordinateGUI;
     private final IconDisplayGUI iconDisplayGUI;
     private final ChatGUI chatGUI;
     private final ProfileGUI profileGUI;
-
-    private CoordinateDisplayType coordinateDisplayType;
-
-    private Chess.BoardLayout currentLayout;
-    public final int boardSize;
-    public final int decBoardSize;
-
     private final GameType gameType;
-
     private final OnlineAssets onlineAssets;
     private final boolean useOnline;
+    public boolean whiteCanCastleQueenside;
+    public boolean whiteCanCastleKingside;
+    public boolean blackCanCastleQueenside;
+    public boolean blackCanCastleKingside;
+    private int randomBotDelay;
+    private boolean isChatEnabled;
+    private boolean isChatFilterEnabled;
+    private boolean soundsEnabled;
+    private volatile boolean isPremoving;
+    private List<Move.SimpleMove> premoves;
+    private List<Piece[][]> snapshots;
+    private int selectedMove;
+    private CoordinateDisplayType coordinateDisplayType;
+    private Chess.BoardLayout currentLayout;
     private PieceDesign pieceTheme;
     private Colours boardTheme;
     private int pieceSize;
@@ -82,18 +73,11 @@ public class BoardGUI extends JPanel {
     private CapturedPieces capturedPieces;
     private boolean playAsWhite;
     private BoardView view;
-
     private BoardCoordinate epSQ = null; // Used for imports
-
     private boolean whiteTurn;
     private int halfMoveClock;
     private int fullMoveCount;
     private int fiftyMoveRule;
-    public boolean whiteCanCastleQueenside;
-    public boolean whiteCanCastleKingside;
-    public boolean blackCanCastleQueenside;
-    public boolean blackCanCastleKingside;
-
     private BoardCoordinate tileSelected;
     private Piece selected;
 
@@ -109,150 +93,6 @@ public class BoardGUI extends JPanel {
 
     private List<String> gameFENHistory;
     private List<CapturedPieces> advantageHistory;
-
-    /**
-     * CHECKMATE_WHITE: WHITE WINS
-     * CHECKMATE_BLACK: BLACK WINS
-     * RESIGNATION_WHITE: BLACK WINS
-     * RESIGNATION_BLACK: WHITE WINS
-     * ABANDONMENT_WHITE: WHITE WINS
-     * ABANDONMENT_BLACK: BLACK WINS
-     * TIME_WHITE: WHITE WINS
-     * TIME_BLACK: BLACK WINS
-     */
-    public enum GameOverType {
-        STALEMATE,
-        CHECKMATE_WHITE, // WHITE WINS
-        CHECKMATE_BLACK, // BLACK WINS
-        FIFTY_MOVE_RULE,
-        INSUFFICIENT_MATERIAL,
-        DRAW_BY_REPETITION,
-        DRAW_BY_AGREEMENT,
-        RESIGNATION_WHITE, // BLACK WINS
-        RESIGNATION_BLACK, // WHITE WINS
-        ILLEGAL_POSITION,
-        ABORTED_WHITE,
-        ABORTED_BLACK,
-        ABANDONMENT_WHITE, // WHITE WINS
-        ABANDONMENT_BLACK, // BLACK WINS
-        TIME_WHITE, // WHITE WINS
-        TIME_BLACK // BLACK WINS
-    }
-
-    public enum BoardView {
-        BLACK,
-        WHITE
-    }
-
-    public enum OpponentType {
-        COMPUTER,
-        RANDOM,
-        AUTO_SWAP,
-        MANUAL,
-        PLAYER
-    }
-
-    public enum GameType {
-        DEFAULT,
-        ATOMIC,
-        FOG_OF_WAR
-    }
-
-    public enum MoveStyle {
-        DRAG,
-        CLICK,
-        BOTH
-    }
-
-    public static class HintStyle {
-        public enum Move {
-            DOT,
-            SQUARE
-        }
-
-        public enum Capture {
-            RING,
-            SQUARE
-        }
-    }
-
-    public enum CoordinateDisplayType {
-        NONE,
-        INSIDE,
-        OUTSIDE
-    }
-
-    public enum TradeType {
-        WHITE,
-        BLACK,
-        EQUAL
-    }
-
-    public void setOpponent(OpponentType type) {
-        opponentType = type;
-        profileGUI.updateAll();
-    }
-
-    public void setupBoard(Chess.BoardLayout layout, String precreatedFEN) {
-        this.gameOver = null;
-        this.premoves = new ArrayList<>();
-        this.snapshots = new ArrayList<>();
-
-        if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
-            this.currentLayout = Chess.BoardLayout.DEFAULT;
-        } else {
-            this.currentLayout = layout;
-        }
-
-        this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
-        this.gamePieces = new Piece[boardSize][boardSize];
-        this.highlightedSquares = new Move.MoveHighlights[boardSize][boardSize];
-        this.highlightIconAccompaniment = new Move.MoveHighlights[boardSize][boardSize];
-        this.moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
-        this.gameHighlights = new Move.InfoIcons[boardSize][boardSize];
-        this.staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
-        this.capturedPieces = new CapturedPieces();
-
-        this.halfMoveClock = 0;
-        this.fullMoveCount = 1;
-        this.fiftyMoveRule = 0;
-
-        this.whiteTurn = true;
-        this.whiteCanCastleKingside = true;
-        this.whiteCanCastleQueenside = true;
-        this.blackCanCastleKingside = true;
-        this.blackCanCastleQueenside = true;
-
-        this.history = new ArrayList<>();
-        this.gameFENHistory = new ArrayList<>();
-        this.advantageHistory = new ArrayList<>();
-
-        this.tileSelected = null;
-        this.selected = null;
-
-        this.selectedMove = 0;
-
-        setupPieces(layout);
-        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
-        snapshots.add(newBoard);
-        advantageHistory.add(capturedPieces.clonePieces());
-        if (challenge && layout != Chess.BoardLayout.DEFAULT) {
-            switch (layout) {
-                case CHESS960 -> setupChallengeChess960(precreatedFEN);
-            }
-        }
-    }
-
-    public void resetBoard(Chess.BoardLayout layout) {
-        setupBoard(layout, null);
-        repaint();
-        displayPieces();
-        chess.createPopUp("Success!", "Board reset", Move.MoveHighlights.EXCELLENT);
-    }
-
-    public void resetBoard() {
-        resetBoard(currentLayout);
-    }
 
     public BoardGUI(boolean challenge, long gameID, String opponentUUID, String precreatedFEN, Chess chess, int pSz, int boardSize, boolean useOnline, boolean playAsWhite, OpponentType type, GameType gameType, Chess.BoardLayout layout, PieceDesign pieceTheme, Colours boardTheme, MoveStyle moveMethod, HintStyle.Move moveStyle, HintStyle.Capture captureStyle, CoordinateDisplayType coordinateDisplayType) {
         this.gameID = gameID;
@@ -279,7 +119,7 @@ public class BoardGUI extends JPanel {
         this.randomBotDelay = 1000;
         this.profanityFilter = new ProfanityFilter();
         this.audioManager = new AudioManager(this);
-        this.historyGUI = new HistoryGUI(chess,this);
+        this.historyGUI = new HistoryGUI(chess, this);
         this.captureGUI = new CaptureGUI(chess, this);
         this.coordinateGUI = new CoordinateGUI(chess, this);
         this.iconDisplayGUI = new IconDisplayGUI(this);
@@ -482,14 +322,6 @@ public class BoardGUI extends JPanel {
         profanityFilter.buildDictionaryTree(Move.getFile("/blacklisted.txt"));
     }
 
-    public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
-        InputMap im = chess.getInputMap(WHEN_IN_FOCUSED_WINDOW);
-        ActionMap am = chess.getActionMap();
-
-        im.put(keyStroke, name);
-        am.put(name, action);
-    }
-
     public static boolean validateBoard(String board, int boardSize) {
         for (String s : board.split("/")) {
             if (!isValidFENRow(s, boardSize)) {
@@ -520,279 +352,6 @@ public class BoardGUI extends JPanel {
             return false;
         }
         return validateBoard(sections[0], boardSize);
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    public void loadFEN(String FEN) {
-        if (validateFEN(FEN, boardSize)) {
-            resetBoard();
-            gamePieces = new Piece[boardSize][boardSize];
-            history = new ArrayList<>();
-            String[] sections = FEN.split(" ");
-            String[] board = sections[0].split("/");
-
-            whiteCanCastleKingside = sections[2].contains("K");
-            whiteCanCastleQueenside = sections[2].contains("Q");
-            blackCanCastleKingside = sections[2].contains("k");
-            blackCanCastleQueenside = sections[2].contains("q");
-
-            for (int rank = 0; rank < boardSize; rank++) {
-                String row = board[decBoardSize - rank];
-                String[] chars = row.split("");
-                StringBuilder parseEmpty = new StringBuilder();
-
-                for (int i = 0; i < chars.length; i++) {
-                    String s = chars[i];
-
-                    if (s.equals(")")) {
-                        continue;
-                    }
-                    if (s.equals("(")) {
-                        String number = "";
-                        for (int j = 1; j < chars.length; j++) {
-                            if (Character.isDigit(chars[j + i].toCharArray()[0])) {
-                                number += Integer.parseInt(chars[j + i]);
-                            } else {
-                                if (chars[j + i].equals(")")) {
-                                    i += j;
-                                }
-                                break;
-                            }
-                        }
-                        parseEmpty.append(" ".repeat(Integer.parseInt(number)));
-                    } else {
-                        if (s.matches("\\d")) {
-                            parseEmpty.append(" ".repeat(Integer.parseInt(s)));
-                        } else {
-                            parseEmpty.append(s);
-                        }
-                    }
-                }
-                String[] newRow = parseEmpty.toString().split("");
-                for (int i = 0; i < boardSize; i++) {
-                    boolean isUpper = newRow[i].matches("[A-Z]");
-                    switch (newRow[i].toLowerCase()) {
-                        case "r" -> {
-                            if (isUpper) {
-                                if (i == 0 && rank == 0 && whiteCanCastleQueenside) {
-                                    gamePieces[rank][i] = new Rook(this, true, new BoardCoordinate(rank, i, this));
-                                } else if (i == decBoardSize && rank == 0 && whiteCanCastleKingside) {
-                                    gamePieces[rank][i] = new Rook(this, true, new BoardCoordinate(rank, i, this));
-                                } else {
-                                    gamePieces[rank][i] = new Rook(this, true, new BoardCoordinate(rank, i, this));
-                                }
-
-                            } else {
-                                if (i == 0 && rank == decBoardSize && blackCanCastleQueenside) {
-                                    gamePieces[rank][i] = new Rook(this, false, new BoardCoordinate(rank, i, this));
-                                } else if (i == decBoardSize && rank == decBoardSize && blackCanCastleKingside) {
-                                    gamePieces[rank][i] = new Rook(this, false, new BoardCoordinate(rank, i, this));
-                                } else {
-                                    gamePieces[rank][i] = new Rook(this, false, new BoardCoordinate(rank, i, this));
-                                }
-                            }
-                        }
-                        case "n" -> gamePieces[rank][i] = new Knight(this, isUpper);
-                        case "b" -> gamePieces[rank][i] = new Bishop(this, isUpper);
-                        case "q" -> gamePieces[rank][i] = new Queen(this, isUpper);
-                        case "k" -> gamePieces[rank][i] = new King(this, isUpper);
-                        case "p" -> {
-                            Pawn pawn = new Pawn(this, isUpper);
-                            if (isUpper) {
-                                if (rank != 1) {
-                                    pawn.incrementMoves();
-                                }
-                            } else {
-                                if (rank != 6) {
-                                    pawn.incrementMoves();
-                                }
-                            }
-                            gamePieces[rank][i] = pawn;
-                        }
-                        case " " -> gamePieces[rank][i] = null;
-                        case "a" -> gamePieces[rank][i] = new Amazon(this, isUpper);
-                        case "c" -> gamePieces[rank][i] = new Camel(this, isUpper);
-                        case "e" -> gamePieces[rank][i] = new Elephant(this, isUpper);
-                        case "s" -> gamePieces[rank][i] = new Princess(this, isUpper);
-                        case "m" -> gamePieces[rank][i] = new Man(this, isUpper);
-                        case "i" -> gamePieces[rank][i] = new Minister(this, isUpper);
-                        case "h" -> gamePieces[rank][i] = new Empress(this, isUpper);
-                        case "y" -> gamePieces[rank][i] = new DragonKing(this, isUpper);
-                        case "u" -> gamePieces[rank][i] = new DragonHorse(this, isUpper);
-                    }
-                }
-            }
-
-            switch (currentLayout) {
-                case DEFAULT -> {
-                    if (gamePieces[0][0] == null && whiteCanCastleQueenside) {
-                        whiteCanCastleQueenside = false;
-                    }
-                    if (gamePieces[0][decBoardSize] == null && whiteCanCastleKingside) {
-                        whiteCanCastleKingside = false;
-                    }
-                    if (gamePieces[decBoardSize][0] == null && blackCanCastleQueenside) {
-                        blackCanCastleQueenside = false;
-                    }
-                    if (gamePieces[decBoardSize][decBoardSize] == null && blackCanCastleKingside) {
-                        blackCanCastleKingside = false;
-                    }
-                }
-                case CHESS960 -> {
-                    for (int i = 0; i < boardSize; i++) {
-                        for (int j = 0; j < boardSize; j++) {
-                            if (gamePieces[i][j] != null && gamePieces[i][j] instanceof Rook rook) {
-                                if (!rook.getInitialSquare().equals(new BoardCoordinate(i, j, this))) {
-                                    rook.disableCheckAbility();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            whiteTurn = Objects.equals(sections[1], "w");
-
-            if (!sections[3].equalsIgnoreCase("-")) {
-                int col = BoardCoordinate.parseCol(sections[3].split("")[0]);
-                int row = BoardCoordinate.parseRow(sections[3].split("")[1]);
-                epSQ = new BoardCoordinate(row, col, this);
-            }
-
-            halfMoveClock = Integer.parseInt(sections[4]);
-            fullMoveCount = Integer.parseInt(sections[5]);
-
-            addImportHistory(whiteTurn);
-
-            displayPieces();
-            repaint();
-            gameOver = null;
-
-            if (bothKingsInCheck(gamePieces)) {
-                gameOver = GameOverType.ILLEGAL_POSITION;
-                createGameOverScreen(gameOver);
-            } else {
-                if (!gameOver()) {
-                    highlightChecks();
-                    displayPieces();
-                    repaint();
-                    chess.createPopUp("Success!", "Game state loaded", Move.MoveHighlights.EXCELLENT);
-                }
-            }
-        } else {
-            String result = fixFENString(FEN);
-            if (result == null) {
-                chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Wrong number of Kings\n\n" + result, "Could not load game state", Move.MoveHighlights.MISTAKE);
-                gameOver = GameOverType.ILLEGAL_POSITION;
-                gameOver();
-            } else {
-                if (!validateFEN(result, boardSize)) {
-                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Could not repair FEN String\n\n" + result, "Could not load game state", Move.MoveHighlights.BLUNDER);
-                    gameOver = GameOverType.ILLEGAL_POSITION;
-                    gameOver();
-                } else {
-                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Successful:\n - Repaired broken FEN String\n\n" + result, "Game state repaired", Move.MoveHighlights.EXCELLENT);
-                    loadFEN(result);
-                }
-            }
-        }
-    }
-
-    public enum GameStage {
-        END_GAME,
-        MID_GAME,
-        EARLY_GAME
-    }
-
-    public String randomFENBoard(GameStage stage) {
-        Piece[][] board = new Piece[boardSize][boardSize];
-        randomKing(board, true);
-        randomKing(board, false);
-
-        randomPawns(board, stage, true);
-        randomPawns(board, stage, false);
-
-        randomPieces(board, new Bishop(this, true), stage);
-        randomPieces(board, new Bishop(this, false), stage);
-
-        randomPieces(board, new Knight(this, true), stage);
-        randomPieces(board, new Knight(this, false), stage);
-
-        randomPieces(board, new Queen(this, true), stage);
-        randomPieces(board, new Queen(this, false), stage);
-
-        randomPieces(board, new Bishop(this, true), stage);
-        randomPieces(board, new Bishop(this, false), stage);
-
-        randomQueen(board, stage, true);
-        randomQueen(board, stage, false);
-
-        return translateBoardToFEN(board);
-    }
-
-    public int[] getRandomNullIndex(Piece[][] board) {
-        Random random = new Random();
-        ArrayList<int[]> indices = new ArrayList<>();
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j] == null) {
-                    indices.add(new int[] {i, j});
-                }
-            }
-        }
-        int randomIndex = random.nextInt(indices.size());
-        return indices.get(randomIndex);
-    }
-
-    public void randomKing(Piece[][] board, boolean white) {
-        placeRandomPiece(board, new King(this, white), 1);
-    }
-
-    public void randomPieces(Piece[][] board, Piece piece, GameStage stage) {
-        Random random = new Random();
-        int pieceCount = switch (stage) {
-            case END_GAME -> random.nextInt(2);
-            case MID_GAME -> random.nextInt(1, 2);
-            case EARLY_GAME -> 2;
-        };
-        placeRandomPiece(board, piece, pieceCount);
-    }
-
-    public void randomQueen(Piece[][] board, GameStage stage, boolean white) {
-        Random random = new Random();
-        int queenCount = switch (stage) {
-            case END_GAME -> random.nextInt(3);
-            case MID_GAME, EARLY_GAME -> random.nextInt(2);
-        };
-        placeRandomPiece(board, new Queen(this, white), queenCount);
-    }
-
-    private void placeRandomPiece(Piece[][] board, Piece piece, int pieceCount) {
-        for (int i = 0; i < pieceCount; i++) {
-            int[] randomTile = getRandomNullIndex(board);
-            int rRank = randomTile[0];
-            int rFile = randomTile[1];
-            if (board[rRank][rFile] == null) {
-                board[rRank][rFile] = piece;
-            }
-        }
-    }
-
-    public void randomPawns(Piece[][] board, GameStage stage, boolean white) {
-        Random random = new Random();
-        int pawnCount = switch (stage) {
-            case END_GAME -> random.nextInt(3);
-            case MID_GAME -> random.nextInt(3, 6);
-            case EARLY_GAME -> random.nextInt(7, 9);
-        };
-        for (int i = 0; i < pawnCount; i++) {
-            int[] randomTile = getRandomNullIndex(board);
-            int rRank = randomTile[0];
-            int rFile = randomTile[1];
-            if (board[rRank][rFile] == null) {
-                board[rRank][rFile] = new Pawn(this, white);
-            }
-        }
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -858,7 +417,7 @@ public class BoardGUI extends JPanel {
                         count++;
                     }
                 } else if (s.matches("\\d")) {
-                    if (count + Integer.parseInt(s) > boardSize ) {
+                    if (count + Integer.parseInt(s) > boardSize) {
                         break;
                     } else {
                         result.append(s);
@@ -1027,66 +586,6 @@ public class BoardGUI extends JPanel {
         return FENBoard;
     }
 
-    public String fixFENString(String FEN) {
-        String[] sections = FEN.split(" ");
-        int sectionLength = sections.length;
-
-        StringJoiner result = new StringJoiner(" ");
-
-        String board = sectionLength > 0 ? sections[0] : "";
-        board = fixFENBoard(board, boardSize, chess.shouldRelocateBackline);
-        if (board == null) {
-            return null;
-        }
-        result.add(board);
-
-        String turn = sectionLength > 1 ? sections[1] : "";
-        if (!turn.equalsIgnoreCase("b") && !turn.equalsIgnoreCase("w")) {
-            turn = "w";
-        }
-        result.add(turn);
-
-        String castles = sectionLength > 2 ? sections[2] : "";
-        if (!castles.equalsIgnoreCase("-") && !(castles.contains("K") || castles.contains("k") || castles.contains("Q") || castles.contains("q"))) {
-            castles = "-";
-        }
-        result.add(castles);
-
-        String enPassantSquare = sectionLength > 3 ? sections[3] : "";
-        if (!BoardCoordinate.isValidTile(boardSize, enPassantSquare) && !enPassantSquare.equalsIgnoreCase("-")) {
-            enPassantSquare = "-";
-        }
-        result.add(enPassantSquare);
-
-        String halfMoveClock = sectionLength > 4 ? sections[4] : "";
-        if (!halfMoveClock.matches("-?\\d+(\\.\\d+)?")) {
-            halfMoveClock = "0";
-        }
-
-        String fullMoveCount = sectionLength > 5 ? sections[5] : "";
-        if (!fullMoveCount.matches("-?\\d+(\\.\\d+)?")) {
-            fullMoveCount = "1";
-        }
-
-        if (!(Integer.parseInt(halfMoveClock) / 2 == Integer.parseInt(fullMoveCount) - 1)) {
-            halfMoveClock = "0";
-            fullMoveCount = "1";
-        }
-
-        result.add(halfMoveClock);
-        result.add(fullMoveCount);
-
-        return result.toString();
-    }
-
-    public void addImportHistory(boolean whiteTurn) {
-        history.add(new Move("Imported FEN String", this));
-        history.add(new Move("", this));
-        if (!whiteTurn) {
-            history.add(new Move("???", this));
-        }
-    }
-
     public static StringBuilder translateBoard(String[][] board, int boardSize) {
         StringBuilder fen = new StringBuilder();
         for (int rank = 0; rank < boardSize; rank++) {
@@ -1162,6 +661,726 @@ public class BoardGUI extends JPanel {
             }
         }
         return fen;
+    }
+
+    public static void setupDefaultBoard(String[][] board, boolean white, int boardSize) {
+        int backLine = white ? 0 : boardSize - 1;
+
+        if (boardSize >= 8) {
+            int startingPoint = (boardSize / 2) - 4;
+            for (int i = startingPoint; i < startingPoint + 8; i++) {
+                board[white ? 1 : boardSize - 1 - 1][i] = white ? "P" : "p";
+            }
+
+            board[backLine][startingPoint] = white ? "R" : "r";
+            board[backLine][startingPoint + 7] = white ? "R" : "r";
+
+            board[backLine][startingPoint + 1] = white ? "N" : "n";
+            board[backLine][startingPoint + 6] = white ? "N" : "n";
+
+            board[backLine][startingPoint + 2] = white ? "B" : "b";
+            board[backLine][startingPoint + 5] = white ? "B" : "b";
+
+            board[backLine][startingPoint + 3] = white ? "Q" : "q";
+            board[backLine][startingPoint + 4] = white ? "K" : "k";
+        } else {
+            for (int i = 0; i < boardSize; i++) {
+                board[white ? 1 : boardSize - 1 - 1][i] = white ? "P" : "p";
+            }
+            switch (boardSize) {
+                case 4 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][2] = white ? "Q" : "q";
+                    board[backLine][1] = white ? "K" : "k";
+                    board[backLine][3] = white ? "N" : "n";
+                }
+                case 5 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "Q" : "q";
+                    board[backLine][2] = white ? "K" : "k";
+                    board[backLine][3] = white ? "N" : "n";
+                    board[backLine][4] = white ? "R" : "r";
+                }
+                case 6 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "B" : "b";
+                    board[backLine][2] = white ? "Q" : "q";
+                    board[backLine][3] = white ? "K" : "k";
+                    board[backLine][4] = white ? "N" : "n";
+                    board[backLine][5] = white ? "R" : "r";
+                }
+                case 7 -> {
+                    board[backLine][0] = white ? "R" : "r";
+                    board[backLine][1] = white ? "N" : "n";
+                    board[backLine][2] = white ? "B" : "b";
+                    board[backLine][3] = white ? "Q" : "q";
+                    board[backLine][4] = white ? "K" : "k";
+                    board[backLine][5] = white ? "N" : "n";
+                    board[backLine][6] = white ? "R" : "r";
+                }
+            }
+        }
+    }
+
+    public static String createFENString(String[][] boardString, int boardSize) {
+        return translateBoard(boardString, boardSize).append(" w KQkq - 0 1").toString();
+    }
+
+    public static String createFEN(Chess.BoardLayout layout, int boardSize) {
+        switch (layout) {
+            case DEFAULT -> {
+                String[][] boardString = new String[boardSize][boardSize];
+                setupDefaultBoard(boardString, true, boardSize);
+                setupDefaultBoard(boardString, false, boardSize);
+                return createFENString(boardString, boardSize);
+            }
+            case CHESS960 -> {
+                String[][] boardString = new String[boardSize][boardSize];
+                for (int i = 0; i < 8; i++) {
+                    boardString[1][i] = "P";
+                    boardString[6][i] = "p";
+                }
+
+                char[] board = new char[8];
+
+                for (int i = 0; i < 2; i++) {
+                    int r = (int) (Math.random() * 4) * 2;
+
+                    if (i == 1) {
+                        r++;
+                    }
+
+                    board[r] = 'B';
+                }
+
+                char[] queenKnights = {'Q', 'N', 'N'};
+                for (int i = 0; i < queenKnights.length; i++) {
+                    int index = (int) (Math.random() * (6 - i));
+
+                    while (board[index] != 0) {
+                        index++;
+                    }
+
+                    board[index] = queenKnights[i];
+                }
+
+                char[] kingRooks = {'R', 'K', 'X'};
+                int index = 0;
+                for (char kingRook : kingRooks) {
+                    while (board[index] != 0) {
+                        index++;
+                    }
+
+                    board[index] = kingRook;
+                    index++;
+                }
+
+                for (int i = 0; i < board.length; i++) {
+                    boardString[0][i] = String.valueOf(board[i]).toUpperCase();
+                    boardString[7][i] = String.valueOf(board[i]).toLowerCase();
+                }
+                return createFENString(boardString, boardSize);
+            }
+        }
+        return null;
+    }
+
+    public void setOpponent(OpponentType type) {
+        opponentType = type;
+        profileGUI.updateAll();
+    }
+
+    public void setupBoard(Chess.BoardLayout layout, String precreatedFEN) {
+        this.gameOver = null;
+        this.premoves = new ArrayList<>();
+        this.snapshots = new ArrayList<>();
+
+        if (layout == Chess.BoardLayout.CHESS960 && boardSize != 8) {
+            this.currentLayout = Chess.BoardLayout.DEFAULT;
+        } else {
+            this.currentLayout = layout;
+        }
+
+        this.view = playAsWhite ? BoardView.WHITE : BoardView.BLACK;
+        this.gamePieces = new Piece[boardSize][boardSize];
+        this.highlightedSquares = new Move.MoveHighlights[boardSize][boardSize];
+        this.highlightIconAccompaniment = new Move.MoveHighlights[boardSize][boardSize];
+        this.moveHighlights = new Move.MoveHighlights[boardSize][boardSize];
+        this.gameHighlights = new Move.InfoIcons[boardSize][boardSize];
+        this.staticHighlights = new ColorScheme.StaticColors[boardSize][boardSize];
+        this.capturedPieces = new CapturedPieces();
+
+        this.halfMoveClock = 0;
+        this.fullMoveCount = 1;
+        this.fiftyMoveRule = 0;
+
+        this.whiteTurn = true;
+        this.whiteCanCastleKingside = true;
+        this.whiteCanCastleQueenside = true;
+        this.blackCanCastleKingside = true;
+        this.blackCanCastleQueenside = true;
+
+        this.history = new ArrayList<>();
+        this.gameFENHistory = new ArrayList<>();
+        this.advantageHistory = new ArrayList<>();
+
+        this.tileSelected = null;
+        this.selected = null;
+
+        this.selectedMove = 0;
+
+        setupPieces(layout);
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        snapshots.add(newBoard);
+        advantageHistory.add(capturedPieces.clonePieces());
+        if (challenge && layout != Chess.BoardLayout.DEFAULT) {
+            switch (layout) {
+                case CHESS960 -> setupChallengeChess960(precreatedFEN);
+            }
+        }
+    }
+
+    public void resetBoard(Chess.BoardLayout layout, boolean showPopup) {
+        setupBoard(layout, null);
+        repaint();
+        displayPieces();
+        if (showPopup) {
+            chess.createPopUp("Success!", "Board reset", Move.MoveHighlights.EXCELLENT);
+        }
+    }
+
+    public void resetBoard(boolean showPopup) {
+        resetBoard(currentLayout, showPopup);
+    }
+
+    public void registerKeyBinding(KeyStroke keyStroke, String name, Action action) {
+        InputMap im = chess.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = chess.getActionMap();
+
+        im.put(keyStroke, name);
+        am.put(name, action);
+    }
+
+    public static class PGN {
+        private final List<Tag> tags;
+        public PGN(Tag... tags) {
+            this.tags = new ArrayList<>(Arrays.asList(tags));
+        }
+
+        public boolean isSetup() {
+            for (Tag tag : tags) {
+                if (tag.tagID.equals(Tags.SETUP)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public PGN() {
+            this.tags = new ArrayList<>();
+        }
+
+        public void addTag(Tag tag) {
+            this.tags.add(tag);
+            if (tag.tagID.equals(Tags.FEN)) {
+                addTag(new Tag(Tags.SETUP, null));
+            }
+        }
+
+        public String getTagContent(Tags tagID) {
+            for (Tag tag : tags) {
+                if (tag.tagID.equals(tagID)) {
+                    return tag.content;
+                }
+            }
+            return null;
+        }
+
+        public List<Tag> getTags() {
+            return tags;
+        }
+
+        public static class Tag {
+            private final Tags tagID;
+            private final String content;
+
+            public Tag(Tags tagID, String content) {
+                this.tagID = tagID;
+                if (tagID == Tags.SETUP) {
+                    this.content = "1";
+                    return;
+                }
+                this.content = content;
+            }
+
+            public Tags getTagID() {
+                return tagID;
+            }
+
+            public String getContent() {
+                return content;
+            }
+
+            @Override
+            public String toString() {
+                return "[" + tagID.getFormatted() + " \"" + content + "\"]";
+            }
+        }
+
+        public enum Tags {
+            EVENT("Event"),
+            SITE("Site"),
+            DATE("Date"),
+            ROUND("Round"),
+            WHITE("White"),
+            BLACK("Black"),
+            RESULT("Result"),
+            ANNOTATOR("Annotator"),
+            PLYCOUNT("PlyCount"),
+            TIMECONTROL("TimeControl"),
+            TIME("Time"),
+            TERMINATION("Termination"),
+            MODE("Mode"),
+            FEN("FEN"),
+            SETUP("SetUp");
+
+            private final String formatted;
+
+            Tags(String formatted) {
+                this.formatted = formatted;
+            }
+
+            public String getFormatted() {
+                return formatted;
+            }
+        }
+
+        public enum Termination {
+            ABANDONED("abandoned"),
+            ADJUDICATION("adjudication"),
+            DEATH("death"),
+            EMERGENCY("emergency"),
+            NORMAL("normal"),
+            RULES_INFRACTION("rules infraction"),
+            TIME_FORFEIT("time forfeit"),
+            UNTERMINATED("unterminated");
+
+            private final String formatted;
+
+            Termination(String formatted) {
+                this.formatted = formatted;
+            }
+
+            public String getFormatted() {
+                return formatted;
+            }
+        }
+    }
+
+    public void loadPGN(String PGNString) {
+        PGN pgn = new PGN();
+        for (String string : PGNString.split("\n")) {
+            if (!string.startsWith("[")) break;
+            String truncated = string.replaceAll("[\\[\\]]+", "");
+            for (BoardGUI.PGN.Tags value : BoardGUI.PGN.Tags.values()) {
+                if (truncated.startsWith(value.formatted)) {
+                    pgn.addTag(new PGN.Tag(value, truncated.split("\"")[1]));
+                }
+            }
+        }
+
+        if (pgn.isSetup()) {
+            loadFEN(pgn.getTagContent(PGN.Tags.FEN), false);
+        } else {
+            resetBoard(false);
+        }
+
+        String moveLine = PGNString.split("\n\n")[1];
+        String stripped = moveLine
+                .replaceAll("(\\d+\\.\\s)", "")
+                .replaceAll("\n", " ")
+                .replaceAll("(\\s\\{.*?\\})", "");
+        String[] moves = stripped.split(" ");
+        boolean whiteToMove = whiteTurn;
+        for (String moveString : moves) {
+            Move move = Move.parse(this, gamePieces, moveString, whiteToMove);
+            if (move == null) continue;
+            if (move.getType().equals(Move.MoveType.MOVE)) {
+                if (move.getPromotes() != null) {
+                    rawPromote(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), unconv(move.getPromotes()), whiteToMove);
+                } else {
+                    rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                }
+            } else if (move.getType().equals(Move.MoveType.CASTLE)) {
+                rawCastle(whiteToMove, move.getCastleType());
+            }
+            if (gameOver()) {
+                setSelectedMove(history.size());
+                chess.createPopUp("Success!", "Game state loaded:\n\n" + fromPGNTags(pgn), Move.MoveHighlights.BEST);
+                return;
+            }
+            whiteToMove = !whiteToMove;
+        }
+
+        setSelectedMove(history.size());
+        chess.createPopUp("Success!", "Game state loaded:\n\n" + fromPGNTags(pgn), Move.MoveHighlights.BEST);
+        gameOver();
+    }
+
+    public String fromPGNTags(PGN pgn) {
+        StringJoiner joiner = new StringJoiner("\n");
+        for (PGN.Tag tag : pgn.tags) {
+            joiner.add(tag.tagID.formatted + ": " + tag.content);
+        }
+        return joiner.toString();
+    }
+
+    public int unconv(Piece piece) {
+        return switch (piece.getAbbr().toLowerCase()) {
+            case "q" -> 1;
+            case "r" -> 2;
+            case "n" -> 3;
+            case "b" -> 4;
+            default -> -1;
+        };
+    }
+
+    public void loadFEN(String FEN) {
+        loadFEN(FEN, true);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public void loadFEN(String FEN, boolean showPopup) {
+        if (validateFEN(FEN, boardSize)) {
+            resetBoard(showPopup);
+            gamePieces = new Piece[boardSize][boardSize];
+            history = new ArrayList<>();
+            String[] sections = FEN.split(" ");
+            String[] board = sections[0].split("/");
+
+            whiteCanCastleKingside = sections[2].contains("K");
+            whiteCanCastleQueenside = sections[2].contains("Q");
+            blackCanCastleKingside = sections[2].contains("k");
+            blackCanCastleQueenside = sections[2].contains("q");
+
+            for (int rank = 0; rank < boardSize; rank++) {
+                String row = board[decBoardSize - rank];
+                String[] chars = row.split("");
+                StringBuilder parseEmpty = new StringBuilder();
+
+                for (int i = 0; i < chars.length; i++) {
+                    String s = chars[i];
+
+                    if (s.equals(")")) {
+                        continue;
+                    }
+                    if (s.equals("(")) {
+                        String number = "";
+                        for (int j = 1; j < chars.length; j++) {
+                            if (Character.isDigit(chars[j + i].toCharArray()[0])) {
+                                number += Integer.parseInt(chars[j + i]);
+                            } else {
+                                if (chars[j + i].equals(")")) {
+                                    i += j;
+                                }
+                                break;
+                            }
+                        }
+                        parseEmpty.append(" ".repeat(Integer.parseInt(number)));
+                    } else {
+                        if (s.matches("\\d")) {
+                            parseEmpty.append(" ".repeat(Integer.parseInt(s)));
+                        } else {
+                            parseEmpty.append(s);
+                        }
+                    }
+                }
+                String[] newRow = parseEmpty.toString().split("");
+                for (int i = 0; i < boardSize; i++) {
+                    boolean isUpper = newRow[i].matches("[A-Z]");
+                    switch (newRow[i].toLowerCase()) {
+                        case "r" -> {
+                            if (isUpper) {
+                                if (i == 0 && rank == 0 && whiteCanCastleQueenside) {
+                                    gamePieces[rank][i] = new Rook(this, true, new BoardCoordinate(rank, i, this));
+                                } else if (i == decBoardSize && rank == 0 && whiteCanCastleKingside) {
+                                    gamePieces[rank][i] = new Rook(this, true, new BoardCoordinate(rank, i, this));
+                                } else {
+                                    gamePieces[rank][i] = new Rook(this, true, new BoardCoordinate(rank, i, this));
+                                }
+
+                            } else {
+                                if (i == 0 && rank == decBoardSize && blackCanCastleQueenside) {
+                                    gamePieces[rank][i] = new Rook(this, false, new BoardCoordinate(rank, i, this));
+                                } else if (i == decBoardSize && rank == decBoardSize && blackCanCastleKingside) {
+                                    gamePieces[rank][i] = new Rook(this, false, new BoardCoordinate(rank, i, this));
+                                } else {
+                                    gamePieces[rank][i] = new Rook(this, false, new BoardCoordinate(rank, i, this));
+                                }
+                            }
+                        }
+                        case "n" -> gamePieces[rank][i] = new Knight(this, isUpper);
+                        case "b" -> gamePieces[rank][i] = new Bishop(this, isUpper);
+                        case "q" -> gamePieces[rank][i] = new Queen(this, isUpper);
+                        case "k" -> gamePieces[rank][i] = new King(this, isUpper);
+                        case "p" -> {
+                            Pawn pawn = new Pawn(this, isUpper);
+                            if (isUpper) {
+                                if (rank != 1) {
+                                    pawn.incrementMoves();
+                                }
+                            } else {
+                                if (rank != 6) {
+                                    pawn.incrementMoves();
+                                }
+                            }
+                            gamePieces[rank][i] = pawn;
+                        }
+                        case " " -> gamePieces[rank][i] = null;
+                        case "a" -> gamePieces[rank][i] = new Amazon(this, isUpper);
+                        case "c" -> gamePieces[rank][i] = new Camel(this, isUpper);
+                        case "e" -> gamePieces[rank][i] = new Elephant(this, isUpper);
+                        case "s" -> gamePieces[rank][i] = new Princess(this, isUpper);
+                        case "m" -> gamePieces[rank][i] = new Man(this, isUpper);
+                        case "i" -> gamePieces[rank][i] = new Minister(this, isUpper);
+                        case "h" -> gamePieces[rank][i] = new Empress(this, isUpper);
+                        case "y" -> gamePieces[rank][i] = new DragonKing(this, isUpper);
+                        case "u" -> gamePieces[rank][i] = new DragonHorse(this, isUpper);
+                    }
+                }
+            }
+
+            switch (currentLayout) {
+                case DEFAULT -> {
+                    if (gamePieces[0][0] == null && whiteCanCastleQueenside) {
+                        whiteCanCastleQueenside = false;
+                    }
+                    if (gamePieces[0][decBoardSize] == null && whiteCanCastleKingside) {
+                        whiteCanCastleKingside = false;
+                    }
+                    if (gamePieces[decBoardSize][0] == null && blackCanCastleQueenside) {
+                        blackCanCastleQueenside = false;
+                    }
+                    if (gamePieces[decBoardSize][decBoardSize] == null && blackCanCastleKingside) {
+                        blackCanCastleKingside = false;
+                    }
+                }
+                case CHESS960 -> {
+                    for (int i = 0; i < boardSize; i++) {
+                        for (int j = 0; j < boardSize; j++) {
+                            if (gamePieces[i][j] != null && gamePieces[i][j] instanceof Rook rook) {
+                                if (!rook.getInitialSquare().equals(new BoardCoordinate(i, j, this))) {
+                                    rook.disableCheckAbility();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            whiteTurn = Objects.equals(sections[1], "w");
+
+            if (!sections[3].equalsIgnoreCase("-")) {
+                int col = BoardCoordinate.parseCol(sections[3].split("")[0]);
+                int row = BoardCoordinate.parseRow(sections[3].split("")[1]);
+                epSQ = new BoardCoordinate(row, col, this);
+            }
+
+            halfMoveClock = Integer.parseInt(sections[4]);
+            fullMoveCount = Integer.parseInt(sections[5]);
+
+            addImportHistory(whiteTurn);
+
+            snapshots.add(getVisibleGamePieces());
+            history.add(new Move("FEN Import", this));
+            advantageHistory.add(getCapturedPieces().clonePieces());
+
+            displayPieces();
+            repaint();
+            gameOver = null;
+
+            if (bothKingsInCheck(gamePieces)) {
+                gameOver = GameOverType.ILLEGAL_POSITION;
+                createGameOverScreen(gameOver);
+            } else {
+                if (!gameOver()) {
+                    highlightChecks();
+                    setSelectedMove(history.size());
+                    displayPieces();
+                    repaint();
+
+                    chess.createPopUp("Success!", "Game state loaded", Move.MoveHighlights.EXCELLENT);
+                }
+            }
+        } else {
+            String result = fixFENString(FEN);
+            if (result == null) {
+                chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Wrong number of Kings\n\n" + result, "Could not load game state", Move.MoveHighlights.MISTAKE);
+                gameOver = GameOverType.ILLEGAL_POSITION;
+                gameOver();
+            } else {
+                if (!validateFEN(result, boardSize)) {
+                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Failed:\n - Could not repair FEN String\n\n" + result, "Could not load game state", Move.MoveHighlights.BLUNDER);
+                    gameOver = GameOverType.ILLEGAL_POSITION;
+                    gameOver();
+                } else {
+                    chess.createPopUp("Invalid FEN String: " + FEN + "\n\nFix Successful:\n - Repaired broken FEN String\n\n" + result, "Game state repaired", Move.MoveHighlights.EXCELLENT);
+                    loadFEN(result);
+                }
+            }
+        }
+    }
+
+    public String randomFENBoard(GameStage stage) {
+        Piece[][] board = new Piece[boardSize][boardSize];
+        randomKing(board, true);
+        randomKing(board, false);
+
+        randomPawns(board, stage, true);
+        randomPawns(board, stage, false);
+
+        randomPieces(board, new Bishop(this, true), stage);
+        randomPieces(board, new Bishop(this, false), stage);
+
+        randomPieces(board, new Knight(this, true), stage);
+        randomPieces(board, new Knight(this, false), stage);
+
+        randomPieces(board, new Queen(this, true), stage);
+        randomPieces(board, new Queen(this, false), stage);
+
+        randomPieces(board, new Bishop(this, true), stage);
+        randomPieces(board, new Bishop(this, false), stage);
+
+        randomQueen(board, stage, true);
+        randomQueen(board, stage, false);
+
+        return translateBoardToFEN(board);
+    }
+
+    public int[] getRandomNullIndex(Piece[][] board) {
+        Random random = new Random();
+        ArrayList<int[]> indices = new ArrayList<>();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j] == null) {
+                    indices.add(new int[]{i, j});
+                }
+            }
+        }
+        int randomIndex = random.nextInt(indices.size());
+        return indices.get(randomIndex);
+    }
+
+    public void randomKing(Piece[][] board, boolean white) {
+        placeRandomPiece(board, new King(this, white), 1);
+    }
+
+    public void randomPieces(Piece[][] board, Piece piece, GameStage stage) {
+        Random random = new Random();
+        int pieceCount = switch (stage) {
+            case END_GAME -> random.nextInt(2);
+            case MID_GAME -> random.nextInt(1, 2);
+            case EARLY_GAME -> 2;
+        };
+        placeRandomPiece(board, piece, pieceCount);
+    }
+
+    public void randomQueen(Piece[][] board, GameStage stage, boolean white) {
+        Random random = new Random();
+        int queenCount = switch (stage) {
+            case END_GAME -> random.nextInt(3);
+            case MID_GAME, EARLY_GAME -> random.nextInt(2);
+        };
+        placeRandomPiece(board, new Queen(this, white), queenCount);
+    }
+
+    private void placeRandomPiece(Piece[][] board, Piece piece, int pieceCount) {
+        for (int i = 0; i < pieceCount; i++) {
+            int[] randomTile = getRandomNullIndex(board);
+            int rRank = randomTile[0];
+            int rFile = randomTile[1];
+            if (board[rRank][rFile] == null) {
+                board[rRank][rFile] = piece;
+            }
+        }
+    }
+
+    public void randomPawns(Piece[][] board, GameStage stage, boolean white) {
+        Random random = new Random();
+        int pawnCount = switch (stage) {
+            case END_GAME -> random.nextInt(3);
+            case MID_GAME -> random.nextInt(3, 6);
+            case EARLY_GAME -> random.nextInt(7, 9);
+        };
+        for (int i = 0; i < pawnCount; i++) {
+            int[] randomTile = getRandomNullIndex(board);
+            int rRank = randomTile[0];
+            int rFile = randomTile[1];
+            if (board[rRank][rFile] == null) {
+                board[rRank][rFile] = new Pawn(this, white);
+            }
+        }
+    }
+
+    public String fixFENString(String FEN) {
+        String[] sections = FEN.split(" ");
+        int sectionLength = sections.length;
+
+        StringJoiner result = new StringJoiner(" ");
+
+        String board = sectionLength > 0 ? sections[0] : "";
+        board = fixFENBoard(board, boardSize, chess.shouldRelocateBackline);
+        if (board == null) {
+            return null;
+        }
+        result.add(board);
+
+        String turn = sectionLength > 1 ? sections[1] : "";
+        if (!turn.equalsIgnoreCase("b") && !turn.equalsIgnoreCase("w")) {
+            turn = "w";
+        }
+        result.add(turn);
+
+        String castles = sectionLength > 2 ? sections[2] : "";
+        if (!castles.equalsIgnoreCase("-") && !(castles.contains("K") || castles.contains("k") || castles.contains("Q") || castles.contains("q"))) {
+            castles = "-";
+        }
+        result.add(castles);
+
+        String enPassantSquare = sectionLength > 3 ? sections[3] : "";
+        if (!BoardCoordinate.isValidTile(boardSize, enPassantSquare) && !enPassantSquare.equalsIgnoreCase("-")) {
+            enPassantSquare = "-";
+        }
+        result.add(enPassantSquare);
+
+        String halfMoveClock = sectionLength > 4 ? sections[4] : "";
+        if (!halfMoveClock.matches("-?\\d+(\\.\\d+)?")) {
+            halfMoveClock = "0";
+        }
+
+        String fullMoveCount = sectionLength > 5 ? sections[5] : "";
+        if (!fullMoveCount.matches("-?\\d+(\\.\\d+)?")) {
+            fullMoveCount = "1";
+        }
+
+        if (!(Integer.parseInt(halfMoveClock) / 2 == Integer.parseInt(fullMoveCount) - 1)) {
+            halfMoveClock = "0";
+            fullMoveCount = "1";
+        }
+
+        result.add(halfMoveClock);
+        result.add(fullMoveCount);
+
+        return result.toString();
+    }
+
+    //FIXME
+    public void addImportHistory(boolean whiteTurn) {
+        //history.add(new Move("Imported FEN String", this));
+        //history.add(new Move("", this));
+        if (!whiteTurn) {
+            //history.add(new Move("???", this));
+        }
     }
 
     public String translateBoardToFEN(Piece[][] board) {
@@ -1261,7 +1480,7 @@ public class BoardGUI extends JPanel {
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
                 if (gamePieces[i][j] != null && gamePieces[i][j] instanceof Rook rook) {
-                    if (rook.isWhite() == white && rook.getType() == type)  {
+                    if (rook.isWhite() == white && rook.getType() == type) {
                         boolean shouldAdd = false;
                         if (white) {
                             switch (type) {
@@ -1330,65 +1549,6 @@ public class BoardGUI extends JPanel {
                     }
                 }
                 panel.validate();
-            }
-        }
-    }
-
-    public static void setupDefaultBoard(String[][] board, boolean white, int boardSize) {
-        int backLine = white ? 0 : boardSize - 1;
-
-        if (boardSize >= 8) {
-            int startingPoint = (boardSize / 2) - 4;
-            for (int i = startingPoint; i < startingPoint + 8; i++) {
-                board[white ? 1 : boardSize - 1 - 1][i] = white ? "P" : "p";
-            }
-
-            board[backLine][startingPoint] = white ? "R" : "r";
-            board[backLine][startingPoint + 7] = white ? "R" : "r";
-
-            board[backLine][startingPoint + 1] = white ? "N" : "n";
-            board[backLine][startingPoint + 6] = white ? "N" : "n";
-
-            board[backLine][startingPoint + 2] = white ? "B" : "b";
-            board[backLine][startingPoint + 5] = white ? "B" : "b";
-
-            board[backLine][startingPoint + 3] = white ? "Q" : "q";
-            board[backLine][startingPoint + 4] = white ? "K" : "k";
-        } else {
-            for (int i = 0; i < boardSize; i++) {
-                board[white ? 1 : boardSize - 1 - 1][i] = white ? "P" : "p";
-            }
-            switch (boardSize) {
-                case 4 -> {
-                    board[backLine][0] = white ? "R" : "r";
-                    board[backLine][2] = white ? "Q" : "q";
-                    board[backLine][1] = white ? "K" : "k";
-                    board[backLine][3] = white ? "N" : "n";
-                }
-                case 5 -> {
-                    board[backLine][0] = white ? "R" : "r";
-                    board[backLine][1] = white ? "Q" : "q";
-                    board[backLine][2] = white ? "K" : "k";
-                    board[backLine][3] = white ? "N" : "n";
-                    board[backLine][4] = white ? "R" : "r";
-                }
-                case 6 -> {
-                    board[backLine][0] = white ? "R" : "r";
-                    board[backLine][1] = white ? "B" : "b";
-                    board[backLine][2] = white ? "Q" : "q";
-                    board[backLine][3] = white ? "K" : "k";
-                    board[backLine][4] = white ? "N" : "n";
-                    board[backLine][5] = white ? "R" : "r";
-                }
-                case 7 -> {
-                    board[backLine][0] = white ? "R" : "r";
-                    board[backLine][1] = white ? "N" : "n";
-                    board[backLine][2] = white ? "B" : "b";
-                    board[backLine][3] = white ? "Q" : "q";
-                    board[backLine][4] = white ? "K" : "k";
-                    board[backLine][5] = white ? "N" : "n";
-                    board[backLine][6] = white ? "R" : "r";
-                }
             }
         }
     }
@@ -1462,69 +1622,6 @@ public class BoardGUI extends JPanel {
             case 'P' -> new Pawn(this, white);
             default -> null;
         };
-    }
-
-    public static String createFENString(String[][] boardString, int boardSize) {
-        return translateBoard(boardString, boardSize).append(" w KQkq - 0 1").toString();
-    }
-
-    public static String createFEN(Chess.BoardLayout layout, int boardSize) {
-        switch (layout) {
-            case DEFAULT -> {
-                String[][] boardString = new String[boardSize][boardSize];
-                setupDefaultBoard(boardString, true, boardSize);
-                setupDefaultBoard(boardString, false, boardSize);
-                return createFENString(boardString, boardSize);
-            }
-            case CHESS960 -> {
-                String[][] boardString = new String[boardSize][boardSize];
-                for (int i = 0; i < 8; i++) {
-                    boardString[1][i] = "P";
-                    boardString[6][i] = "p";
-                }
-
-                char[] board = new char[8];
-
-                for (int i = 0; i < 2; i++) {
-                    int r = (int) (Math.random() * 4) * 2;
-
-                    if (i == 1) {
-                        r++;
-                    }
-
-                    board[r] = 'B';
-                }
-
-                char[] queenKnights = {'Q', 'N', 'N'};
-                for (int i = 0; i < queenKnights.length; i++) {
-                    int index = (int) (Math.random() * (6 - i));
-
-                    while (board[index] != 0) {
-                        index++;
-                    }
-
-                    board[index] = queenKnights[i];
-                }
-
-                char[] kingRooks = {'R', 'K', 'X'};
-                int index = 0;
-                for (char kingRook : kingRooks) {
-                    while (board[index] != 0) {
-                        index++;
-                    }
-
-                    board[index] = kingRook;
-                    index++;
-                }
-
-                for (int i = 0; i < board.length; i++) {
-                    boardString[0][i] = String.valueOf(board[i]).toUpperCase();
-                    boardString[7][i] = String.valueOf(board[i]).toLowerCase();
-                }
-                return createFENString(boardString, boardSize);
-            }
-        }
-        return null;
     }
 
     public void setupChallengeChess960(String FEN) {
@@ -1611,26 +1708,6 @@ public class BoardGUI extends JPanel {
                     }
                 }
             }
-        }
-    }
-
-    public static class MaterialAdvantage {
-        private int pts;
-
-        public MaterialAdvantage() {
-            this.pts = 0;
-        }
-
-        private void increment(boolean white, int pts) {
-            this.pts += pts * (white ? 1 : -1);
-        }
-
-        public int result() {
-            return Integer.compare(pts, 0);
-        }
-
-        public int getPts() {
-            return pts;
         }
     }
 
@@ -1941,114 +2018,6 @@ public class BoardGUI extends JPanel {
         }
     }
 
-    public enum Colours {
-        EIGHT_BIT("8-Bit", new ColorScheme(new Color(243,243,244), new Color(106,155,65), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
-        BASES("Bases", new ColorScheme(new Color(239, 204, 161), new Color(194, 107, 56), new Color(245, 204, 42, 127), new Color(245, 204, 42))),
-        BLUE("Blue", new ColorScheme(new Color(236,236,215), new Color(77,109,146), new Color(0, 165, 255, 127), new Color(0, 165, 255))),
-        BROWN("Brown", new ColorScheme(new Color(237,214,176), new Color(184,135,98), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
-        BUBBLEGUM("Bubblegum", new ColorScheme(new Color(255,255,255), new Color(252,216,221), new Color(222, 93, 111, 127), new Color(222, 93, 111))),
-        BURLED_WOOD("Burled Wood", new ColorScheme(new Color(217, 176, 136), new Color(137, 81, 50), new Color(238, 144, 22, 127), new Color(238, 144, 22))),
-        DARK_WOOD("Dark Wood", new ColorScheme(new Color(231, 205, 178), new Color(141, 103, 94), new Color(204, 145, 34, 127), new Color(204, 145, 34))),
-        DASH("Dash", new ColorScheme(new Color(189, 146, 87), new Color(107, 58, 39), new Color(236, 167, 34, 127), new Color(236, 167, 34))),
-        GLASS("Glass", new ColorScheme(new Color(102, 113, 136), new Color(40, 47, 63), new Color(91, 145, 179, 127), new Color(91, 145, 179))),
-        GRAFFITI("Graffiti", new ColorScheme(new Color(174, 174, 174), new Color(185, 111, 24), new Color(243, 144, 17, 127), new Color(243, 144, 17))),
-        GREEN("Green", new ColorScheme(new Color(238, 238, 210), new Color(118, 150, 86), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
-        ICY_SEA("Icy Sea", new ColorScheme(new Color(197, 213, 220), new Color(122, 157, 178), new Color(94, 215, 241, 127), new Color(94, 215, 241))),
-        LIGHT("Light", new ColorScheme(new Color(220,220,220), new Color(171,171,171), new Color(164, 184, 196, 127), new Color(164, 184, 196))),
-        LOLZ("Lolz", new ColorScheme(new Color(224, 233, 233), new Color(144, 152, 152), new Color(163, 190, 205, 127), new Color(163, 190, 205))),
-        MARBLE("Marble", new ColorScheme(new Color(199, 189, 170), new Color(112, 107, 102), new Color(240, 219, 134, 127), new Color(240, 219, 134))),
-        METAL("Metal", new ColorScheme(new Color(201, 201, 201), new Color(110, 110, 110), new Color(163, 190, 205, 127), new Color(163, 190, 205))),
-        NEON("Neon", new ColorScheme(new Color(185, 185, 185), new Color(99, 99, 99), new Color(109, 144, 166, 127), new Color(109, 144, 166))),
-        NEWSPAPER("Newspaper", new ColorScheme(new Color(90, 89, 86), new Color(90, 89, 86), new Color(153, 151, 110, 127), new Color(153, 151, 110))),
-        ORANGE("Orange", new ColorScheme(new Color(252,228,178), new Color(208,139,24), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
-        OVERLAY("Overlay", new ColorScheme(new Color(72, 120, 160), new Color(120, 158, 189), new Color(13, 154, 207, 127), new Color(13, 154, 207))),
-        PARCHMENT("Parchment", new ColorScheme(new Color(240, 217, 181), new Color(181, 136, 99), new Color(216, 204, 102, 127), new Color(216, 204, 102))),
-        PURPLE("Purple", new ColorScheme(new Color(239,239,239), new Color(136,119,183), new Color(125, 172, 201, 127), new Color(125, 172, 201))),
-        RED("Red", new ColorScheme(new Color(240,216,191), new Color(186,85,70), new Color(248, 248, 147, 127), new Color(248, 248, 147))),
-        SAND("Sand", new ColorScheme(new Color(229, 211, 196), new Color(184, 165, 144), new Color(226, 188, 135, 127), new Color(226, 188, 135))),
-        SKY("Sky", new ColorScheme(new Color(239,239,239), new Color(194,215,226), new Color(101, 218, 247, 127), new Color(101, 218, 247))),
-        STONE("Stone", new ColorScheme(new Color(200, 195, 189), new Color(102, 100, 99), new Color(54, 82, 95, 127), new Color(54, 82, 95))),
-        TAN("Tan", new ColorScheme(new Color(237,201,162), new Color(211,163,106), new Color(247, 216, 74, 127), new Color(247, 216, 74))),
-        TOURNAMENT("Tournament", new ColorScheme(new Color(235, 236, 232), new Color(49, 101, 73), new Color(164, 194, 91, 127), new Color(164, 194, 91))),
-        TRANSLUCENT("Translucent", new ColorScheme(new Color(40, 47, 63), new Color(102, 113, 136), new Color(91, 154, 179, 127), new Color(91, 145, 179))),
-        WALNUT("Walnut", new ColorScheme(new Color(192, 166, 132), new Color(131, 95, 66), new Color(209, 165, 45, 127), new Color(209, 165, 45)));
-
-        private final ColorScheme scheme;
-        private final String name;
-
-        Colours(String name, ColorScheme scheme) {
-            this.scheme = scheme;
-            this.name = name;
-        }
-
-        public ColorScheme getScheme() {
-            return scheme;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getLinkString() {
-            return name.replace(" ", "_").replace("-", "_").toLowerCase();
-        }
-    }
-
-    public enum PieceDesign {
-        EIGHT_BIT("8-Bit"),
-        ALPHA("Alpha"),
-        BASES("Bases"),
-        BLINDFOLD("Blindfold"),
-        BOOK("Book"),
-        BUBBLEGUM("Bubblegum"),
-        CASES("Cases"),
-        CLASSIC("Classic"),
-        CLUB("Club"),
-        CONDAL("Condal"),
-        DASH("Dash"),
-        GAME_ROOM("Game Room"),
-        GLASS("Glass"),
-        GOTHIC("Gothic"),
-        GRAFFITI("Graffiti"),
-        ICY_SEA("Icy Sea"),
-        LIGHT("Light"),
-        LOLZ("Lolz"),
-        MARBLE("Marble"),
-        MAYA("Maya"),
-        METAL("Metal"),
-        MODERN("Modern"),
-        NATURE("Nature"),
-        NEON("Neon"),
-        NEO("Neo"),
-        NEO_WOOD("Neo Wood"),
-        NEWSPAPER("Newspaper"),
-        OCEAN("Ocean"),
-        SKY("Sky"),
-        SPACE("Space"),
-        TIGERS("Tigers"),
-        TOURNAMENT("Tournament"),
-        VINTAGE("Vintage"),
-        WOOD("Wood"),
-        WOOD_3D("3D Wood"),
-        STAUNTON_3D("3D Staunton"),
-        PLASTIC_3D("3D Plastic"),
-        CHESSKID_3D("3D Chesskid");
-
-        private final String name;
-
-        PieceDesign(String name) {
-            this.name = name;
-        }
-
-        public String getLinkString() {
-            return name.replace(" ", "_").replace("-", "_").toLowerCase();
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -2098,7 +2067,7 @@ public class BoardGUI extends JPanel {
                     }
                     if (r1 == 7) {
                         g.setColor((row + col) % 2 == 0 ? scheme.light() : scheme.dark());
-                        Rectangle rectangle = new Rectangle( (c1 * pieceSize) + ((pieceSize / 4) * 3), (pieceSize * decBoardSize) + ((pieceSize / 4) * 3), pieceSize / 4, pieceSize / 4);
+                        Rectangle rectangle = new Rectangle((c1 * pieceSize) + ((pieceSize / 4) * 3), (pieceSize * decBoardSize) + ((pieceSize / 4) * 3), pieceSize / 4, pieceSize / 4);
                         CoordinateGUI.drawCenteredString(g, BoardCoordinate.getColString(col), rectangle, getFont());
                     }
                 }
@@ -2195,8 +2164,10 @@ public class BoardGUI extends JPanel {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, color.getAlpha() / 255f));
             g.setColor(color);
             switch (moveStyle) {
-                case DOT -> g.fillOval((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
-                case SQUARE -> g.fillRect((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
+                case DOT ->
+                        g.fillOval((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
+                case SQUARE ->
+                        g.fillRect((col * pieceSize) + (pieceSize / 3), (row * pieceSize) + (pieceSize / 3), pieceSize / 3, pieceSize / 3);
             }
 
             g2d.dispose();
@@ -2207,8 +2178,18 @@ public class BoardGUI extends JPanel {
         return boardTheme;
     }
 
+    public void setBoardTheme(Colours boardTheme) {
+        this.boardTheme = boardTheme;
+        onlineAssets.updateSavedImage(this);
+        repaint();
+    }
+
     public int getPieceSize() {
         return pieceSize;
+    }
+
+    public void setPieceSize(int pieceSize) {
+        this.pieceSize = pieceSize;
     }
 
     public OnlineAssets getOnlineAssets() {
@@ -2219,8 +2200,11 @@ public class BoardGUI extends JPanel {
         return pieceTheme;
     }
 
-    public void setPieceSize(int pieceSize) {
-        this.pieceSize = pieceSize;
+    public void setPieceTheme(PieceDesign pieceTheme) {
+        this.pieceTheme = pieceTheme;
+        onlineAssets.updatePieceDesigns(this);
+        displayPieces();
+        repaint();
     }
 
     public BoardView getView() {
@@ -2230,19 +2214,6 @@ public class BoardGUI extends JPanel {
     public void setView(BoardView view) {
         this.view = view;
         profileGUI.updateAll();
-    }
-
-    public void setBoardTheme(Colours boardTheme) {
-        this.boardTheme = boardTheme;
-        onlineAssets.updateSavedImage(this);
-        repaint();
-    }
-
-    public void setPieceTheme(PieceDesign pieceTheme) {
-        this.pieceTheme = pieceTheme;
-        onlineAssets.updatePieceDesigns(this);
-        displayPieces();
-        repaint();
     }
 
     public Piece[][] getGamePieces() {
@@ -2542,6 +2513,27 @@ public class BoardGUI extends JPanel {
                             moves.add(new Move(this, piece, kingFrom, kingTo, check, false, null, null, null, Move.CastleType.QUEENSIDE, Move.MoveType.CASTLE));
                         }
                     }
+                } else if (piece instanceof Pawn pawn && (possibleTile.row() == 7 || possibleTile.row() == 0)) {
+                    Piece taken = board[possibleTile.row()][possibleTile.col()];
+                    boolean capture = taken != null;
+                    if (notBlocked(board, coordinate, possibleTile) && pawn.validMove(coordinate, possibleTile, capture) && (!capture || (taken.isWhite() != piece.isWhite()))) {
+                        for (int k = 1; k < 5; k++) {
+                            if (kingAvoidsPromotionCheck(board, piece, possibleTile, coordinate, possibleTile, k, piece.isWhite())) {
+                                Piece[][] newBoard = promotionResult(board, possibleTile, coordinate, possibleTile, k, piece.isWhite());
+                                Move.Check check = null;
+
+                                if (!(taken instanceof King)) {
+                                    if (!isCheckingForMate && kingIsInCheck(newBoard, !piece.isWhite())) {
+                                        check = Move.Check.CHECK;
+                                        if (kingIsCheckmated(newBoard, !piece.isWhite())) {
+                                            check = Move.Check.MATE;
+                                        }
+                                    }
+                                }
+                                moves.add(new Move(this, piece, coordinate, possibleTile, check, false, possibleTile, taken, conv(this, k, possibleTile, playAsWhite), null, Move.MoveType.MOVE));
+                            }
+                        }
+                    }
                 } else {
                     Piece taken = board[possibleTile.row()][possibleTile.col()];
                     boolean capture = taken != null;
@@ -2663,6 +2655,15 @@ public class BoardGUI extends JPanel {
         return !kingIsInCheck(newBoard, piece.isWhite());
     }
 
+    public boolean kingAvoidsPromotionCheck(Piece[][] board, Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to, int newPiece, boolean white) {
+        Piece[][] newBoard = promotionResult(board, takes, from, to, newPiece, white);
+        if (getKing(getSide(true, newBoard)) == null || getKing(getSide(false, newBoard)) == null) {
+            return !kingIsInCheck(gamePieces, piece.isWhite());
+        }
+
+        return !kingIsInCheck(newBoard, piece.isWhite());
+    }
+
     public void printGame(boolean includeInfo) {
         BoardMatrixRotation.printBoard(gamePieces, view, boardSize);
         if (includeInfo) {
@@ -2713,7 +2714,65 @@ public class BoardGUI extends JPanel {
         return null;
     }
 
-    public void rawMove(Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to, boolean selfMove) {
+    // TODO fix material advantage on promote
+    public void rawPromote(Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to, int newPiece, boolean white) {
+        Piece promoted = conv(this, newPiece, to, white);
+        Piece taken = gamePieces[takes.row()][takes.col()];
+
+        gamePieces[from.row()][from.col()] = null;
+        gamePieces[takes.row()][takes.col()] = null;
+        gamePieces[to.row()][to.col()] = promoted;
+
+        if (taken != null) {
+            capturedPieces.add(taken);
+            captureGUI.updatePanel();
+        }
+
+        Move.Check check = null;
+        if (kingIsInCheck(gamePieces, !piece.isWhite())) {
+            check = Move.Check.CHECK;
+
+            if (kingIsCheckmated(gamePieces, !piece.isWhite())) {
+                check = Move.Check.MATE;
+            }
+        }
+
+        Move move = new Move(this, piece, from, to, check, false, takes, taken, promoted, null, Move.MoveType.MOVE);
+
+        history.add(move);
+        historyGUI.updateHistory();
+        Piece[][] newBoard = Arrays.stream(gamePieces).map(Piece[]::clone).toArray(Piece[][]::new);
+        snapshots.add(newBoard);
+
+        if (move.getTaken() instanceof Rook rook) {
+            if (rook.isWhite()) {
+                switch (rook.getType()) {
+                    case KINGSIDE -> whiteCanCastleKingside = false;
+                    case QUEENSIDE -> whiteCanCastleQueenside = false;
+                }
+            } else {
+                switch (rook.getType()) {
+                    case KINGSIDE -> blackCanCastleKingside = false;
+                    case QUEENSIDE -> blackCanCastleQueenside = false;
+                }
+            }
+        }
+
+        advantageHistory.add(capturedPieces.clonePieces());
+
+        halfMoveClock++;
+        if (!whiteTurn) {
+            fullMoveCount++;
+            gameFENHistory.add(translateBoardToFEN(gamePieces));
+            fiftyMoveRule++;
+        }
+        if (taken != null) {
+            fiftyMoveRule = 0;
+        }
+        whiteTurn = !whiteTurn;
+    }
+
+    public void rawMove(Piece piece, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to) {
         Piece moved = gamePieces[from.row()][from.col()];
         Piece taken = gamePieces[takes.row()][takes.col()];
 
@@ -2735,7 +2794,7 @@ public class BoardGUI extends JPanel {
             }
         }
 
-        Move move = new Move(this, piece, from, to, check, !takes.equals(to), takes, taken,null, null, Move.MoveType.MOVE); // TODO
+        Move move = new Move(this, piece, from, to, check, !takes.equals(to), takes, taken, null, null, Move.MoveType.MOVE); // TODO
 
         history.add(move);
         historyGUI.updateHistory();
@@ -2829,6 +2888,18 @@ public class BoardGUI extends JPanel {
         return newBoard;
     }
 
+    public Piece[][] promotionResult(Piece[][] board, BoardCoordinate takes, BoardCoordinate from, BoardCoordinate to, int newPiece, boolean white) {
+        Piece[][] newBoard = Arrays.stream(board).map(Piece[]::clone).toArray(Piece[][]::new);
+
+        newBoard[from.row()][from.col()] = null;
+        if (takes != null) {
+            newBoard[takes.row()][takes.col()] = null;
+        }
+        newBoard[to.row()][to.col()] = conv(this, newPiece, to, white);
+
+        return newBoard;
+    }
+
     public void rawCastle(boolean white, Move.CastleType type) {
         BoardCoordinate kingFrom = getKing(getSide(white, gamePieces));
         BoardCoordinate rookFrom = getRook(gamePieces, white, type);
@@ -2911,7 +2982,7 @@ public class BoardGUI extends JPanel {
         List<BoardCoordinate> tiles = new ArrayList<>();
         if (a.row() == b.row()) {
             int from = Math.min(a.col(), b.col());
-            int to =  Math.max(a.col(), b.col());
+            int to = Math.max(a.col(), b.col());
 
             for (int i = from; i <= to; i++) {
                 tiles.add(new BoardCoordinate(a.row(), i, this));
@@ -3063,27 +3134,28 @@ public class BoardGUI extends JPanel {
 
     public void finaliseGame(GameOverType type, int oldRating, int newRating) {
         if (!type.equals(gameOver)) return;
-        
+
         int ratingDiff = newRating - oldRating;
         String diff = ratingDiff > 0 ? "+" + ratingDiff : String.valueOf(ratingDiff);
-        
+
         BoardCoordinate whiteKing = getKing(getSide(true, gamePieces));
         BoardCoordinate blackKing = getKing(getSide(false, gamePieces));
+        advantageHistory.add(capturedPieces.clonePieces());
         EventQueue.invokeLater(() -> {
             Object[] options = {"View board", "Exit game"};
             int r = switch (type) {
-                case CHECKMATE_BLACK -> {
+                case CHECKMATE_BLACK -> { // TODO FIXME
                     staticHighlights[whiteKing.row()][whiteKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.CHECKMATE_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
-
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
                     yield chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by checkmate\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_WHITE), options, 0);
                 }
                 case CHECKMATE_WHITE -> {
                     staticHighlights[blackKing.row()][blackKing.col()] = ColorScheme.StaticColors.MATE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.CHECKMATE_BLACK;
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
-
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
                     yield chess.createPopUp("You " + (playAsWhite ? "Win" : "Lost") + ": White wins by checkmate\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.CHECKMATE_BLACK), options, 0);
                 }
                 case STALEMATE -> {
@@ -3123,19 +3195,54 @@ public class BoardGUI extends JPanel {
                     history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
                     yield chess.createPopUp("You " + (!playAsWhite ? "Win" : "Lost") + ": Black wins by resignation\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.WINNER : Move.InfoIcons.RESIGN_BLACK), options, 0);
                 }
-                case DRAW_BY_REPETITION -> chess.createPopUp("Draw by three-fold repetition\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                case DRAW_BY_REPETITION -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Draw by three-fold repetition\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
+                }
                 case INSUFFICIENT_MATERIAL -> {
                     gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.DRAW_WHITE;
                     gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.DRAW_BLACK;
                     history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
                     yield chess.createPopUp("Draw by insufficient material\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.DRAW_WHITE : Move.InfoIcons.DRAW_BLACK), options, 0);
                 }
-                case TIME_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins on time\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.TIME_WHITE : Move.InfoIcons.WINNER), options, 0);
-                case TIME_WHITE -> chess.createPopUp("You " + (playAsWhite ? "Won" : "Lost") + ": White wins on time\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.TIME_BLACK : Move.InfoIcons.WINNER), options, 0);
-                case ABORTED_BLACK -> chess.createPopUp("Game ended: Black aborted game\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", Move.InfoIcons.ABORTED, options, 0);
-                case ABORTED_WHITE -> chess.createPopUp("Game ended: White aborted game\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", Move.InfoIcons.ABORTED, options, 0);
-                case ABANDONMENT_BLACK -> chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins by abandonment\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
-                case ABANDONMENT_WHITE -> chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+                case TIME_BLACK -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.TIME_WHITE;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
+                    yield chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins on time\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.TIME_WHITE : Move.InfoIcons.WINNER), options, 0);
+                }
+                case TIME_WHITE -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.TIME_BLACK;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
+                    yield chess.createPopUp("You " + (playAsWhite ? "Won" : "Lost") + ": White wins on time\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.TIME_BLACK : Move.InfoIcons.WINNER), options, 0);
+                }
+                case ABORTED_BLACK -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.ABORTED;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.ABORTED;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Game ended: Black aborted game\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", Move.InfoIcons.ABORTED, options, 0);
+                }
+                case ABORTED_WHITE -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.ABORTED;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.ABORTED;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.DRAW));
+                    yield chess.createPopUp("Game ended: White aborted game\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", Move.InfoIcons.ABORTED, options, 0);
+                }
+                case ABANDONMENT_BLACK -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.ABORTED;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.WINNER;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.BLACK));
+                    yield chess.createPopUp("You " + (playAsWhite ? "Lost" : "Won") + ": Black wins by abandonment\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+                }
+                case ABANDONMENT_WHITE -> {
+                    gameHighlights[whiteKing.row()][whiteKing.col()] = Move.InfoIcons.WINNER;
+                    gameHighlights[blackKing.row()][blackKing.col()] = Move.InfoIcons.ABORTED;
+                    history.add(new Move(this, null, null, null, null, false, null, null, null, null, Move.MoveType.WHITE));
+                    yield chess.createPopUp("You " + (!playAsWhite ? "Lost" : "Won") + ": White wins by abandonment\n\nOld Rating: " + oldRating + " (" + diff + ")" + "\nNew Rating: " + newRating + "\n", "Game Over", (!playAsWhite ? Move.InfoIcons.ABORTED : Move.InfoIcons.WINNER), options, 0);
+                }
             };
 
             if (r == 1) {
@@ -3143,6 +3250,10 @@ public class BoardGUI extends JPanel {
                 chess.frame.dispose();
             }
         });
+    }
+
+    public void setGameOver(GameOverType gameOver) {
+        this.gameOver = gameOver;
     }
 
     public boolean gameOver() {
@@ -3249,8 +3360,6 @@ public class BoardGUI extends JPanel {
         highlightChecks(snapshots.get(selectedMove));
     }
 
-
-
     public void endComputerTurn() {
         if (!gameOver()) {
             if (!premoves.isEmpty()) {
@@ -3284,7 +3393,7 @@ public class BoardGUI extends JPanel {
         if (move.getCastleType() != null) {
             rawCastle(!playAsWhite, move.getCastleType());
         } else {
-            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), false);
+            rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
         }
         endComputerTurn();
     }
@@ -3332,11 +3441,23 @@ public class BoardGUI extends JPanel {
                     List<Move> moves = availableMoves(gamePieces, piece, from, false);
                     for (Move move : moves) {
                         if (move.getTo().equals(to)) {
-                            moveHighlight(move.getFrom(), move.getTo());
-                            if (move.getCastleType() != null) {
-                                rawCastle(piece.isWhite(), move.getCastleType());
+                            if (move.getPromotes() != null) {
+                                int promotion = openPromotionDialogue();
+                                if (promotion == -1) {
+                                    displayPieces();
+                                    repaint();
+                                    return false;
+                                }
+                                move.setPromotes(conv(this, promotion, to, playAsWhite));
+                                moveHighlight(move.getFrom(), move.getTo());
+                                rawPromote(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), promotion, playAsWhite);
                             } else {
-                                rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), true);
+                                moveHighlight(move.getFrom(), move.getTo());
+                                if (move.getCastleType() != null) {
+                                    rawCastle(piece.isWhite(), move.getCastleType());
+                                } else {
+                                    rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
+                                }
                             }
                             if (challenge) {
                                 CommunicationHandler.thread.sendPacket(new me.vlink102.personal.chess.internal.networking.packets.game.Move(gameID, !playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, playAsWhite ? ChessMenu.IDENTIFIER : opponentUUID, move));
@@ -3360,6 +3481,7 @@ public class BoardGUI extends JPanel {
                             if (move.to().equals(to)) {
                                 premoves.add(new Move.SimpleMove(this, piece, from, to));
                                 highlightPremoves();
+                                audioManager.play(AudioPlayer.AudioLink.PREMOVE);
                                 displayPieces();
                                 repaint();
                                 return true;
@@ -3469,6 +3591,69 @@ public class BoardGUI extends JPanel {
         }
     }
 
+    public static Piece conv(BoardGUI boardGUI, int choice, BoardCoordinate square, boolean white) {
+        return switch (choice) {
+            case 1 -> new Queen(boardGUI, white);
+            case 2 -> new Rook(boardGUI, white, square);
+            case 3 -> new Knight(boardGUI, white);
+            case 4 -> new Bishop(boardGUI, white);
+            default -> throw new IllegalStateException("Unexpected value: " + choice);
+        };
+    }
+
+    public class PromotionPiece extends JPanel {
+        private final Image image;
+        public PromotionPiece(String abbr) {
+            super();
+            String prefix = (playAsWhite ? "W" : "B");
+            this.image = onlineAssets.getSavedPiece(BoardGUI.this, prefix + abbr);
+            this.setBounds(0, 0, pieceSize, pieceSize);
+        }
+
+        public Image getImage() {
+            return image;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.drawImage(image, 0, 0, this);
+        }
+    }
+
+    public int openPromotionDialogue() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        JPanel queen = new PromotionPiece("Q");
+        JPanel rook = new PromotionPiece("R");
+        JPanel knight = new PromotionPiece("N");
+        JPanel bishop = new PromotionPiece("B");
+
+        queen.setOpaque(true);
+        rook.setOpaque(true);
+        knight.setOpaque(true);
+        bishop.setOpaque(true);
+
+        DefaultListModel<JPanel> model = new DefaultListModel<>();
+        JList<JPanel> list = new JList<>(model);
+        list.setSelectionMode(DefaultListSelectionModel.SINGLE_SELECTION);
+        list.setCellRenderer(new ImageListRenderer());
+        model.addElement(queen);
+        model.addElement(rook);
+        model.addElement(knight);
+        model.addElement(bishop);
+
+        panel.add(list);
+
+        int result = JOptionPane.showOptionDialog(null, panel, "Promote",  JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{"Promote", "Cancel"}, "Promote");
+        if (result == JOptionPane.CANCEL_OPTION) {
+            return -1;
+        } else if (result == JOptionPane.OK_OPTION) {
+            return list.getSelectedIndex() + 1;
+        }
+        return -1;
+    }
+
     public List<Move> getHistory() {
         return history;
     }
@@ -3502,20 +3687,20 @@ public class BoardGUI extends JPanel {
         this.moveMethod = moveMethod;
     }
 
-    public void setCaptureStyle(HintStyle.Capture captureStyle) {
-        this.captureStyle = captureStyle;
-    }
-
-    public void setMoveStyle(HintStyle.Move moveStyle) {
-        this.moveStyle = moveStyle;
-    }
-
     public HintStyle.Capture getCaptureStyle() {
         return captureStyle;
     }
 
+    public void setCaptureStyle(HintStyle.Capture captureStyle) {
+        this.captureStyle = captureStyle;
+    }
+
     public HintStyle.Move getMoveStyle() {
         return moveStyle;
+    }
+
+    public void setMoveStyle(HintStyle.Move moveStyle) {
+        this.moveStyle = moveStyle;
     }
 
     public int getBoardSize() {
@@ -3565,6 +3750,14 @@ public class BoardGUI extends JPanel {
         return gameID;
     }
 
+    public void setRandomBotDelay(int randomBotDelay) {
+        this.randomBotDelay = randomBotDelay;
+    }
+
+    public int getSelectedMove() {
+        return selectedMove;
+    }
+
     public void setSelectedMove(int selectedMove) {
         if (history.isEmpty() || snapshots.size() == 1) return;
         selectedMove = Math.min(selectedMove, history.size());
@@ -3572,52 +3765,55 @@ public class BoardGUI extends JPanel {
         this.selectedMove = selectedMove;
 
         highlightChecks(snapshots.get(selectedMove));
-        Move last = history.get(Math.max(0, selectedMove -1));
-        if (last.getType().equals(Move.MoveType.MOVE) || last.getType().equals(Move.MoveType.CASTLE)) {
-            moveHighlight(last.getFrom(), last.getTo());
-        }
-
-        if (soundsEnabled) {
-            if (last.getCheck() != null) {
-                if (last.getCheck() == Move.Check.CHECK) {
-                    audioManager.play(AudioPlayer.AudioLink.MOVE_CHECK);
-                }
+        Move last = history.get(Math.max(0, selectedMove - 1));
+        if (last.getType() != Move.MoveType.IMPORT) {
+            if (last.getType().equals(Move.MoveType.MOVE) || last.getType().equals(Move.MoveType.CASTLE)) {
+                moveHighlight(last.getFrom(), last.getTo());
             } else {
-                if (last.getTaken() != null) {
-                    audioManager.play(AudioPlayer.AudioLink.CAPTURE);
+            }
+
+            if (soundsEnabled) {
+                if (last.getCheck() != null) {
+                    if (last.getCheck() == Move.Check.CHECK) {
+                        audioManager.play(AudioPlayer.AudioLink.MOVE_CHECK);
+                    }
                 } else {
-                    if (last.getPromotes() != null) {
-                        audioManager.play(AudioPlayer.AudioLink.PROMOTE);
-                    } else if (last.getType() == Move.MoveType.CASTLE) {
-                        audioManager.play(AudioPlayer.AudioLink.CASTLE);
+                    if (last.getTaken() != null) {
+                        audioManager.play(AudioPlayer.AudioLink.CAPTURE);
                     } else {
-                        if (last.getPiece().isWhite() == playAsWhite) {
-                            audioManager.play(AudioPlayer.AudioLink.MOVE_SELF);
+                        if (last.getPromotes() != null) {
+                            audioManager.play(AudioPlayer.AudioLink.PROMOTE);
+                        } else if (last.getType() == Move.MoveType.CASTLE) {
+                            audioManager.play(AudioPlayer.AudioLink.CASTLE);
                         } else {
-                            audioManager.play(AudioPlayer.AudioLink.MOVE_OPPONENT);
+                            if (last.getType().equals(Move.MoveType.MOVE)) {
+                                if (last.getPiece().isWhite() == playAsWhite) {
+                                    audioManager.play(AudioPlayer.AudioLink.MOVE_SELF);
+                                } else {
+                                    audioManager.play(AudioPlayer.AudioLink.MOVE_OPPONENT);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        gameHighlights = new Move.InfoIcons[boardSize][boardSize];
 
-        JScrollBar bar = chess.getScrollPane().getVerticalScrollBar();
-        bar.setValue(selectedMove * 10);
+        gameHighlights = new Move.InfoIcons[boardSize][boardSize];
 
         captureGUI.updatePanel();
         displayPieces();
         historyGUI.repaint();
         repaint();
+
+        JScrollBar bar = chess.getScrollPane().getVerticalScrollBar();
+        bar.setValue(selectedMove * 10);
+        revalidate();
     }
 
-    public void setRandomBotDelay(int randomBotDelay) {
-        this.randomBotDelay = randomBotDelay;
-    }
-
-    public int getSelectedMove() {
-        return selectedMove;
+    public boolean isGameOver() {
+        return gameOver != null;
     }
 
     public CapturedPieces getCapturedPieces() {
@@ -3644,36 +3840,248 @@ public class BoardGUI extends JPanel {
         return advantageHistory;
     }
 
+    public boolean getIsChatEnabled() {
+        return isChatEnabled;
+    }
+
     public void setIsChatEnabled(boolean isChatEnabled) {
         this.isChatEnabled = isChatEnabled;
         chess.getInputField().setEnabled(isChatEnabled);
-    }
-
-    public boolean getIsChatEnabled() {
-        return isChatEnabled;
     }
 
     public PieceInteraction getPieceInteraction() {
         return pieceInteraction;
     }
 
-    public void setSoundsEnabled(boolean soundsEnabled) {
-        this.soundsEnabled = soundsEnabled;
-    }
-
     public boolean isSoundsEnabled() {
         return soundsEnabled;
     }
 
-    public void setChatFilterEnabled(boolean chatFilterEnabled) {
-        isChatFilterEnabled = chatFilterEnabled;
+    public void setSoundsEnabled(boolean soundsEnabled) {
+        this.soundsEnabled = soundsEnabled;
     }
 
     public boolean isChatFilterEnabled() {
         return isChatFilterEnabled;
     }
 
+    public void setChatFilterEnabled(boolean chatFilterEnabled) {
+        isChatFilterEnabled = chatFilterEnabled;
+    }
+
     public ProfanityFilter getProfanityFilter() {
         return profanityFilter;
+    }
+
+    /**
+     * CHECKMATE_WHITE: WHITE WINS
+     * CHECKMATE_BLACK: BLACK WINS
+     * RESIGNATION_WHITE: BLACK WINS
+     * RESIGNATION_BLACK: WHITE WINS
+     * ABANDONMENT_WHITE: WHITE WINS
+     * ABANDONMENT_BLACK: BLACK WINS
+     * TIME_WHITE: WHITE WINS
+     * TIME_BLACK: BLACK WINS
+     */
+    public enum GameOverType {
+        STALEMATE,
+        CHECKMATE_WHITE, // WHITE WINS
+        CHECKMATE_BLACK, // BLACK WINS
+        FIFTY_MOVE_RULE,
+        INSUFFICIENT_MATERIAL,
+        DRAW_BY_REPETITION,
+        DRAW_BY_AGREEMENT,
+        RESIGNATION_WHITE, // BLACK WINS
+        RESIGNATION_BLACK, // WHITE WINS
+        ILLEGAL_POSITION,
+        ABORTED_WHITE,
+        ABORTED_BLACK,
+        ABANDONMENT_WHITE, // WHITE WINS
+        ABANDONMENT_BLACK, // BLACK WINS
+        TIME_WHITE, // WHITE WINS
+        TIME_BLACK // BLACK WINS
+    }
+
+    public enum BoardView {
+        BLACK,
+        WHITE
+    }
+
+    public enum OpponentType {
+        COMPUTER,
+        RANDOM,
+        AUTO_SWAP,
+        MANUAL,
+        PLAYER
+    }
+
+    public enum GameType {
+        DEFAULT,
+        ATOMIC,
+        FOG_OF_WAR
+    }
+
+    public enum MoveStyle {
+        DRAG,
+        CLICK,
+        BOTH
+    }
+
+    public enum CoordinateDisplayType {
+        NONE,
+        INSIDE,
+        OUTSIDE
+    }
+
+    public enum TradeType {
+        WHITE,
+        BLACK,
+        EQUAL
+    }
+
+    public enum GameStage {
+        END_GAME,
+        MID_GAME,
+        EARLY_GAME
+    }
+
+    public enum Colours {
+        EIGHT_BIT("8-Bit", new ColorScheme(new Color(243, 243, 244), new Color(106, 155, 65), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
+        BASES("Bases", new ColorScheme(new Color(239, 204, 161), new Color(194, 107, 56), new Color(245, 204, 42, 127), new Color(245, 204, 42))),
+        BLUE("Blue", new ColorScheme(new Color(236, 236, 215), new Color(77, 109, 146), new Color(0, 165, 255, 127), new Color(0, 165, 255))),
+        BROWN("Brown", new ColorScheme(new Color(237, 214, 176), new Color(184, 135, 98), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
+        BUBBLEGUM("Bubblegum", new ColorScheme(new Color(255, 255, 255), new Color(252, 216, 221), new Color(222, 93, 111, 127), new Color(222, 93, 111))),
+        BURLED_WOOD("Burled Wood", new ColorScheme(new Color(217, 176, 136), new Color(137, 81, 50), new Color(238, 144, 22, 127), new Color(238, 144, 22))),
+        DARK_WOOD("Dark Wood", new ColorScheme(new Color(231, 205, 178), new Color(141, 103, 94), new Color(204, 145, 34, 127), new Color(204, 145, 34))),
+        DASH("Dash", new ColorScheme(new Color(189, 146, 87), new Color(107, 58, 39), new Color(236, 167, 34, 127), new Color(236, 167, 34))),
+        GLASS("Glass", new ColorScheme(new Color(102, 113, 136), new Color(40, 47, 63), new Color(91, 145, 179, 127), new Color(91, 145, 179))),
+        GRAFFITI("Graffiti", new ColorScheme(new Color(174, 174, 174), new Color(185, 111, 24), new Color(243, 144, 17, 127), new Color(243, 144, 17))),
+        GREEN("Green", new ColorScheme(new Color(238, 238, 210), new Color(118, 150, 86), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
+        ICY_SEA("Icy Sea", new ColorScheme(new Color(197, 213, 220), new Color(122, 157, 178), new Color(94, 215, 241, 127), new Color(94, 215, 241))),
+        LIGHT("Light", new ColorScheme(new Color(220, 220, 220), new Color(171, 171, 171), new Color(164, 184, 196, 127), new Color(164, 184, 196))),
+        LOLZ("Lolz", new ColorScheme(new Color(224, 233, 233), new Color(144, 152, 152), new Color(163, 190, 205, 127), new Color(163, 190, 205))),
+        MARBLE("Marble", new ColorScheme(new Color(199, 189, 170), new Color(112, 107, 102), new Color(240, 219, 134, 127), new Color(240, 219, 134))),
+        METAL("Metal", new ColorScheme(new Color(201, 201, 201), new Color(110, 110, 110), new Color(163, 190, 205, 127), new Color(163, 190, 205))),
+        NEON("Neon", new ColorScheme(new Color(185, 185, 185), new Color(99, 99, 99), new Color(109, 144, 166, 127), new Color(109, 144, 166))),
+        NEWSPAPER("Newspaper", new ColorScheme(new Color(90, 89, 86), new Color(90, 89, 86), new Color(153, 151, 110, 127), new Color(153, 151, 110))),
+        ORANGE("Orange", new ColorScheme(new Color(252, 228, 178), new Color(208, 139, 24), new Color(255, 255, 0, 127), new Color(255, 255, 0))),
+        OVERLAY("Overlay", new ColorScheme(new Color(72, 120, 160), new Color(120, 158, 189), new Color(13, 154, 207, 127), new Color(13, 154, 207))),
+        PARCHMENT("Parchment", new ColorScheme(new Color(240, 217, 181), new Color(181, 136, 99), new Color(216, 204, 102, 127), new Color(216, 204, 102))),
+        PURPLE("Purple", new ColorScheme(new Color(239, 239, 239), new Color(136, 119, 183), new Color(125, 172, 201, 127), new Color(125, 172, 201))),
+        RED("Red", new ColorScheme(new Color(240, 216, 191), new Color(186, 85, 70), new Color(248, 248, 147, 127), new Color(248, 248, 147))),
+        SAND("Sand", new ColorScheme(new Color(229, 211, 196), new Color(184, 165, 144), new Color(226, 188, 135, 127), new Color(226, 188, 135))),
+        SKY("Sky", new ColorScheme(new Color(239, 239, 239), new Color(194, 215, 226), new Color(101, 218, 247, 127), new Color(101, 218, 247))),
+        STONE("Stone", new ColorScheme(new Color(200, 195, 189), new Color(102, 100, 99), new Color(54, 82, 95, 127), new Color(54, 82, 95))),
+        TAN("Tan", new ColorScheme(new Color(237, 201, 162), new Color(211, 163, 106), new Color(247, 216, 74, 127), new Color(247, 216, 74))),
+        TOURNAMENT("Tournament", new ColorScheme(new Color(235, 236, 232), new Color(49, 101, 73), new Color(164, 194, 91, 127), new Color(164, 194, 91))),
+        TRANSLUCENT("Translucent", new ColorScheme(new Color(40, 47, 63), new Color(102, 113, 136), new Color(91, 154, 179, 127), new Color(91, 145, 179))),
+        WALNUT("Walnut", new ColorScheme(new Color(192, 166, 132), new Color(131, 95, 66), new Color(209, 165, 45, 127), new Color(209, 165, 45)));
+
+        private final ColorScheme scheme;
+        private final String name;
+
+        Colours(String name, ColorScheme scheme) {
+            this.scheme = scheme;
+            this.name = name;
+        }
+
+        public ColorScheme getScheme() {
+            return scheme;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getLinkString() {
+            return name.replace(" ", "_").replace("-", "_").toLowerCase();
+        }
+    }
+
+    public enum PieceDesign {
+        EIGHT_BIT("8-Bit"),
+        ALPHA("Alpha"),
+        BASES("Bases"),
+        BLINDFOLD("Blindfold"),
+        BOOK("Book"),
+        BUBBLEGUM("Bubblegum"),
+        CASES("Cases"),
+        CLASSIC("Classic"),
+        CLUB("Club"),
+        CONDAL("Condal"),
+        DASH("Dash"),
+        GAME_ROOM("Game Room"),
+        GLASS("Glass"),
+        GOTHIC("Gothic"),
+        GRAFFITI("Graffiti"),
+        ICY_SEA("Icy Sea"),
+        LIGHT("Light"),
+        LOLZ("Lolz"),
+        MARBLE("Marble"),
+        MAYA("Maya"),
+        METAL("Metal"),
+        MODERN("Modern"),
+        NATURE("Nature"),
+        NEON("Neon"),
+        NEO("Neo"),
+        NEO_WOOD("Neo Wood"),
+        NEWSPAPER("Newspaper"),
+        OCEAN("Ocean"),
+        SKY("Sky"),
+        SPACE("Space"),
+        TIGERS("Tigers"),
+        TOURNAMENT("Tournament"),
+        VINTAGE("Vintage"),
+        WOOD("Wood"),
+        WOOD_3D("3D Wood"),
+        STAUNTON_3D("3D Staunton"),
+        PLASTIC_3D("3D Plastic"),
+        CHESSKID_3D("3D Chesskid");
+
+        private final String name;
+
+        PieceDesign(String name) {
+            this.name = name;
+        }
+
+        public String getLinkString() {
+            return name.replace(" ", "_").replace("-", "_").toLowerCase();
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    public static class HintStyle {
+        public enum Move {
+            DOT,
+            SQUARE
+        }
+
+        public enum Capture {
+            RING,
+            SQUARE
+        }
+    }
+
+    public static class MaterialAdvantage {
+        private int pts;
+
+        public MaterialAdvantage() {
+            this.pts = 0;
+        }
+
+        private void increment(boolean white, int pts) {
+            this.pts += pts * (white ? 1 : -1);
+        }
+
+        public int result() {
+            return Integer.compare(pts, 0);
+        }
+
+        public int getPts() {
+            return pts;
+        }
     }
 }

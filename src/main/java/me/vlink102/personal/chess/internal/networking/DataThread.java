@@ -1,6 +1,5 @@
 package me.vlink102.personal.chess.internal.networking;
 
-import com.mysql.cj.conf.PropertyDefinitions;
 import me.vlink102.personal.GameSelector;
 import me.vlink102.personal.chess.BoardGUI;
 import me.vlink102.personal.chess.Chess;
@@ -9,7 +8,6 @@ import me.vlink102.personal.chess.internal.BoardCoordinate;
 import me.vlink102.personal.chess.internal.Move;
 import me.vlink102.personal.chess.internal.SwingLink;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Accept;
-import me.vlink102.personal.chess.internal.networking.packets.challenge.Challenge;
 import me.vlink102.personal.chess.internal.networking.packets.challenge.Decline;
 import me.vlink102.personal.chess.pieces.Piece;
 import org.json.JSONObject;
@@ -135,7 +133,7 @@ public class DataThread extends Thread {
                                 System.out.println(move);
                                 boardGUI.moveHighlight(move.getFrom(), move.getTo());
                                 if (move.getCastleType() == null) {
-                                    boardGUI.rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo(), false);
+                                    boardGUI.rawMove(move.getPiece(), move.getTakeSquare(), move.getFrom(), move.getTo());
                                 } else {
                                     boardGUI.rawCastle(move.getPiece().isWhite(), move.getCastleType());
                                 }
